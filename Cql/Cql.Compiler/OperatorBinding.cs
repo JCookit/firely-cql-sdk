@@ -7,14 +7,23 @@
  */
 
 using Hl7.Cql.Abstractions;
+
+using Microsoft.SqlServer.TransactSql.ScriptDom;
+
 using System.Linq.Expressions;
 
 namespace Hl7.Cql.Compiler
 {
+    internal interface IOperatorBinding<T>
+    {
+        public T Bind(CqlOperator @operator, T context, params T[] parameters);
+    }
+
+
     /// <summary>
     /// Binds <see cref="CqlOperator"/>s to <see cref="Expression"/>s.
     /// </summary>
-    internal abstract class OperatorBinding
+    internal abstract class OperatorBinding : IOperatorBinding<Expression>
     {
         /// <summary>
         /// Binds <paramref name="operator"/> to an <see cref="Expression"/>.
@@ -24,5 +33,13 @@ namespace Hl7.Cql.Compiler
         /// <param name="parameters">Zero or more parameter <see cref="Expression"/>s.  The number and order of expressions is dependent on <paramref name="operator"/>.</param>
         /// <returns>An expression that implements <paramref name="operator"/>.</returns>
         public abstract Expression Bind(CqlOperator @operator, Expression runtimeContext, params Expression[] parameters);
+    }
+
+    internal abstract class SqlOperatorBinding : IOperatorBinding<TSqlFragment>
+    {
+        public TSqlFragment Bind(CqlOperator @operator, TSqlFragment context, params TSqlFragment[] parameters)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

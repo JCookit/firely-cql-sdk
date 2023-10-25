@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 		<Cql Include="input\*.cql" />
+		<MyCql Include="myinput\*.cql" />
 	</ItemGroup>
 
 </Project>
