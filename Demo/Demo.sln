@@ -39,6 +39,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hl7.Fhir.R4", "..\..\firely
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elm", "..\Cql\Elm\Elm.csproj", "{270F53BE-283A-4CC4-88AC-99B773E4464B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyMeasures", "MyMeasures\MyMeasures.csproj", "{3822478E-0378-434A-A3FB-460370C7393C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +143,12 @@ Global
 		{270F53BE-283A-4CC4-88AC-99B773E4464B}.FullDebug|Any CPU.Build.0 = Debug|Any CPU
 		{270F53BE-283A-4CC4-88AC-99B773E4464B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{270F53BE-283A-4CC4-88AC-99B773E4464B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3822478E-0378-434A-A3FB-460370C7393C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3822478E-0378-434A-A3FB-460370C7393C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3822478E-0378-434A-A3FB-460370C7393C}.FullDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3822478E-0378-434A-A3FB-460370C7393C}.FullDebug|Any CPU.Build.0 = Debug|Any CPU
+		{3822478E-0378-434A-A3FB-460370C7393C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3822478E-0378-434A-A3FB-460370C7393C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
