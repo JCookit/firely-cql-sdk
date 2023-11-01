@@ -35,11 +35,4 @@ namespace Hl7.Cql.Compiler
         public abstract Expression Bind(CqlOperator @operator, Expression runtimeContext, params Expression[] parameters);
     }
 
-    internal abstract class SqlOperatorBinding : IOperatorBinding<TSqlFragment>
-    {
-        public TSqlFragment Bind(CqlOperator @operator, TSqlFragment context, params TSqlFragment[] parameters)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
 }

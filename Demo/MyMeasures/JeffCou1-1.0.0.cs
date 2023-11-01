@@ -68,7 +68,7 @@ public class JeffCou1_1_0_0
 	private int? OtherThing_Value()
 	{
 		var a_ = this.Thing();
-		var b_ = context.Operators.Add((int?)2, a_);
+		var b_ = context.Operators.Add((int?)3, a_);
 
 		return b_;
 	}

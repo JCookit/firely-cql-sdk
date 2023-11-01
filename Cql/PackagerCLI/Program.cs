@@ -41,7 +41,16 @@ namespace Hl7.Cql.Packager
                 return -1;
             }
 
-
+            DirectoryInfo? sqlDir = null;
+            var sqlArg = config["sql"];
+            if (sqlArg != null)
+            {
+                sqlDir = new DirectoryInfo(sqlArg);
+                if (!sqlDir.Exists)
+                {
+                    EnsureDirectory(sqlDir);
+                }
+            }
 
             var dArg = config["d"];
             bool debug = false;
@@ -80,11 +89,11 @@ namespace Hl7.Cql.Packager
                     EnsureDirectory(fhirDir);
                 }
             }
-            Package(elmDir, cqlDir, csDir, fhirDir);
+            Package(elmDir, cqlDir, csDir, fhirDir, sqlDir);
             return 0;
         }
 
-        public static void Package(DirectoryInfo elmDir, DirectoryInfo cqlDir, DirectoryInfo? csDir, DirectoryInfo? fhirDir)
+        public static void Package(DirectoryInfo elmDir, DirectoryInfo cqlDir, DirectoryInfo? csDir, DirectoryInfo? fhirDir, DirectoryInfo? sqlDir)
         {
             var logLevel = LogLevel.Trace;
             var logFactory = LoggerFactory
@@ -106,11 +115,14 @@ namespace Hl7.Cql.Packager
                     logging.AddSerilog();
                 });
 
-            var packagerLogger = logFactory.CreateLogger<LibraryPackager>();
+            //var packagerLogger = logFactory.CreateLogger<LibraryPackager>();
+
+            var cliLogger = logFactory.CreateLogger("CLI");
+
             var packages = LibraryPackager.LoadLibraries(elmDir);
             var graph = Elm.Library.GetIncludedLibraries(packages.Values);
+
             var typeResolver = new FhirTypeResolver(ModelInfo.ModelInspector);
-            var cliLogger = logFactory.CreateLogger("CLI");
 
             var packager = new LibraryPackager();
             var resources = packager.PackageResources(elmDir,
@@ -122,11 +134,24 @@ namespace Hl7.Cql.Packager
                 CanonicalUri,
                 logFactory);
 
-            var options = new JsonSerializerOptions()
-                .ForFhir(typeof(Resource).Assembly)
-                .Pretty();
+            if (sqlDir != null)
+            {
+                // skip the part where the SQL is wrapped in a library and then extracted from the library....
+                // TODO: at the moment, N ELM libraries are reduced to 1 SQL output.  Think about this.
+
+                var sqlGenerator = new SqlGenerator();
+                string sqlStatement = sqlGenerator.GenerateSql(graph, logFactory);
+
+                var file = new FileInfo(Path.Combine(sqlDir.FullName, $"output.sql"));
+                cliLogger.LogInformation($"Writing {file.FullName}");
+                File.WriteAllText(file.FullName, sqlStatement);
+            }
+
             if (fhirDir != null)
             {
+                var options = new JsonSerializerOptions()
+                    .ForFhir(typeof(Resource).Assembly)
+                    .Pretty();
 
                 cliLogger.LogInformation($"Writing FHIR resources to {fhirDir.FullName}");
 
@@ -208,6 +233,7 @@ namespace Hl7.Cql.Packager
             Console.WriteLine();
             Console.WriteLine($"\t--elm <directory>\tLibrary root path");
             Console.WriteLine($"\t--cql <directory>\tCQL root path");
+            Console.WriteLine($"\t[--sql] <directory>\tSQL root path");
             Console.WriteLine($"\t[--fhir] <file>\tResource location, either file name or directory");
             Console.WriteLine($"\t[--cs] <file>\tC# output location, either file name or directory");
             Console.WriteLine($"\t[--d] true|false\t\tProduce as a debug assembly");

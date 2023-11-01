@@ -24,122 +24,53 @@
             "version" : "4.0.1"
          } ]
       },
-      "contexts" : {
-         "def" : [ {
-            "locator" : "6:1-6:15",
-            "name" : "Patient"
-         } ]
-      },
       "statements" : {
          "def" : [ {
-            "locator" : "6:1-6:15",
-            "name" : "Patient",
-            "context" : "Patient",
-            "expression" : {
-               "type" : "SingletonFrom",
-               "operand" : {
-                  "locator" : "6:1-6:15",
-                  "dataType" : "{http://hl7.org/fhir}Patient",
-                  "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
-                  "type" : "Retrieve"
-               }
-            }
-         }, {
-            "locator" : "8:1-9:7",
+            "locator" : "5:1-6:7",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
             "name" : "Thing",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "9:3-9:7",
+               "locator" : "6:3-6:7",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+               "type" : "Add",
+               "operand" : [ {
+                  "locator" : "6:3",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "1",
+                  "type" : "Literal"
+               }, {
+                  "locator" : "6:7",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "1",
+                  "type" : "Literal"
+               } ]
+            }
+         }, {
+            "locator" : "8:1-9:11",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "name" : "OtherThing",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "9:3-9:11",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                "type" : "Add",
                "operand" : [ {
                   "locator" : "9:3",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "value" : "1",
-                  "type" : "Literal"
-               }, {
-                  "locator" : "9:7",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "value" : "1",
-                  "type" : "Literal"
-               } ]
-            }
-         }, {
-            "locator" : "11:1-12:11",
-            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-            "name" : "OtherThing",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "expression" : {
-               "locator" : "12:3-12:11",
-               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-               "type" : "Add",
-               "operand" : [ {
-                  "locator" : "12:3",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "2",
                   "type" : "Literal"
                }, {
-                  "locator" : "12:7-12:11",
+                  "locator" : "9:7-9:11",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "name" : "Thing",
                   "type" : "ExpressionRef"
                } ]
-            }
-         }, {
-            "locator" : "14:1-15:13",
-            "name" : "Boogers",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "resultTypeSpecifier" : {
-               "type" : "ListTypeSpecifier",
-               "elementType" : {
-                  "name" : "{http://hl7.org/fhir}Condition",
-                  "type" : "NamedTypeSpecifier"
-               }
-            },
-            "expression" : {
-               "locator" : "15:3-15:13",
-               "dataType" : "{http://hl7.org/fhir}Condition",
-               "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
-               "type" : "Retrieve",
-               "resultTypeSpecifier" : {
-                  "type" : "ListTypeSpecifier",
-                  "elementType" : {
-                     "name" : "{http://hl7.org/fhir}Condition",
-                     "type" : "NamedTypeSpecifier"
-                  }
-               }
-            }
-         }, {
-            "locator" : "17:1-18:13",
-            "name" : "Boogers2",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "resultTypeSpecifier" : {
-               "type" : "ListTypeSpecifier",
-               "elementType" : {
-                  "name" : "{http://hl7.org/fhir}Condition",
-                  "type" : "NamedTypeSpecifier"
-               }
-            },
-            "expression" : {
-               "locator" : "18:3-18:13",
-               "dataType" : "{http://hl7.org/fhir}Condition",
-               "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
-               "type" : "Retrieve",
-               "resultTypeSpecifier" : {
-                  "type" : "ListTypeSpecifier",
-                  "elementType" : {
-                     "name" : "{http://hl7.org/fhir}Condition",
-                     "type" : "NamedTypeSpecifier"
-                  }
-               }
             }
          } ]
       }
