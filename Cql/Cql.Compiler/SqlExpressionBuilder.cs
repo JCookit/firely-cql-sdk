@@ -220,17 +220,17 @@ namespace Hl7.Cql.Compiler
                     if (def.expression != null)
                     {
                         //var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
-                        //var buildContext = new ExpressionBuilderContext(this,
-                        //    contextParameter,
-                        //    definitions,
-                        //    localLibraryIdentifiers);
+                        var buildContext = new ExpressionBuilderContext(this,
+                            contextParameter,
+                            definitions,
+                            localLibraryIdentifiers);
 
-                        //if (string.IsNullOrWhiteSpace(def.name))
-                        //{
-                        //    var message = $"Definition with local ID {def.localId} does not have a name.  This is not allowed.";
-                        //    buildContext.LogError(message, def);
-                        //    throw new InvalidOperationException(message);
-                        //}
+                        if (string.IsNullOrWhiteSpace(def.name))
+                        {
+                            var message = $"Definition with local ID {def.localId} does not have a name.  This is not allowed.";
+                            buildContext.LogError(message, def);
+                            throw new InvalidOperationException(message);
+                        }
                         //var customKey = $"{nav}.{def.name}";
                         //Type[] functionParameterTypes = Type.EmptyTypes;
                         //var parameters = new[] { buildContext.RuntimeContextParameter };
