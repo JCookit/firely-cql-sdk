@@ -21,7 +21,21 @@ using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
 {
-    internal abstract class ExpressionBuilderContextBase<T>
+    internal class ScopedExpression
+    {
+        public Expression Expression { get; }
+        public elm.Element ElmExpression { get; }
+
+        public ScopedExpression(Expression expression, elm.Element elmExpression)
+        {
+            Expression = expression;
+            ElmExpression = elmExpression;
+        }
+    }
+
+    internal abstract class ExpressionBuilderContextBase<T, B>
+        where T : ExpressionBuilderContextBase<T, B>
+        where B : ExpressionBuilderBase<B>
     {
 
         /// <summary>
@@ -33,16 +47,43 @@ namespace Hl7.Cql.Compiler
 
         protected IList<elm.Element> Predecessors { get; init; } = new List<elm.Element>();
 
-        internal ExpressionBuilderContextBase(ExpressionBuilder builder, IDictionary<string, string> localLibraryIdentifiers)
+        /// <summary>
+        /// In dodgy sort expressions where the properties are named using the undocumented IdentifierRef expression type,
+        /// this value is the implied alias name that should qualify it, e.g. from DRR-E 2022:
+        /// <code>
+        ///     "PHQ-9 Assessments" PHQ
+        ///      where ...
+        ///      sort by date from start of FHIRBase."Normalize Interval"(effective) asc
+        /// </code> 
+        /// The use of "effective" here is unqualified and is implied to be PHQ.effective
+        /// No idea how this is supposed to work with queries with multiple sources (e.g., with let statements)
+        /// </summary>
+        protected internal string? ImpliedAlias { get; protected set; } = null;
+
+
+        internal ExpressionBuilderContextBase(
+            B builder, 
+            IDictionary<string, string> localLibraryIdentifiers)
         {
             Builder = builder;
             LocalLibraryIdentifiers = localLibraryIdentifiers;
         }
 
+        public ExpressionBuilderContextBase(
+            B builder, 
+            IDictionary<string, string> localLibraryIdentifiers, 
+            string? impliedAlias, 
+            IList<elm.Element> predecessors) 
+            : this(builder, localLibraryIdentifiers)
+        {
+            ImpliedAlias = impliedAlias;
+            this.Predecessors = predecessors.ToList(); // copy
+        }
+
         /// <summary>
-        /// Gets the <see cref="ExpressionBuilder"/> from which this context derives.
+        /// Gets the builder from which this context derives.
         /// </summary>
-        public ExpressionBuilder Builder { get; }
+        public B Builder { get; }
 
         /// <summary>
         /// Gets the parent of the context's current expression.
@@ -76,19 +117,6 @@ namespace Hl7.Cql.Compiler
                     yield return kvp;
             }
         }
-
-        /// <summary>
-        /// In dodgy sort expressions where the properties are named using the undocumented IdentifierRef expression type,
-        /// this value is the implied alias name that should qualify it, e.g. from DRR-E 2022:
-        /// <code>
-        ///     "PHQ-9 Assessments" PHQ
-        ///      where ...
-        ///      sort by date from start of FHIRBase."Normalize Interval"(effective) asc
-        /// </code> 
-        /// The use of "effective" here is unqualified and is implied to be PHQ.effective
-        /// No idea how this is supposed to work with queries with multiple sources (e.g., with let statements)
-        /// </summary>
-        protected internal string? ImpliedAlias { get; protected set; } = null;
 
         internal static string? NormalizeIdentifier(string? identifier)
         {
@@ -155,14 +183,14 @@ namespace Hl7.Cql.Compiler
     /// <remarks>
     /// The scope information in this class is useful for <see cref="IExpressionMutator"/> and is supplied to <see cref="IExpressionMutator.Mutate(Expression, elm.Element, ExpressionBuilderContext)"/>.
     /// </remarks>
-    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext>
+    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder>
     {
         internal bool HasScope(string elmAlias) => Scopes.ContainsKey(elmAlias);
 
         /// <summary>
         /// Contains query aliases and let declarations, and any other symbol that is now "in scope"
         /// </summary>
-        protected IDictionary<string, (Expression, elm.Element)> Scopes { get; } = new Dictionary<string, (Expression, elm.Element)>();
+        protected IDictionary<string, ScopedExpression> Scopes { get; } = new Dictionary<string, ScopedExpression>();
 
 
         internal ExpressionBuilderContext(ExpressionBuilder builder,
@@ -176,19 +204,17 @@ namespace Hl7.Cql.Compiler
         }
 
         private ExpressionBuilderContext(ExpressionBuilderContext other)
-            : base(other.Builder, other.LocalLibraryIdentifiers)
+            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors)
         {
             Libraries = other.Libraries;
             RuntimeContextParameter = other.RuntimeContextParameter;
             Definitions = other.Definitions;
             Operands = other.Operands;
             Scopes = other.Scopes;
-            Predecessors = other.Predecessors.ToList(); // copy it
-            ImpliedAlias = other.ImpliedAlias;
         }
 
         private ExpressionBuilderContext(ExpressionBuilderContext other,
-            Dictionary<string, (Expression, elm.Element)> scopes) : this(other)
+            Dictionary<string, ScopedExpression> scopes) : this(other)
         {
             Scopes = scopes;
         }
@@ -214,11 +240,11 @@ namespace Hl7.Cql.Compiler
         {
             var normalized = NormalizeIdentifier(elmAlias!)!;
             if (Scopes.TryGetValue(normalized, out var expression))
-                return expression.Item1;
+                return expression.Expression;
             else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
         }
 
-        internal (Expression, elm.Element) GetScope(string elmAlias)
+        internal ScopedExpression GetScope(string elmAlias)
         {
             var normalized = NormalizeIdentifier(elmAlias!)!;
             if (Scopes.TryGetValue(normalized, out var expression))
@@ -241,9 +267,9 @@ namespace Hl7.Cql.Compiler
         /// <summary>
         /// Creates a copy with the scopes provided.
         /// </summary>
-        internal ExpressionBuilderContext WithScopes(params KeyValuePair<string, (Expression, elm.Element)>[] kvps)
+        internal ExpressionBuilderContext WithScopes(params KeyValuePair<string, ScopedExpression>[] kvps)
         {
-            var scopes = new Dictionary<string, (Expression, elm.Element)>(Scopes);
+            var scopes = new Dictionary<string, ScopedExpression>(Scopes);
             if (Builder.Settings.AllowScopeRedefinition)
             {
                 foreach (var kvp in kvps)
@@ -276,7 +302,7 @@ namespace Hl7.Cql.Compiler
 
         internal ExpressionBuilderContext WithImpliedAlias(string aliasName, Expression linqExpression, elm.Element elmExpression)
         {
-            var subContext = WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(aliasName, (linqExpression, elmExpression)));
+            var subContext = WithScopes(new KeyValuePair<string, ScopedExpression>(aliasName, new ScopedExpression(linqExpression, elmExpression)));
             subContext.ImpliedAlias = aliasName;
 
             return subContext;

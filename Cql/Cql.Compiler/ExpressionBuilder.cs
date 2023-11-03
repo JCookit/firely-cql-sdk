@@ -31,7 +31,7 @@ namespace Hl7.Cql.Compiler
     /// <summary>
     /// The ExpressionBuilder translates ELM <see cref="elm.Expression"/>s into <see cref="Expression"/>.
     /// </summary>
-    internal partial class ExpressionBuilder
+    internal partial class ExpressionBuilder : ExpressionBuilderBase<ExpressionBuilder>
     {
         private readonly ExpressionBuilderOptions options;
 
@@ -50,14 +50,11 @@ namespace Hl7.Cql.Compiler
             Library elm,
             ILogger<ExpressionBuilder> logger,
             ExpressionBuilderOptions? options = null)
+            : base(elm, logger)
         {
             OperatorBinding = operatorBinding;
             TypeManager = typeManager ?? throw new ArgumentNullException(nameof(typeManager));
-            Library = elm ?? throw new ArgumentNullException(nameof(elm));
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.options = options ?? new(EmitStackTraces: false);
-            if (Library.identifier == null)
-                throw new ArgumentException("Package is missing a library identifier", nameof(elm));
         }
 
         /// <summary>
@@ -83,21 +80,13 @@ namespace Hl7.Cql.Compiler
         /// The <see cref="TypeManager"/> used to resolve and create types referenced in <see cref="Library"/>.
         /// </summary>
         public TypeManager TypeManager { get; }
-        /// <summary>
-        /// The <see cref="Library"/> this builder will build.
-        /// </summary>
-        public Library Library { get; }
-        protected internal TypeResolver TypeResolver => TypeManager.Resolver;
 
-        protected internal ILogger<ExpressionBuilder> Logger { get; }
+        protected internal TypeResolver TypeResolver => TypeManager.Resolver;
 
         /// <summary>
         /// The expression visitors that will be executed (in order) on translated expressions.
         /// </summary>
         public IList<IExpressionMutator> ExpressionMutators { get; } = new List<IExpressionMutator>();
-
-        internal string ThisLibraryKey => Library.NameAndVersion
-            ?? throw new InvalidOperationException("Name and version is null.");
 
         /// <summary>
         /// Builds <see cref="LambdaExpression"/>s for each definition in <see cref="Library"/>.
@@ -1085,17 +1074,17 @@ namespace Hl7.Cql.Compiler
                 if (querySourceAlias == "ItemOnLine")
                 {
                 }
-                var scopes = new[] { new KeyValuePair<string, (Expression, elm.Element)>(querySourceAlias!, (whereLambdaParameter, querySource.expression)) };
+                var scopes = new[] { new KeyValuePair<string, ScopedExpression>(querySourceAlias!, new ScopedExpression(whereLambdaParameter, querySource.expression)) };
                 var subContext = ctx.WithScopes(scopes);
 
                 if (query.let != null)
                 {
-                    var letScopes = new KeyValuePair<string, (Expression, elm.Element)>[query.let.Length];
+                    var letScopes = new KeyValuePair<string, ScopedExpression>[query.let.Length];
                     for (int i = 0; i < query.let.Length; i++)
                     {
                         var let = query.let[i];
                         var expression = TranslateExpression(let.expression!, subContext);
-                        letScopes[i] = new KeyValuePair<string, (Expression, elm.Element)>(let.identifier!, (expression, let.expression!));
+                        letScopes[i] = new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!));
                     }
                     subContext = subContext.WithScopes(letScopes);
                 }
@@ -1113,7 +1102,7 @@ namespace Hl7.Cql.Compiler
 
                 var selectLambdaParameter = Expression.Parameter(elementType, parameterName);
 
-                var scopes = new[] { new KeyValuePair<string, (Expression, elm.Element)>(querySourceAlias!, (selectLambdaParameter, query.@return)) };
+                var scopes = new[] { new KeyValuePair<string, ScopedExpression>(querySourceAlias!, new ScopedExpression(selectLambdaParameter, query.@return)) };
                 var subContext = ctx.WithScopes(scopes);
 
                 if (query.let != null)
@@ -1122,7 +1111,7 @@ namespace Hl7.Cql.Compiler
                     {
                         var let = query.let[i];
                         var expression = TranslateExpression(let.expression!, subContext);
-                        subContext = subContext.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(let.identifier!, (expression, let.expression!)));
+                        subContext = subContext.WithScopes(new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!)));
                     }
                 }
                 var selectBody = TranslateExpression(query.@return.expression!, subContext);
@@ -1153,8 +1142,8 @@ namespace Hl7.Cql.Compiler
                 var resultParameter = Expression.Parameter(resultType, resultAlias);
                 var scopes = new[]
                 {
-                        new KeyValuePair<string, (Expression, elm.Element)>(querySourceAlias!, (sourceAliasParameter, query)),
-                        new KeyValuePair<string, (Expression, elm.Element)>(resultAlias!, (resultParameter, query.aggregate))
+                        new KeyValuePair < string, ScopedExpression > (querySourceAlias !, new ScopedExpression(sourceAliasParameter, query)),
+                        new KeyValuePair < string, ScopedExpression > (resultAlias !, new ScopedExpression(resultParameter, query.aggregate))
                     };
                 var subContext = ctx.WithScopes(scopes);
                 if (query.let != null)
@@ -1163,7 +1152,7 @@ namespace Hl7.Cql.Compiler
                     {
                         var let = query.let[i];
                         var expression = TranslateExpression(let.expression!, subContext);
-                        subContext = subContext.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(let.identifier!, (expression, let.expression!)));
+                        subContext = subContext.WithScopes(new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!)));
                     }
                 }
                 var startingValue = TranslateExpression(query.aggregate.starting!, subContext);
@@ -1294,7 +1283,7 @@ namespace Hl7.Cql.Compiler
                     (
                         from property in multiSourceTupleType!.GetProperties()
                         let propertyAccess = Expression.Property(whereLambdaParameter, property)
-                        select new KeyValuePair<string, (Expression, elm.Element)>(property.Name, (propertyAccess, query.@where))
+                        select new KeyValuePair<string, ScopedExpression>(property.Name, new ScopedExpression(propertyAccess, query.@where))
                     )
                     .ToArray();
                 var subContext = ctx.WithScopes(scopes);
@@ -1302,12 +1291,12 @@ namespace Hl7.Cql.Compiler
 
                 if (query.let != null)
                 {
-                    var letScopes = new KeyValuePair<string, (Expression, elm.Element)>[query.let.Length];
+                    var letScopes = new KeyValuePair<string, ScopedExpression>[query.let.Length];
                     for (int i = 0; i < query.let.Length; i++)
                     {
                         var let = query.let[i];
                         var expression = TranslateExpression(let.expression!, subContext);
-                        letScopes[i] = new KeyValuePair<string, (Expression, elm.Element)>(let.identifier!, (expression, let.expression!));
+                        letScopes[i] = new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!));
                     }
                     subContext = subContext.WithScopes(letScopes);
                 }
@@ -1329,7 +1318,7 @@ namespace Hl7.Cql.Compiler
                     (
                         from property in multiSourceTupleType!.GetProperties()
                         let propertyAccess = Expression.Property(selectLambdaParameter, property)
-                        select new KeyValuePair<string, (Expression, elm.Element)>(property.Name, (propertyAccess, query.@return))
+                        select new KeyValuePair<string, ScopedExpression>(property.Name, new ScopedExpression(propertyAccess, query.@return))
                     )
                     .ToArray();
                 var subContext = ctx.WithScopes(scopes);
@@ -1341,7 +1330,7 @@ namespace Hl7.Cql.Compiler
                     {
                         var let = query.let[i];
                         var expression = TranslateExpression(let.expression!, subContext);
-                        subContext = subContext.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(let.identifier!, (expression, let.expression!)));
+                        subContext = subContext.WithScopes(new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!)));
                     }
                 }
                 var selectBody = TranslateExpression(query.@return.expression!, subContext);
@@ -1360,7 +1349,7 @@ namespace Hl7.Cql.Compiler
                         (
                             from property in multiSourceTupleType!.GetProperties()
                             let propertyAccess = Expression.Property(sourceParameter, property)
-                            select new KeyValuePair<string, (Expression, elm.Element)>(property.Name, (propertyAccess, query))
+                            select new KeyValuePair<string, ScopedExpression>(property.Name, new ScopedExpression(propertyAccess, query))
                         )
                         .ToArray();
                     var subContext = ctx.WithScopes(scopes);
@@ -1381,16 +1370,16 @@ namespace Hl7.Cql.Compiler
                     }
                     var resultParameter = Expression.Parameter(resultType, resultAlias);
 
-                    subContext = subContext.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(resultAlias!, (resultParameter, query.aggregate)));
+                    subContext = subContext.WithScopes(new KeyValuePair<string, ScopedExpression>(resultAlias!, new ScopedExpression(resultParameter, query.aggregate)));
 
                     if (query.let != null)
                     {
-                        var letScopes = new KeyValuePair<string, (Expression, elm.Element)>[query.let.Length];
+                        var letScopes = new KeyValuePair<string, ScopedExpression>[query.let.Length];
                         for (int i = 0; i < query.let.Length; i++)
                         {
                             var let = query.let[i];
                             var expression = TranslateExpression(let.expression!, subContext);
-                            letScopes[i] = new KeyValuePair<string, (Expression, elm.Element)>(let.identifier!, (expression, let.expression!));
+                            letScopes[i] = new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!));
                         }
                         subContext = subContext.WithScopes(letScopes);
                     }
@@ -2038,7 +2027,7 @@ namespace Hl7.Cql.Compiler
             //            .Where(P => true) // such that goes here
             //            .Select(P => E));
             var selectManyParameter = Expression.Parameter(outerElementType, outerScope);
-            var selectManyContext = ctx.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(outerScope, (selectManyParameter, with)));
+            var selectManyContext = ctx.WithScopes(new KeyValuePair<string, ScopedExpression>(outerScope, new ScopedExpression(selectManyParameter, with)));
             var source = TranslateExpression(with.expression, selectManyContext);
             if (!IsOrImplementsIEnumerableOfT(source.Type))
             {
@@ -2052,7 +2041,7 @@ namespace Hl7.Cql.Compiler
             var sourcElementType = TypeResolver.GetListElementType(source.Type)!;
 
             var whereLambdaParameter = Expression.Parameter(sourcElementType, with.alias);
-            var whereContext = selectManyContext.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(with.alias!, (whereLambdaParameter, with)));
+            var whereContext = selectManyContext.WithScopes(new KeyValuePair<string, ScopedExpression>(with.alias!, new ScopedExpression(whereLambdaParameter, with)));
             var suchThatBody = TranslateExpression(with.suchThat, whereContext);
 
             var whereLambda = Expression.Lambda(suchThatBody, whereLambdaParameter);
@@ -2104,7 +2093,7 @@ namespace Hl7.Cql.Compiler
             var selectManyParameter = Expression.Parameter(tupleType, TypeNameToIdentifier(tupleType, ctx));
             var scopes = (from property in tupleType.GetProperties()
                           let propertyAccess = Expression.Property(selectManyParameter, property)
-                          select new KeyValuePair<string, (Expression, elm.Element)>(property.Name, (propertyAccess, with)))
+                          select new KeyValuePair<string, ScopedExpression>(property.Name, new ScopedExpression(propertyAccess, with)))
                          .ToArray();
             var selectManyContext = ctx.WithScopes(scopes);
 
@@ -2112,7 +2101,7 @@ namespace Hl7.Cql.Compiler
             var sourceElementType = TypeResolver.GetListElementType(source.Type)!;
 
             var whereLambdaParameter = Expression.Parameter(sourceElementType, with.alias);
-            var whereContext = selectManyContext.WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(with.alias!, (whereLambdaParameter, with)));
+            var whereContext = selectManyContext.WithScopes(new KeyValuePair<string, ScopedExpression>(with.alias!, new ScopedExpression(whereLambdaParameter, with)));
             var suchThatBody = TranslateExpression(with.suchThat, whereContext);
             var whereLambda = Expression.Lambda(suchThatBody, whereLambdaParameter);
             var callWhereOnSource = OperatorBinding.Bind(CqlOperator.Where, ctx.RuntimeContextParameter, source, whereLambda);

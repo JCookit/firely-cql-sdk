@@ -14,18 +14,11 @@ using System.Threading.Tasks;
 
 namespace Hl7.Cql.Compiler
 {
-    internal class SqlExpressionBuilder
+    internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder>
     {
-        private Library library;
-        private ILogger<SqlExpressionBuilder> builderLogger;
-
-        internal string ThisLibraryKey => library.NameAndVersion
-            ?? throw new InvalidOperationException("Name and version is null.");
-
         public SqlExpressionBuilder(Library library, ILogger<SqlExpressionBuilder> builderLogger)
+            : base(library, builderLogger)
         {
-            this.library = library ?? throw new ArgumentNullException(nameof(library));
-            this.builderLogger = builderLogger ?? throw new ArgumentNullException(nameof(builderLogger));
         }
 
         internal DefinitionDictionary<TSqlFragment> Build()
@@ -33,16 +26,16 @@ namespace Hl7.Cql.Compiler
             var definitions = new DefinitionDictionary<TSqlFragment>();
             var localLibraryIdentifiers = new Dictionary<string, string>();
 
-            var version = library.identifier!.version;
+            var version = this.Library.identifier!.version;
             if (string.IsNullOrWhiteSpace(version))
                 version = "1.0.0";
 
-            if (!string.IsNullOrWhiteSpace(library.identifier!.id))
+            if (!string.IsNullOrWhiteSpace(this.Library.identifier!.id))
             {
                 var nav = ThisLibraryKey;
-                if (library.includes != null)
+                if (this.Library.includes != null)
                 {
-                    foreach (var def in library!.includes!)
+                    foreach (var def in this.Library!.includes!)
                     {
                         var alias = !string.IsNullOrWhiteSpace(def.localIdentifier)
                             ? def.localIdentifier!
@@ -57,7 +50,7 @@ namespace Hl7.Cql.Compiler
                     }
                 }
 
-                if (library.valueSets != null)
+                if (this.Library.valueSets != null)
                 {
                     //foreach (var def in Library.valueSets!)
                     //{
@@ -80,7 +73,7 @@ namespace Hl7.Cql.Compiler
                 //    .ToDictionary(cs => cs.name, cs => cs.id) ?? new Dictionary<string, string>();
                 //var codesByName = new Dictionary<string, CqlCode>();
                 //var codesByCodeSystemName = new Dictionary<string, List<CqlCode>>();
-                if (library.codes != null)
+                if (this.Library.codes != null)
                 {
                     //foreach (var code in Library.codes)
                     //{
@@ -112,7 +105,7 @@ namespace Hl7.Cql.Compiler
                     //}
                 }
 
-                if (library.codeSystems != null)
+                if (this.Library.codeSystems != null)
                 {
                     //foreach (var codeSystem in Library.codeSystems)
                     //{
@@ -142,7 +135,7 @@ namespace Hl7.Cql.Compiler
                     //}
                 }
 
-                if (library.concepts != null)
+                if (this.Library.concepts != null)
                 {
                     //var conceptCtor = typeof(CqlConcept).GetConstructor(new[] { typeof(IEnumerable<CqlCode>), typeof(string) });
                     //foreach (var concept in Library.concepts)
@@ -180,7 +173,7 @@ namespace Hl7.Cql.Compiler
                     //}
                 }
 
-                if (library.parameters != null)
+                if (this.Library.parameters != null)
                 {
                     //foreach (var parameter in Library.parameters ?? Enumerable.Empty<elm.ParameterDef>())
                     //{
@@ -215,15 +208,14 @@ namespace Hl7.Cql.Compiler
                     //}
                 }
 
-                foreach (var def in library.statements ?? Enumerable.Empty<Hl7.Cql.Elm.ExpressionDef>())
+                foreach (var def in this.Library.statements ?? Enumerable.Empty<Hl7.Cql.Elm.ExpressionDef>())
                 {
                     if (def.expression != null)
                     {
                         //var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
-                        var buildContext = new ExpressionBuilderContext(this,
-                            contextParameter,
-                            definitions,
-                            localLibraryIdentifiers);
+                        var buildContext = new SqlExpressionBuilderContext(this,
+                            localLibraryIdentifiers,
+                            definitions);
 
                         if (string.IsNullOrWhiteSpace(def.name))
                         {

@@ -105,7 +105,7 @@ namespace Hl7.Cql.Compiler
                 else if (propertyExpression.scope != null)
                 {
                     var scope = context.GetScope(propertyExpression.scope);
-                    sourceType = scope.Item1.Type;
+                    sourceType = scope.Expression.Type;
                 }
                 if (sourceType != null)
                 {
@@ -118,7 +118,7 @@ namespace Hl7.Cql.Compiler
             else if (element is elm.AliasRef aliasRef && !string.IsNullOrWhiteSpace(aliasRef.name))
             {
                 var scope = context.GetScope(aliasRef.name);
-                return scope.Item1.Type;
+                return scope.Expression.Type;
             }
             else if (element is elm.OperandRef operandRef && !string.IsNullOrWhiteSpace(operandRef.name))
             {
