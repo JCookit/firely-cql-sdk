@@ -154,6 +154,7 @@ namespace Hl7.Cql.Compiler
             return subContext;
         }
 
+        // TODO: does this get hoisted into the base class?   are Scopes common handling?
         internal ExpressionBuilderContext WithImpliedAlias(string aliasName, Expression linqExpression, elm.Element elmExpression)
         {
             var subContext = WithScopes(new KeyValuePair<string, ScopedExpression>(aliasName, new ScopedExpression(linqExpression, elmExpression)));

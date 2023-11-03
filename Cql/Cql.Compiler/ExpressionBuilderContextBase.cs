@@ -101,6 +101,7 @@ namespace Hl7.Cql.Compiler
             }
         }
 
+        // TODO: is this sufficient for SQL also?
         internal static string? NormalizeIdentifier(string? identifier)
         {
             if (identifier == null)

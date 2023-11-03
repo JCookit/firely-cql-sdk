@@ -2,7 +2,7 @@
   "profiles": {
     "PackagerCLI": {
       "commandName": "Project",
-      "commandLineArgs": "--elm $(ProjectDir)/../../Demo/Elm/MyJson --cql $(ProjectDir)/../../Demo/Cql/myinput --o $(ProjectDir)/../../Demo/Test/Resources --cs $(ProjectDir)/../../Demo/MyMeasures --force true"
+      "commandLineArgs": "--elm $(ProjectDir)/../../Demo/Elm/MyJson --cql $(ProjectDir)/../../Demo/Cql/myinput --o $(ProjectDir)/../../Demo/Test/Resources --cs $(ProjectDir)/../../Demo/MyMeasures --force true --sql $(ProjectDir)/../../Demo/MyMeasures"
     }
   }
 }

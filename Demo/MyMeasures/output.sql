@@ -1,0 +1,11 @@
+DROP FUNCTION TestFunction
+GO
+CREATE FUNCTION TestFunction
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT 1 + 1 AS Result
+     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+
+GO
