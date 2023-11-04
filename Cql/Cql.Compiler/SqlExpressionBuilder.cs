@@ -226,7 +226,10 @@ namespace Hl7.Cql.Compiler
                         //var customKey = $"{nav}.{def.name}";
                         //Type[] functionParameterTypes = Type.EmptyTypes;
                         //var parameters = new[] { buildContext.RuntimeContextParameter };
-                        //var function = def as FunctionDef;
+                        var function = def as FunctionDef;
+
+                        // jeffcou:  believe this section is for functions with parameters
+
                         //if (function != null && function.operand != null)
                         //{
                         //    functionParameterTypes = new Type[function.operand!.Length];
@@ -272,8 +275,11 @@ namespace Hl7.Cql.Compiler
                         //    }
 
                         //}
-                        //buildContext = buildContext.Deeper(def);
-                        //var bodyExpression = TranslateExpression(def.expression, buildContext);
+                        buildContext = buildContext.Deeper(def);
+                        var bodyExpression = TranslateExpression(def.expression, buildContext);
+                        
+                        
+
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
                         //if (function?.operand != null && definitions.ContainsKey(ThisLibraryKey, def.name, functionParameterTypes))
                         //{
@@ -313,5 +319,601 @@ namespace Hl7.Cql.Compiler
                 throw new InvalidOperationException("This package does not have a name and version.");
             }
         }
+
+        private TSqlFragment TranslateExpression(Element op, SqlExpressionBuilderContext ctx)
+        {
+            ctx = ctx.Deeper(op);
+            TSqlFragment? result = null;
+            switch (op)
+            {
+                case Abs abs:
+                    // result = Abs(abs, ctx);
+                    break;
+                case Add add:
+                    result = Add(add, ctx);
+                    break;
+                case After after:
+                    // result = After(after, ctx);
+                    break;
+                case AliasRef ar:
+                    // result = AliasRef(ar, ctx);
+                    break;
+                case AllTrue alt:
+                    // result = AllTrue(alt, ctx);
+                    break;
+                case And and:
+                    // result = And(and, ctx);
+                    break;
+                case As @as:
+                    // result = As(@as, ctx);
+                    break;
+                case AnyTrue ate:
+                    // result = AnyTrue(ate, ctx);
+                    break;
+                case AnyInValueSet avs:
+                    // result = AnyInValueSet(avs, ctx);
+                    break;
+                case Avg avg:
+                    // result = Avg(avg, ctx);
+                    break;
+                case Before before:
+                    // result = Before(before, ctx);
+                    break;
+                case CalculateAgeAt caa:
+                    // result = CalculateAgeAt(caa, ctx);
+                    break;
+                case CalculateAge ca:
+                    // result = CalculateAge(ca, ctx);
+                    break;
+                case Case ce:
+                    // result = Case(ce, ctx);
+                    break;
+                case Ceiling ceil:
+                    // result = Ceiling(ceil, ctx);
+                    break;
+                case Coalesce cle:
+                    // result = Coalesce(cle, ctx);
+                    break;
+                case CodeRef cre:
+                    // result = CodeRef(cre, ctx);
+                    break;
+                case CodeSystemRef csr:
+                    // result = CodeSystemRef(csr, ctx);
+                    break;
+                case Collapse col:
+                    // result = Collapse(col, ctx);
+                    break;
+                case Combine com:
+                    // result = Combine(com, ctx);
+                    break;
+                case Concatenate cctn:
+                    // result = Concatenate(cctn, ctx);
+                    break;
+                case ConceptRef cr:
+                    // result = ConceptRef(cr, ctx);
+                    break;
+                case Contains ct:
+                    // result = Contains(ct, ctx);
+                    break;
+                case ConvertQuantity cqe:
+                    // result = ConvertQuantity(cqe, ctx);
+                    break;
+                case ConvertsToBoolean ce:
+                    // result = ConvertsToBoolean(ce, ctx);
+                    break;
+                case ConvertsToDate ce:
+                    // result = ConvertsToDate(ce, ctx);
+                    break;
+                case ConvertsToDateTime ce:
+                    // result = ConvertsToDateTime(ce, ctx);
+                    break;
+                case ConvertsToDecimal ce:
+                    // result = ConvertsToDecimal(ce, ctx);
+                    break;
+                case ConvertsToLong ce:
+                    // result = ConvertsToLong(ce, ctx);
+                    break;
+                case ConvertsToInteger ce:
+                    // result = ConvertsToInteger(ce, ctx);
+                    break;
+                case ConvertsToQuantity ce:
+                    // result = ConvertsToQuantity(ce, ctx);
+                    break;
+                case ConvertsToString ce:
+                    // result = ConvertsToString(ce, ctx);
+                    break;
+                case ConvertsToTime ce:
+                    // result = ConvertsToTime(ce, ctx);
+                    break;
+                case Count ce:
+                    // result = Count(ce, ctx);
+                    break;
+                case DateFrom dfe:
+                    // result = DateFrom(dfe, ctx);
+                    break;
+                case Elm.DateTime dt:
+                    // result = DateTime(dt, ctx);
+                    break;
+                case Date d:
+                    // result = Date(d, ctx);
+                    break;
+                case DateTimeComponentFrom dtcf:
+                    // result = DateTimeComponentFrom(dtcf, ctx);
+                    break;
+                case Descendents desc:
+                    // result = Descendents(desc, ctx);
+                    break;
+                case DifferenceBetween dbe:
+                    // result = DifferenceBetween(dbe, ctx);
+                    break;
+                case Distinct distinct:
+                    // result = Distinct(distinct, ctx);
+                    break;
+                case Divide divide:
+                    // result = Divide(divide, ctx);
+                    break;
+                case DurationBetween dbe:
+                    // result = DurationBetween(dbe, ctx);
+                    break;
+                case End e:
+                    // result = End(e, ctx);
+                    break;
+                case Ends e:
+                    // result = Ends(e, ctx);
+                    break;
+                case EndsWith e:
+                    // result = EndsWith(e, ctx);
+                    break;
+                case Equal eq:
+                    // result = Equal(eq, ctx);
+                    break;
+                case Equivalent eqv:
+                    // result = Equivalent(eqv, ctx);
+                    break;
+                case Except ex:
+                    // result = Except(ex, ctx);
+                    break;
+                case Exists ex:
+                    // result = Exists(ex, ctx);
+                    break;
+                case Exp exe:
+                    // result = Exp(exe, ctx);
+                    break;
+                case Expand expand:
+                    // result = Expand(expand, ctx);
+                    break;
+                case ExpandValueSet evs:
+                    // result = ExpandValueSet(evs, ctx);
+                    break;
+                case FunctionRef fre:
+                    // result = FunctionRef(fre, ctx);
+                    break;
+                case ExpressionRef ere:
+                    // result = ExpressionRef(ere, ctx);
+                    break;
+                case First first:
+                    // result = First(first, ctx);
+                    break;
+                case Flatten fl:
+                    // result = Flatten(fl, ctx);
+                    break;
+                case Floor floor:
+                    // result = Floor(floor, ctx);
+                    break;
+                case GeometricMean gme:
+                    // result = GeometricMean(gme, ctx);
+                    break;
+                case Greater gtr:
+                    // result = Greater(gtr, ctx);
+                    break;
+                case GreaterOrEqual gtre:
+                    // result = GreaterOrEqual(gtre, ctx);
+                    break;
+                case HighBoundary hb:
+                    // result = HighBoundary(hb, ctx);
+                    break;
+                case IdentifierRef ire:
+                    // result = IdentifierRef(ire, ctx);
+                    break;
+                case If @if:
+                    // result = If(@if, ctx);
+                    break;
+                case Implies implies:
+                    // result = Implies(implies, ctx);
+                    break;
+                case Includes inc:
+                    // result = Includes(inc, ctx);
+                    break;
+                case IncludedIn ii:
+                    // result = IncludedIn(ii, ctx);
+                    break;
+                case Indexer idx:
+                    // result = Indexer(idx, ctx);
+                    break;
+                case IndexOf io:
+                    // result = IndexOf(io, ctx);
+                    break;
+                case Instance ine:
+                    // result = Instance(ine, ctx);
+                    break;
+                case Intersect ise:
+                    // result = Intersect(ise, ctx);
+                    break;
+                case Interval ie:
+                    // result = Intervalresult(ie, ctx);
+                    break;
+                case InValueSet inv:
+                    // result = InValueSet(inv, ctx);
+                    break;
+                case In @in:
+                    // result = In(@in, ctx);
+                    break;
+                case Is @is:
+                    // result = Is(@is, ctx);
+                    break;
+                case IsFalse @isn:
+                    // result = IsFalse(@isn, ctx);
+                    break;
+                case IsNull @isn:
+                    // result = IsNull(@isn, ctx);
+                    break;
+                case IsTrue @isn:
+                    // result = IsTrue(@isn, ctx);
+                    break;
+                case Last last:
+                    // result = Last(last, ctx);
+                    break;
+                case LastPositionOf lpo:
+                    // result = LastPositionOf(lpo, ctx);
+                    break;
+                case Length len:
+                    // result = Length(len, ctx);
+                    break;
+                case Less less:
+                    // result = Less(less, ctx);
+                    break;
+                case LessOrEqual lesse:
+                    // result = LessOrEqual(lesse, ctx);
+                    break;
+                case List list:
+                    // result = List(list, ctx);
+                    break;
+                case Elm.Literal lit:
+                    result = Literal(lit, ctx);
+                    break;
+                case Ln ln:
+                    // result = Ln(ln, ctx);
+                    break;
+                case Log log:
+                    // result = Log(log, ctx);
+                    break;
+                case LowBoundary lb:
+                    // result = LowBoundary(lb, ctx);
+                    break;
+                case Lower e:
+                    // result = Lower(e, ctx);
+                    break;
+                case Matches e:
+                    // result = Matches(e, ctx);
+                    break;
+                case Max max:
+                    // result = Max(max, ctx);
+                    break;
+                case MaxValue max:
+                    // result = MaxValue(max, ctx);
+                    break;
+                case Median med:
+                    // result = Median(med, ctx);
+                    break;
+                case Meets meets:
+                    // result = Meets(meets, ctx);
+                    break;
+                case MeetsBefore meets:
+                    // result = MeetsBefore(meets, ctx);
+                    break;
+                case MeetsAfter meets:
+                    // result = MeetsAfter(meets, ctx);
+                    break;
+                case Message msg:
+                    // result = Message(msg, ctx);
+                    break;
+                case Min min:
+                    // result = Min(min, ctx);
+                    break;
+                case MinValue min:
+                    // result = MinValue(min, ctx);
+                    break;
+                case Mode mode:
+                    // result = Mode(mode, ctx);
+                    break;
+                case Modulo mod:
+                    // result = Modulo(mod, ctx);
+                    break;
+                case Multiply mul:
+                    // result = Multiply(mul, ctx);
+                    break;
+                case Negate neg:
+                    // result = Negate(neg, ctx);
+                    break;
+                case Not not:
+                    // result = Not(not, ctx);
+                    break;
+                case NotEqual ne:
+                    // result = NotEqual(ne, ctx);
+                    break;
+                case Now now:
+                    // result = Now(now, ctx);
+                    break;
+                case Null @null:
+                    // result = Null(@null, ctx);
+                    break;
+                case OperandRef ore:
+                    // result = OperandRef(ore, ctx);
+                    break;
+                case Or or:
+                    // result = Or(or, ctx);
+                    break;
+                case Overlaps ole:
+                    // result = Overlaps(ole, ctx);
+                    break;
+                case OverlapsAfter ola:
+                    // result = OverlapsAfter(ola, ctx);
+                    break;
+                case OverlapsBefore olb:
+                    // result = OverlapsBefore(olb, ctx);
+                    break;
+                case ParameterRef pre:
+                    // result = ParameterRef(pre, ctx);
+                    break;
+                case PointFrom pf:
+                    // result = PointFrom(pf, ctx);
+                    break;
+                case PopulationStdDev pstd:
+                    // result = PopulationStdDev(pstd, ctx);
+                    break;
+                case PopulationVariance pvar:
+                    // result = PopulationVariance(pvar, ctx);
+                    break;
+                case PositionOf po:
+                    // result = PositionOf(po, ctx);
+                    break;
+                case Power pow:
+                    // result = Power(pow, ctx);
+                    break;
+                case Precision pre:
+                    // result = Precision(pre, ctx);
+                    break;
+                case Predecessor prd:
+                    // result = Predecessor(prd, ctx);
+                    break;
+                case Product prod:
+                    // result = Product(prod, ctx);
+                    break;
+                case ProperContains pc:
+                    // result = ProperContains(pc, ctx);
+                    break;
+                case ProperIn pi:
+                    // result = ProperIn(pi, ctx);
+                    break;
+                case ProperIncludes pi:
+                    // result = ProperIncludes(pi, ctx);
+                    break;
+                case ProperIncludedIn pie:
+                    // result = ProperIncludedIn(pie, ctx);
+                    break;
+                case Property pe:
+                    // result = Property(pe, ctx);
+                    break;
+                case Quantity qua:
+                    // result = Quantity(qua, ctx);
+                    break;
+                case Query qe:
+                    // result = Query(qe, ctx);
+                    break;
+                case QueryLetRef qlre:
+                    // result = QueryLetRef(qlre, ctx);
+                    break;
+                case Ratio re:
+                    // result = Ratio(re, ctx);
+                    break;
+                case ReplaceMatches e:
+                    // result = ReplaceMatches(e, ctx);
+                    break;
+                case Retrieve re:
+                    // result = Retrieve(re, ctx);
+                    break;
+                case Round rnd:
+                    // result = Round(rnd, ctx);
+                    break;
+                case SameAs sa:
+                    // result = SameAs(sa, ctx);
+                    break;
+                case SameOrAfter soa:
+                    // result = SameOrAfter(soa, ctx);
+                    break;
+                case SameOrBefore sob:
+                    // result = SameOrBefore(sob, ctx);
+                    break;
+                case SingletonFrom sf:
+                    // result = SingletonFrom(sf, ctx);
+                    break;
+                case Slice slice:
+                    // result = Slice(slice, ctx);
+                    break;
+                case Split split:
+                    // result = Split(split, ctx);
+                    break;
+                case Substring e:
+                    // result = Substring(e, ctx);
+                    break;
+                case Subtract sub:
+                    // result = Subtract(sub, ctx);
+                    break;
+                case Successor suc:
+                    // result = Successor(suc, ctx);
+                    break;
+                case Sum sum:
+                    // result = Sum(sum, ctx);
+                    break;
+                case Starts starts:
+                    // result = Starts(starts, ctx);
+                    break;
+                case Start start:
+                    // result = Start(start, ctx);
+                    break;
+                case StartsWith e:
+                    // result = StartsWith(e, ctx);
+                    break;
+                case StdDev stddev:
+                    // result = StdDev(stddev, ctx);
+                    break;
+                case Time time:
+                    // result = Time(time, ctx);
+                    break;
+                case TimeOfDay tod:
+                    // result = TimeOfDay(tod, ctx);
+                    break;
+                case TimezoneOffsetFrom tofe:
+                    // result = TimezoneOffsetFrom(tofe, ctx);
+                    break;
+                case ToBoolean e:
+                    // result = ToBoolean(e, ctx);
+                    break;
+                case ToConcept tc:
+                    // result = ToConcept(tc, ctx);
+                    break;
+                case ToDateTime tdte:
+                    // result = ToDateTime(tdte, ctx);
+                    break;
+                case ToDate tde:
+                    // result = ToDate(tde, ctx);
+                    break;
+                case Today today:
+                    // result = Today(today, ctx);
+                    break;
+                case ToDecimal tde:
+                    // result = ToDecimal(tde, ctx);
+                    break;
+                case ToInteger tde:
+                    // result = ToInteger(tde, ctx);
+                    break;
+                case ToList tle:
+                    // result = ToList(tle, ctx);
+                    break;
+                case ToLong toLong:
+                    // result = ToLong(toLong, ctx);
+                    break;
+                case ToQuantity tq:
+                    // result = ToQuantity(tq, ctx);
+                    break;
+                case ToString e:
+                    // result = ToString(e, ctx);
+                    break;
+                case ToTime e:
+                    // result = ToTime(e, ctx);
+                    break;
+                case Truncate trunc:
+                    // result = Truncate(trunc, ctx);
+                    break;
+                case TruncatedDivide div:
+                    // result = TruncatedDivide(div, ctx);
+                    break;
+                case Elm.Tuple tu:
+                    // result = Tuple(tu, ctx);
+                    break;
+                case Union ue:
+                    // result = Union(ue, ctx);
+                    break;
+                case ValueSetRef vsre:
+                    // result = ValueSetRef(vsre, ctx);
+                    break;
+                case Variance variance:
+                    // result = Variance(variance, ctx);
+                    break;
+                case Upper e:
+                    // result = Upper(e, ctx);
+                    break;
+                case Width width:
+                    // result = Width(width, ctx);
+                    break;
+                case Xor xor:
+                    // result = Xor(xor, ctx);
+                    break;
+            }
+
+            if (result == null)
+                throw new InvalidOperationException($"Expression {op.GetType().FullName} is not implemented.");
+
+            //foreach (var visitor in ExpressionMutators)
+            //{
+            //    if (visitor != null)
+            //        expression = visitor.Mutate(expression!, op, ctx);
+            //}
+
+            return result!;
+        }
+
+        private TSqlFragment? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)
+        {
+            return BuildSqlLiteral(lit, ctx);
+        }
+
+        private TSqlFragment? Add(Elm.Add add, SqlExpressionBuilderContext ctx)
+        {
+            ScalarExpression? lhs = TranslateExpression(add.operand[0], ctx) as ScalarExpression;
+            ScalarExpression? rhs = TranslateExpression(add.operand[1], ctx) as ScalarExpression;
+
+            var fragment = new ParenthesisExpression
+            {
+                Expression = new Microsoft.SqlServer.TransactSql.ScriptDom.BinaryExpression
+                {
+                    BinaryExpressionType = BinaryExpressionType.Add,
+                    FirstExpression = lhs,
+                    SecondExpression = rhs
+                }
+            };
+
+            return fragment;
+        }
+
+
+        //protected readonly Dictionary<string, Type> Types = new(StringComparer.OrdinalIgnoreCase) {
+        //{ "{urn:hl7-org:elm-types:r1}Any", typeof(object) },
+        //{ "{urn:hl7-org:elm-types:r1}Date", typeof(CqlDate) },
+        //{ "{urn:hl7-org:elm-types:r1}DateTime", typeof(CqlDateTime) },
+        //{ "{urn:hl7-org:elm-types:r1}Quantity", typeof(CqlQuantity) },
+        //{ "{urn:hl7-org:elm-types:r1}Integer", typeof(IntegerLiteral) },
+        //{ "{urn:hl7-org:elm-types:r1}Long", typeof(long?) },
+        //{ "{urn:hl7-org:elm-types:r1}Boolean", typeof(bool?) },
+        //{ "{urn:hl7-org:elm-types:r1}String", typeof(string) },
+        //{ "{urn:hl7-org:elm-types:r1}Decimal", typeof(decimal?) },
+        //{ "{urn:hl7-org:elm-types:r1}Ratio", typeof(CqlRatio) },
+        //{ "{urn:hl7-org:elm-types:r1}Code", typeof(CqlCode) },
+        //{ "{urn:hl7-org:elm-types:r1}CodeSystem", typeof(CqlCodeSystem) },
+        //{ "{urn:hl7-org:elm-types:r1}Concept", typeof(CqlConcept) },
+        //{ "{urn:hl7-org:elm-types:r1}Time", typeof(CqlTime) },
+        //{ "{urn:hl7-org:elm-types:r1}ValueSet", typeof(CqlValueSet) },
+        //{ "{urn:hl7-org:elm-types:r1}Vocabulary", typeof(CqlVocabulary) },
+        //};
+
+        // TODO: would this need to force type in some cases?
+        private Microsoft.SqlServer.TransactSql.ScriptDom.Literal BuildSqlLiteral(Elm.Literal lit, SqlExpressionBuilderContext ctx)
+        {
+            Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
+
+            switch (lit.valueType.Name)
+            {
+                case "{urn:hl7-org:elm-types:r1}Integer":
+                    // TODO:  validate?
+                    result = new IntegerLiteral { Value = lit.value };
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            return result;
+        }
+
     }
 }

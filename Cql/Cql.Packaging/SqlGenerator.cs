@@ -52,6 +52,7 @@ namespace Hl7.Cql.Compiler
             var writer = new StringWriter();
 
             // call the generator for each fragment, and insert GO inbetween
+            // TODO:  is order going to be an issue?   i think so; with functions that depend on each other --- leverage the graph
             foreach (var library in all.Libraries)
             {
                 foreach (var define in all.DefinitionsForLibrary(library))
@@ -61,6 +62,7 @@ namespace Hl7.Cql.Compiler
                     // TODO:  what does this mean when there is more than one overload?
                     foreach (var fragment in define.Value)
                     {
+                        // TODO:  embed Expression in a function definition with Drop
                         generator.GenerateScript(fragment.Item2, writer);
                     }
                     writer.WriteLine("GO");
