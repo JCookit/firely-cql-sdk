@@ -12,6 +12,9 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
+using BinaryExpression = Microsoft.SqlServer.TransactSql.ScriptDom.BinaryExpression;
+using Expression = System.Linq.Expressions.Expression;
+
 namespace Hl7.Cql.Compiler
 {
     internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder>
@@ -275,11 +278,15 @@ namespace Hl7.Cql.Compiler
                         //    }
 
                         //}
-                        buildContext = buildContext.Deeper(def);
-                        var bodyExpression = TranslateExpression(def.expression, buildContext);
-                        
-                        
 
+                        // create SELECT statment
+
+                        buildContext = buildContext.Deeper(def);
+
+                        var bodyExpression = WrapWithSelect(TranslateExpression(def.expression, buildContext));
+
+                        definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
+                        
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
                         //if (function?.operand != null && definitions.ContainsKey(ThisLibraryKey, def.name, functionParameterTypes))
                         //{
@@ -318,6 +325,74 @@ namespace Hl7.Cql.Compiler
             {
                 throw new InvalidOperationException("This package does not have a name and version.");
             }
+        }
+
+        private TSqlFragment WrapWithSelect(TSqlFragment queryExpression)
+        {
+            TSqlFragment? select = null;
+
+            // does the queryExpression have literals?
+            // create a wrapping scalar expression
+            if (ExpressionHasLiterals(queryExpression))
+            {
+                var selectQueryExpression = new SelectScalarExpression
+                {
+                    Expression = queryExpression as ScalarExpression ?? throw new ArgumentException(),
+                    ColumnName = new IdentifierOrValueExpression
+                    {
+                        Identifier = new Identifier { Value = "Result" }
+                    }
+                };
+
+                var selectFromExpression = new FromClause
+                {
+                    TableReferences =
+                    {
+                        new QueryDerivedTable
+                        {
+                            QueryExpression = new QuerySpecification
+                            {
+                                SelectElements =
+                                {
+                                    new SelectScalarExpression
+                                    {
+                                        Expression = new NullLiteral(),
+                                        ColumnName = new IdentifierOrValueExpression
+                                        {
+                                            Identifier = new Identifier { Value = "unused_column" }
+                                        }
+                                    }
+                                }
+                            },
+                            Alias = new Identifier { Value = "UNUSED" }
+                        }
+                    }
+                };
+
+                select = new SelectStatement
+                {
+                    QueryExpression = new QueryParenthesisExpression
+                    {
+                        QueryExpression = new QuerySpecification
+                        {
+                            SelectElements = { selectQueryExpression },
+                            FromClause = selectFromExpression
+                        },
+                    }
+                };
+            }
+
+            if (select == null)
+            {
+                throw new NotImplementedException();
+            }
+
+            return select;
+        }
+
+        private bool ExpressionHasLiterals(TSqlFragment queryExpression)
+        {
+            return true; // TODO: implement -- walk the tree and look for literals
         }
 
         private TSqlFragment TranslateExpression(Element op, SqlExpressionBuilderContext ctx)
@@ -855,7 +930,37 @@ namespace Hl7.Cql.Compiler
 
         private TSqlFragment? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)
         {
-            return BuildSqlLiteral(lit, ctx);
+            Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
+
+            // TODO: would this need to force type in some cases?
+            switch (lit.valueType.Name.ToLower())
+            {
+                case "{urn:hl7-org:elm-types:r1}integer":
+                    // TODO:  validate?
+                    result = new IntegerLiteral { Value = lit.value };
+                    break;
+
+                case "{urn:hl7-org:elm-types:r1}any":
+                case "{urn:hl7-org:elm-types:r1}date":
+                case "{urn:hl7-org:elm-types:r1}datetime":
+                case "{urn:hl7-org:elm-types:r1}quantity":
+                case "{urn:hl7-org:elm-types:r1}long":
+                case "{urn:hl7-org:elm-types:r1}boolean":
+                case "{urn:hl7-org:elm-types:r1}string":
+                case "{urn:hl7-org:elm-types:r1}decimal":
+                case "{urn:hl7-org:elm-types:r1}ratio":
+                case "{urn:hl7-org:elm-types:r1}code":
+                case "{urn:hl7-org:elm-types:r1}codesystem":
+                case "{urn:hl7-org:elm-types:r1}concept":
+                case "{urn:hl7-org:elm-types:r1}time":
+                case "{urn:hl7-org:elm-types:r1}valueset":
+                case "{urn:hl7-org:elm-types:r1}vocabulary":
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            return result;
         }
 
         private TSqlFragment? Add(Elm.Add add, SqlExpressionBuilderContext ctx)
@@ -863,56 +968,15 @@ namespace Hl7.Cql.Compiler
             ScalarExpression? lhs = TranslateExpression(add.operand[0], ctx) as ScalarExpression;
             ScalarExpression? rhs = TranslateExpression(add.operand[1], ctx) as ScalarExpression;
 
-            var fragment = new ParenthesisExpression
+            // TODO:  when to use ParenthesisExpression?
+            var fragment = new BinaryExpression
             {
-                Expression = new Microsoft.SqlServer.TransactSql.ScriptDom.BinaryExpression
-                {
-                    BinaryExpressionType = BinaryExpressionType.Add,
-                    FirstExpression = lhs,
-                    SecondExpression = rhs
-                }
+                BinaryExpressionType = BinaryExpressionType.Add,
+                FirstExpression = lhs,
+                SecondExpression = rhs
             };
 
             return fragment;
-        }
-
-
-        //protected readonly Dictionary<string, Type> Types = new(StringComparer.OrdinalIgnoreCase) {
-        //{ "{urn:hl7-org:elm-types:r1}Any", typeof(object) },
-        //{ "{urn:hl7-org:elm-types:r1}Date", typeof(CqlDate) },
-        //{ "{urn:hl7-org:elm-types:r1}DateTime", typeof(CqlDateTime) },
-        //{ "{urn:hl7-org:elm-types:r1}Quantity", typeof(CqlQuantity) },
-        //{ "{urn:hl7-org:elm-types:r1}Integer", typeof(IntegerLiteral) },
-        //{ "{urn:hl7-org:elm-types:r1}Long", typeof(long?) },
-        //{ "{urn:hl7-org:elm-types:r1}Boolean", typeof(bool?) },
-        //{ "{urn:hl7-org:elm-types:r1}String", typeof(string) },
-        //{ "{urn:hl7-org:elm-types:r1}Decimal", typeof(decimal?) },
-        //{ "{urn:hl7-org:elm-types:r1}Ratio", typeof(CqlRatio) },
-        //{ "{urn:hl7-org:elm-types:r1}Code", typeof(CqlCode) },
-        //{ "{urn:hl7-org:elm-types:r1}CodeSystem", typeof(CqlCodeSystem) },
-        //{ "{urn:hl7-org:elm-types:r1}Concept", typeof(CqlConcept) },
-        //{ "{urn:hl7-org:elm-types:r1}Time", typeof(CqlTime) },
-        //{ "{urn:hl7-org:elm-types:r1}ValueSet", typeof(CqlValueSet) },
-        //{ "{urn:hl7-org:elm-types:r1}Vocabulary", typeof(CqlVocabulary) },
-        //};
-
-        // TODO: would this need to force type in some cases?
-        private Microsoft.SqlServer.TransactSql.ScriptDom.Literal BuildSqlLiteral(Elm.Literal lit, SqlExpressionBuilderContext ctx)
-        {
-            Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
-
-            switch (lit.valueType.Name)
-            {
-                case "{urn:hl7-org:elm-types:r1}Integer":
-                    // TODO:  validate?
-                    result = new IntegerLiteral { Value = lit.value };
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-
-            return result;
         }
 
     }

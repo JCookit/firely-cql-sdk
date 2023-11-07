@@ -20,7 +20,6 @@ public class JeffCou1_1_0_0
     #region Cached values
 
     internal Lazy<int?> __Thing;
-    internal Lazy<int?> __OtherThing;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
@@ -29,7 +28,6 @@ public class JeffCou1_1_0_0
 
 
         __Thing = new Lazy<int?>(this.Thing_Value);
-        __OtherThing = new Lazy<int?>(this.OtherThing_Value);
     }
     #region Dependencies
 
@@ -46,17 +44,5 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("Thing")]
 	public int? Thing() => 
 		__Thing.Value;
-
-	private int? OtherThing_Value()
-	{
-		var a_ = this.Thing();
-		var b_ = context.Operators.Add((int?)2, a_);
-
-		return b_;
-	}
-
-    [CqlDeclaration("OtherThing")]
-	public int? OtherThing() => 
-		__OtherThing.Value;
 
 }

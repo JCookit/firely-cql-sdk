@@ -1,3 +1,14 @@
+DROP FUNCTION Thing
+GO
+CREATE FUNCTION Thing
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT 1 + 1 AS Result
+     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+
+GO
 DROP FUNCTION TestFunction
 GO
 CREATE FUNCTION TestFunction

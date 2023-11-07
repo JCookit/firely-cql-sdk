@@ -73,6 +73,12 @@ namespace Hl7.Cql.Compiler
             Scopes = scopes;
         }
 
+        protected override ExpressionBuilderContext DeepCopy()
+        {
+            return new ExpressionBuilderContext(this);
+        }
+
+
         /// <summary>
         /// Gets the <see cref="ParameterExpression"/> which is passed to the <see cref="OperatorBinding"/> for operators to use.        
         /// </summary>
@@ -107,16 +113,6 @@ namespace Hl7.Cql.Compiler
         }
 
         internal Expression? ImpliedAliasExpression => ImpliedAlias != null ? GetScopeExpression(ImpliedAlias) : null;
-
-        /// <summary>
-        /// Clones this ExpressionBuilderContext, adding the current context as a predecessor.
-        /// </summary>
-        internal override ExpressionBuilderContext Deeper(elm.Element expression)
-        {
-            var subContext = new ExpressionBuilderContext(this);
-            subContext.Predecessors.Add(expression);
-            return subContext;
-        }
 
         /// <summary>
         /// Creates a copy with the scopes provided.
@@ -162,5 +158,6 @@ namespace Hl7.Cql.Compiler
 
             return subContext;
         }
+
     }
 }

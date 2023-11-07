@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
+using static System.Net.WebRequestMethods;
 
 namespace Hl7.Cql.Compiler
 {
@@ -62,10 +63,13 @@ namespace Hl7.Cql.Compiler
                     // TODO:  what does this mean when there is more than one overload?
                     foreach (var fragment in define.Value)
                     {
-                        // TODO:  embed Expression in a function definition with Drop
-                        generator.GenerateScript(fragment.Item2, writer);
+                        generator.GenerateScript(BuildDropFunction(define.Key), writer);
+                        writer.WriteLine();
+                        writer.WriteLine("GO");
+                        generator.GenerateScript(WrapWithFunction(define.Key, fragment.Item2), writer);
+                        writer.WriteLine();
+                        writer.WriteLine("GO");
                     }
-                    writer.WriteLine("GO");
                 }
             }
 
@@ -156,7 +160,7 @@ namespace Hl7.Cql.Compiler
             return function;
         }
 
-        private static CreateFunctionStatement WrapWithFunction(string functionName, SelectStatement select)
+        private static CreateFunctionStatement WrapWithFunction(string functionName, TSqlFragment selectStatement)
         {
             return new CreateFunctionStatement
             {
@@ -169,7 +173,7 @@ namespace Hl7.Cql.Compiler
                 },
                 ReturnType = new SelectFunctionReturnType
                 {
-                    SelectStatement = select
+                    SelectStatement = selectStatement as SelectStatement ?? throw new ArgumentException("Must be a select statement", nameof(selectStatement))
                 }
             };
         }

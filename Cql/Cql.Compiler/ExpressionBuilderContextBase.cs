@@ -63,6 +63,8 @@ namespace Hl7.Cql.Compiler
             this.Predecessors = predecessors.ToList(); // copy
         }
 
+        abstract protected T DeepCopy();
+
         /// <summary>
         /// Gets the builder from which this context derives.
         /// </summary>
@@ -86,7 +88,13 @@ namespace Hl7.Cql.Compiler
         /// <summary>
         /// Clones this ExpressionBuilderContext, adding the current context as a predecessor.
         /// </summary>
-        internal abstract T Deeper(elm.Element expression);
+        internal T Deeper(elm.Element expression)
+        {
+            var subContext = DeepCopy();
+            subContext.Predecessors.Add(expression);
+            return subContext;
+        }
+
 
         /// <summary>
         /// Gets key value pairs mapping the library identifier to its library-local alias.

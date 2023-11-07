@@ -49,29 +49,6 @@
                   "type" : "Literal"
                } ]
             }
-         }, {
-            "locator" : "8:1-9:11",
-            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-            "name" : "OtherThing",
-            "context" : "Patient",
-            "accessLevel" : "Public",
-            "expression" : {
-               "locator" : "9:3-9:11",
-               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-               "type" : "Add",
-               "operand" : [ {
-                  "locator" : "9:3",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "value" : "2",
-                  "type" : "Literal"
-               }, {
-                  "locator" : "9:7-9:11",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "name" : "Thing",
-                  "type" : "ExpressionRef"
-               } ]
-            }
          } ]
       }
    }

@@ -48,6 +48,12 @@ namespace Hl7.Cql.Compiler
             Predecessors = other.Predecessors.ToList(); // copy it
         }
 
+        protected override SqlExpressionBuilderContext DeepCopy()
+        {
+            return new SqlExpressionBuilderContext(this);
+        }
+
+
         //private SqlExpressionBuilderContext(ExpressionBuilderContext other,
         //    Dictionary<string, (Expression, elm.Element)> scopes) : this(other)
         //{
@@ -137,14 +143,5 @@ namespace Hl7.Cql.Compiler
         //    return subContext;
         //}
 
-        /// <summary>
-        /// Clones this ExpressionBuilderContext, adding the current context as a predecessor.
-        /// </summary>
-        internal override SqlExpressionBuilderContext Deeper(elm.Element expression)
-        {
-            var subContext = new SqlExpressionBuilderContext(this);
-            subContext.Predecessors.Add(expression);
-            return subContext;
-        }
     }
 }
