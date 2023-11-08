@@ -4,6 +4,17 @@
          "translatorVersion" : "2.11.0",
          "translatorOptions" : "EnableLocators,EnableResultTypes",
          "type" : "CqlToElmInfo"
+      }, {
+         "libraryId" : "JeffCou1",
+         "libraryVersion" : "1.0.0",
+         "startLine" : 10,
+         "startChar" : 2,
+         "endLine" : 10,
+         "endChar" : 38,
+         "message" : "Could not resolve membership operator for terminology target of the retrieve.",
+         "errorType" : "semantic",
+         "errorSeverity" : "warning",
+         "type" : "CqlToElmError"
       } ],
       "identifier" : {
          "id" : "JeffCou1",
@@ -24,30 +35,164 @@
             "version" : "4.0.1"
          } ]
       },
+      "codeSystems" : {
+         "def" : [ {
+            "locator" : "5:1-5:52",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+            "name" : "ICD10",
+            "id" : "http://hl7.org/fhir/sid/icd-10",
+            "accessLevel" : "Public"
+         } ]
+      },
+      "codes" : {
+         "def" : [ {
+            "locator" : "6:1-6:52",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+            "name" : "Sucked into jet engine",
+            "id" : "V97.33",
+            "accessLevel" : "Public",
+            "codeSystem" : {
+               "locator" : "6:46-6:52",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+               "name" : "ICD10"
+            }
+         }, {
+            "locator" : "7:1-7:76",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+            "name" : "Sucked into jet engine, subsequent encounter",
+            "id" : "V97.33XD",
+            "accessLevel" : "Public",
+            "codeSystem" : {
+               "locator" : "7:70-7:76",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+               "name" : "ICD10"
+            }
+         } ]
+      },
       "statements" : {
          "def" : [ {
-            "locator" : "5:1-6:7",
-            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "locator" : "9:1-10:40",
+            "name" : "Jet engine conditions",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "10:2-10:40",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "10:2-10:40",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "10:2-10:38",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "codeProperty" : "code",
+                     "codeComparator" : "~",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     },
+                     "codes" : {
+                        "type" : "ToList",
+                        "operand" : {
+                           "locator" : "10:14-10:37",
+                           "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+                           "name" : "Sucked into jet engine",
+                           "type" : "CodeRef"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ]
+            }
+         }, {
+            "locator" : "13:1-14:15",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "Thing",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "6:3-6:7",
-               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-               "type" : "Add",
+               "locator" : "14:3-14:15",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+               "type" : "Divide",
                "operand" : [ {
-                  "locator" : "6:3",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "value" : "1",
-                  "type" : "Literal"
+                  "locator" : "14:3-14:9",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "type" : "Add",
+                  "operand" : [ {
+                     "type" : "ToDecimal",
+                     "operand" : {
+                        "locator" : "14:4",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "3",
+                        "type" : "Literal"
+                     }
+                  }, {
+                     "locator" : "14:6-14:8",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "value" : "4.0",
+                     "type" : "Literal"
+                  } ]
                }, {
-                  "locator" : "6:7",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
-                  "value" : "1",
-                  "type" : "Literal"
+                  "type" : "ToDecimal",
+                  "operand" : {
+                     "locator" : "14:11-14:15",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "type" : "Add",
+                     "operand" : [ {
+                        "locator" : "14:12",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     }, {
+                        "locator" : "14:14",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2",
+                        "type" : "Literal"
+                     } ]
+                  }
                } ]
+            }
+         }, {
+            "locator" : "16:1-17:3",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "name" : "Thing2",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "17:3",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+               "value" : "1",
+               "type" : "Literal"
             }
          } ]
       }

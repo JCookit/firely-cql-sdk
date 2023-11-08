@@ -21,6 +21,8 @@ namespace Hl7.Cql.Compiler
 {
     /// <summary>
     /// The SqlExpressionBuilderContext class maintains scope information for the traversal of ElmPackage statements during <see cref="SqlExpressionBuilder.Build"/>.
+    /// 
+    /// in sql, it also contains state information for the currently-building sql construct
     /// </summary>
     /// <remarks>
     /// The scope information in this class is useful for <see cref="IExpressionMutator"/> and is supplied to <see cref="IExpressionMutator.Mutate(Expression, elm.Element, ExpressionBuilderContext)"/>.
@@ -33,6 +35,7 @@ namespace Hl7.Cql.Compiler
             DefinitionDictionary<TSqlFragment> definitions)
             : base(builder, localLibraryIdentifiers)
         {
+            // TODO:  should this contain the AST for the function call or not?  currently it does not
             this.Definitions = definitions;
         }
 

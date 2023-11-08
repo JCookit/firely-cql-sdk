@@ -5,18 +5,18 @@ CREATE FUNCTION Thing
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT 1 + 1 AS Result
+    (SELECT (CAST ((3) AS DECIMAL) + 4.0) / CAST ((1 + 2) AS DECIMAL) AS Result
      FROM   (SELECT NULL AS unused_column) AS UNUSED)
 
 GO
-DROP FUNCTION TestFunction
+DROP FUNCTION Thing2
 GO
-CREATE FUNCTION TestFunction
+CREATE FUNCTION Thing2
 ( )
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT 1 + 1 AS Result
+    (SELECT 1 AS Result
      FROM   (SELECT NULL AS unused_column) AS UNUSED)
 
 GO

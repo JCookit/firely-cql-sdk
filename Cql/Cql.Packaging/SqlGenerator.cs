@@ -73,12 +73,12 @@ namespace Hl7.Cql.Compiler
                 }
             }
 
-            generator.GenerateScript(BuildDropFunction("TestFunction"), writer);
-            writer.WriteLine();
-            writer.WriteLine("GO");
-            generator.GenerateScript(BuildTestData("TestFunction"), writer);
-            writer.WriteLine();
-            writer.WriteLine("GO");
+            //generator.GenerateScript(BuildDropFunction("TestFunction"), writer);
+            //writer.WriteLine();
+            //writer.WriteLine("GO");
+            //generator.GenerateScript(BuildTestData("TestFunction"), writer);
+            //writer.WriteLine();
+            //writer.WriteLine("GO");
 
             return writer.ToString();
         }

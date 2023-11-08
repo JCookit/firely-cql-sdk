@@ -281,11 +281,18 @@ namespace Hl7.Cql.Compiler
 
                         // create SELECT statment
 
-                        buildContext = buildContext.Deeper(def);
+                        try
+                        {
+                            buildContext = buildContext.Deeper(def);
 
-                        var bodyExpression = WrapWithSelect(TranslateExpression(def.expression, buildContext));
+                            var bodyExpression = WrapWithSelect(TranslateExpression(def.expression, buildContext));
 
-                        definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
+                            definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
+                        }
+                        catch
+                        {
+                            buildContext.LogError("Failed to create SQL expression", def);
+                        }
                         
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
                         //if (function?.operand != null && definitions.ContainsKey(ThisLibraryKey, def.name, functionParameterTypes))
@@ -525,7 +532,7 @@ namespace Hl7.Cql.Compiler
                     // result = Distinct(distinct, ctx);
                     break;
                 case Divide divide:
-                    // result = Divide(divide, ctx);
+                    result = Divide(divide, ctx);
                     break;
                 case DurationBetween dbe:
                     // result = DurationBetween(dbe, ctx);
@@ -705,7 +712,7 @@ namespace Hl7.Cql.Compiler
                     // result = Modulo(mod, ctx);
                     break;
                 case Multiply mul:
-                    // result = Multiply(mul, ctx);
+                    result = Multiply(mul, ctx);
                     break;
                 case Negate neg:
                     // result = Negate(neg, ctx);
@@ -822,7 +829,7 @@ namespace Hl7.Cql.Compiler
                     // result = Substring(e, ctx);
                     break;
                 case Subtract sub:
-                    // result = Subtract(sub, ctx);
+                    result = Subtract(sub, ctx);
                     break;
                 case Successor suc:
                     // result = Successor(suc, ctx);
@@ -867,7 +874,7 @@ namespace Hl7.Cql.Compiler
                     // result = Today(today, ctx);
                     break;
                 case ToDecimal tde:
-                    // result = ToDecimal(tde, ctx);
+                    result = ToDecimal(tde, ctx);
                     break;
                 case ToInteger tde:
                     // result = ToInteger(tde, ctx);
@@ -948,6 +955,9 @@ namespace Hl7.Cql.Compiler
                 case "{urn:hl7-org:elm-types:r1}boolean":
                 case "{urn:hl7-org:elm-types:r1}string":
                 case "{urn:hl7-org:elm-types:r1}decimal":
+                    result = new NumericLiteral { Value = lit.value };
+                    break;
+
                 case "{urn:hl7-org:elm-types:r1}ratio":
                 case "{urn:hl7-org:elm-types:r1}code":
                 case "{urn:hl7-org:elm-types:r1}codesystem":
@@ -963,20 +973,91 @@ namespace Hl7.Cql.Compiler
             return result;
         }
 
-        private TSqlFragment? Add(Elm.Add add, SqlExpressionBuilderContext ctx)
-        {
-            ScalarExpression? lhs = TranslateExpression(add.operand[0], ctx) as ScalarExpression;
-            ScalarExpression? rhs = TranslateExpression(add.operand[1], ctx) as ScalarExpression;
+        private TSqlFragment? Add(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+            => BinaryScalarExpression(BinaryExpressionType.Add, binaryExpression, ctx);
+        private TSqlFragment? Subtract(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+            => BinaryScalarExpression(BinaryExpressionType.Subtract, binaryExpression, ctx);
+        private TSqlFragment? Multiply(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+            => BinaryScalarExpression(BinaryExpressionType.Multiply, binaryExpression, ctx);
+        private TSqlFragment? Divide(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+            => BinaryScalarExpression(BinaryExpressionType.Divide, binaryExpression, ctx);
 
-            // TODO:  when to use ParenthesisExpression?
-            var fragment = new BinaryExpression
+
+        private TSqlFragment BinaryScalarExpression(BinaryExpressionType binType, Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
+        {
+            ScalarExpression? lhs = TranslateExpression(binaryExpression.operand[0], ctx) as ScalarExpression;
+            ScalarExpression? rhs = TranslateExpression(binaryExpression.operand[1], ctx) as ScalarExpression;
+
+            ScalarExpression fragment = new BinaryExpression
             {
-                BinaryExpressionType = BinaryExpressionType.Add,
+                BinaryExpressionType = binType,
                 FirstExpression = lhs,
                 SecondExpression = rhs
             };
 
+            if (NeedsParenthesis(binaryExpression, ctx.Parent))
+            {
+                var parenthesis = new ParenthesisExpression
+                {
+                    Expression = fragment
+                };
+
+                fragment = parenthesis;
+            }
             return fragment;
+        }
+
+        private TSqlFragment? ToDecimal(ToDecimal tde, SqlExpressionBuilderContext ctx)
+        {
+            var fragment = new CastCall
+            {
+                DataType = new SqlDataTypeReference
+                {
+                    SqlDataTypeOption = SqlDataTypeOption.Decimal
+                },
+                Parameter = new ParenthesisExpression
+                {
+                    Expression = TranslateExpression(tde.operand, ctx) as ScalarExpression
+                }
+            };
+
+            return fragment;
+        }
+
+        /// <summary>
+        /// Tries to determine if the current expression needs parenthesis.
+        /// TODO:  this could be not worth it; maybe sub expressions always get parenthesis --- but was unsure if SQL has some maximum nesting depth 
+        /// and it is necessary to minimize
+        /// </summary>
+        /// <param name="current"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private bool NeedsParenthesis(Element current, Element? parent)
+        {
+            bool result = false;
+
+            switch (current)
+            {
+                case Elm.Add:
+                case Elm.Subtract:
+                    switch (parent)
+                    {
+                        case Elm.Multiply:
+                        case Elm.Divide:
+                            result = true;
+                            break;
+                    }
+                    break;
+
+                case Elm.Multiply:
+                case Elm.Divide:
+                    break;
+                default:
+                    throw new NotImplementedException();
+
+            }
+            return result;
         }
 
     }
