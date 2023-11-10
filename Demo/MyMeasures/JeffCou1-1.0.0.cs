@@ -21,6 +21,7 @@ public class JeffCou1_1_0_0
 
     internal Lazy<decimal?> __Thing;
     internal Lazy<decimal?> __Thing2;
+    internal Lazy<decimal?> __Thing3;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
@@ -30,6 +31,7 @@ public class JeffCou1_1_0_0
 
         __Thing = new Lazy<decimal?>(this.Thing_Value);
         __Thing2 = new Lazy<decimal?>(this.Thing2_Value);
+        __Thing3 = new Lazy<decimal?>(this.Thing3_Value);
     }
     #region Dependencies
 
@@ -63,5 +65,20 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("Thing2")]
 	public decimal? Thing2() => 
 		__Thing2.Value;
+
+	private decimal? Thing3_Value()
+	{
+		var a_ = this.Thing2();
+		var b_ = this.Thing();
+		var c_ = context.Operators.ConvertIntegerToDecimal((int?)2);
+		var d_ = context.Operators.Multiply(b_, c_);
+		var e_ = context.Operators.Add(a_, d_);
+
+		return e_;
+	}
+
+    [CqlDeclaration("Thing3")]
+	public decimal? Thing3() => 
+		__Thing3.Value;
 
 }

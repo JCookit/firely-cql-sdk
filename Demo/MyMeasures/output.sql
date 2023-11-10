@@ -17,6 +17,17 @@ RETURNS TABLE
 AS
 RETURN 
     (SELECT CAST ((1) AS DECIMAL) + Thing.Result AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+     FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY Thing() AS Thing)
+
+GO
+DROP FUNCTION Thing3
+GO
+CREATE FUNCTION Thing3
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT Thing2.Result + Thing.Result * CAST ((2) AS DECIMAL) AS Result
+     FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY Thing2() AS Thing2 CROSS APPLY Thing() AS Thing)
 
 GO

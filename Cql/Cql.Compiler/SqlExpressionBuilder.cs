@@ -367,7 +367,7 @@ namespace Hl7.Cql.Compiler
                             {
                                 TableReferences =
                                 {
-                                    context.FromTables
+                                    context.OutputContext.FromTables
                                 }
                             }
                         },
@@ -925,7 +925,7 @@ namespace Hl7.Cql.Compiler
         {
             string functionName = ere.name;
 
-            ctx.AddJoinFunctionReference(functionName, functionName);
+            ctx.OutputContext.AddJoinFunctionReference(functionName, functionName);
 
             var referenceExpression = new ColumnReferenceExpression
             {

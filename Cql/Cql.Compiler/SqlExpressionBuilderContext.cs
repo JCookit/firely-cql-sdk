@@ -18,56 +18,21 @@ using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
 {
-    /// <summary>
-    /// The SqlExpressionBuilderContext class maintains scope information for the traversal of ElmPackage statements during <see cref="SqlExpressionBuilder.Build"/>.
-    /// 
-    /// in sql, it also contains state information for the currently-building sql construct
-    /// </summary>
-    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder>
+    internal class SqlOutputContext
     {
         private TableReference? currentFromTables;
 
         public TableReference? FromTables => currentFromTables;
 
-        internal DefinitionDictionary<TSqlFragment> Definitions { get; }
+        public SqlOutputContext()
+        {
+            AddNullTableReference();
+        }   
 
         /// <summary>
-        /// Parameters for function definitions.
+        /// builds the first part of the From clause (an empty table)
+        /// TODO: not clear this is needed in all cases, but certainly for scalar math
         /// </summary>
-        //internal IDictionary<string, ParameterExpression> Operands { get; } = new Dictionary<string, ParameterExpression>();
-
-        internal IDictionary<string, DefinitionDictionary<TSqlFragment>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<TSqlFragment>>();
-
-        internal SqlExpressionBuilderContext(
-            SqlExpressionBuilder builder,
-            IDictionary<string, string> localLibraryIdentifiers,
-            DefinitionDictionary<TSqlFragment> definitions)
-            : base(builder, localLibraryIdentifiers)
-        {
-            this.Definitions = definitions;
-
-            AddNullTableReference();
-        }
-
-        private SqlExpressionBuilderContext(
-            SqlExpressionBuilderContext other)
-            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList())
-        {
-            Libraries = other.Libraries;
-            //RuntimeContextParameter = other.RuntimeContextParameter;
-            Definitions = other.Definitions;
-            currentFromTables = other.FromTables;
-
-            //Operands = other.Operands;
-            //Scopes = other.Scopes;
-            Predecessors = other.Predecessors.ToList(); // copy it
-        }
-
-        protected override SqlExpressionBuilderContext CopyForDeeper()
-        {
-            return new SqlExpressionBuilderContext(this);
-        }
-
         private void AddNullTableReference()
         {
             this.currentFromTables = new QueryDerivedTable
@@ -90,10 +55,16 @@ namespace Hl7.Cql.Compiler
             };
         }
 
+        /// <summary>
+        /// Add a table reference to from clause (which corresponds to a scalar function call)
+        /// 
+        /// TODO: think about correct way to de-dupe
+        /// </summary>
+        /// <param name="functionName"></param>
+        /// <param name="alias"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         internal void AddJoinFunctionReference(string functionName, string alias)
         {
-            // TODO:  need to change singleton of the From clause --- right now this is just changing the deepest context
-
             var functionTableReference = new SchemaObjectFunctionTableReference
             {
                 SchemaObject = new SchemaObjectName
@@ -119,6 +90,53 @@ namespace Hl7.Cql.Compiler
                     UnqualifiedJoinType = UnqualifiedJoinType.CrossApply
                 };
             }
+        }
+    }
+
+    /// <summary>
+    /// The SqlExpressionBuilderContext class maintains scope information for the traversal of ElmPackage statements during <see cref="SqlExpressionBuilder.Build"/>.
+    /// 
+    /// in sql, it also contains state information for the currently-building sql construct
+    /// </summary>
+    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder>
+    {
+        internal DefinitionDictionary<TSqlFragment> Definitions { get; }
+
+        public SqlOutputContext OutputContext { get; } = new SqlOutputContext();
+
+        /// <summary>
+        /// Parameters for function definitions.
+        /// </summary>
+        //internal IDictionary<string, ParameterExpression> Operands { get; } = new Dictionary<string, ParameterExpression>();
+
+        internal IDictionary<string, DefinitionDictionary<TSqlFragment>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<TSqlFragment>>();
+
+        internal SqlExpressionBuilderContext(
+            SqlExpressionBuilder builder,
+            IDictionary<string, string> localLibraryIdentifiers,
+            DefinitionDictionary<TSqlFragment> definitions)
+            : base(builder, localLibraryIdentifiers)
+        {
+            this.Definitions = definitions;
+        }
+
+        private SqlExpressionBuilderContext(
+            SqlExpressionBuilderContext other)
+            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList())
+        {
+            Libraries = other.Libraries;
+            //RuntimeContextParameter = other.RuntimeContextParameter;
+            Definitions = other.Definitions;
+            OutputContext = other.OutputContext;    
+
+            //Operands = other.Operands;
+            //Scopes = other.Scopes;
+            Predecessors = other.Predecessors.ToList(); // copy it
+        }
+
+        protected override SqlExpressionBuilderContext CopyForDeeper()
+        {
+            return new SqlExpressionBuilderContext(this);
         }
 
         //private SqlExpressionBuilderContext(ExpressionBuilderContext other,

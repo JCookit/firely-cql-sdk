@@ -103,6 +103,42 @@
                   "type" : "ExpressionRef"
                } ]
             }
+         }, {
+            "locator" : "11:1-12:20",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+            "name" : "Thing3",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "12:3-12:20",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+               "type" : "Add",
+               "operand" : [ {
+                  "locator" : "12:3-12:8",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "name" : "Thing2",
+                  "type" : "ExpressionRef"
+               }, {
+                  "locator" : "12:12-12:20",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "type" : "Multiply",
+                  "operand" : [ {
+                     "locator" : "12:12-12:16",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "name" : "Thing",
+                     "type" : "ExpressionRef"
+                  }, {
+                     "type" : "ToDecimal",
+                     "operand" : {
+                        "locator" : "12:20",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2",
+                        "type" : "Literal"
+                     }
+                  } ]
+               } ]
+            }
          } ]
       }
    }

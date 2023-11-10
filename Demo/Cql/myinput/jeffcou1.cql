@@ -8,6 +8,8 @@ define "Thing":
 define "Thing2":
   1 + Thing
 
+define "Thing3":
+  Thing2 + Thing * 2
 
 
 
