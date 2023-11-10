@@ -16,7 +16,7 @@ CREATE FUNCTION Thing2
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT 1 AS Result
+    (SELECT CAST ((1) AS DECIMAL) + Thing.Result AS Result
      FROM   (SELECT NULL AS unused_column) AS UNUSED)
 
 GO

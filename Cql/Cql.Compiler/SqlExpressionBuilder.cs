@@ -285,7 +285,9 @@ namespace Hl7.Cql.Compiler
                         {
                             buildContext = buildContext.Deeper(def);
 
-                            var bodyExpression = WrapWithSelect(TranslateExpression(def.expression, buildContext));
+                            TSqlFragment queryExpression = TranslateExpression(def.expression, buildContext);
+
+                            var bodyExpression = WrapWithSelect(queryExpression, buildContext);
 
                             definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
                         }
@@ -334,7 +336,7 @@ namespace Hl7.Cql.Compiler
             }
         }
 
-        private TSqlFragment WrapWithSelect(TSqlFragment queryExpression)
+        private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context)
         {
             TSqlFragment? select = null;
 
@@ -351,39 +353,23 @@ namespace Hl7.Cql.Compiler
                     }
                 };
 
-                var selectFromExpression = new FromClause
-                {
-                    TableReferences =
-                    {
-                        new QueryDerivedTable
-                        {
-                            QueryExpression = new QuerySpecification
-                            {
-                                SelectElements =
-                                {
-                                    new SelectScalarExpression
-                                    {
-                                        Expression = new NullLiteral(),
-                                        ColumnName = new IdentifierOrValueExpression
-                                        {
-                                            Identifier = new Identifier { Value = "unused_column" }
-                                        }
-                                    }
-                                }
-                            },
-                            Alias = new Identifier { Value = "UNUSED" }
-                        }
-                    }
-                };
-
                 select = new SelectStatement
                 {
                     QueryExpression = new QueryParenthesisExpression
                     {
                         QueryExpression = new QuerySpecification
                         {
-                            SelectElements = { selectQueryExpression },
-                            FromClause = selectFromExpression
+                            SelectElements = 
+                            {
+                                selectQueryExpression
+                            },
+                            FromClause = new FromClause
+                            {
+                                TableReferences =
+                                {
+                                    context.FromTables
+                                }
+                            }
                         },
                     }
                 };
@@ -571,7 +557,7 @@ namespace Hl7.Cql.Compiler
                     // result = FunctionRef(fre, ctx);
                     break;
                 case ExpressionRef ere:
-                    // result = ExpressionRef(ere, ctx);
+                    result = ExpressionRef(ere, ctx);
                     break;
                 case First first:
                     // result = First(first, ctx);
@@ -933,6 +919,27 @@ namespace Hl7.Cql.Compiler
             //}
 
             return result!;
+        }
+
+        private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
+        {
+            string functionName = ere.name;
+
+            ctx.AddJoinFunctionReference(functionName, functionName);
+
+            var referenceExpression = new ColumnReferenceExpression
+            {
+                MultiPartIdentifier = new MultiPartIdentifier
+                {
+                    Identifiers =
+                    {
+                        new Identifier { Value = functionName},
+                        new Identifier { Value = "Result" }
+                    }
+                }
+            };
+
+            return referenceExpression;
         }
 
         private TSqlFragment? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)

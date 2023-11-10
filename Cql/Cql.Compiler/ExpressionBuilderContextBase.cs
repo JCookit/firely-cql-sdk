@@ -63,7 +63,11 @@ namespace Hl7.Cql.Compiler
             this.Predecessors = predecessors.ToList(); // copy
         }
 
-        abstract protected T DeepCopy();
+        /// <summary>
+        /// Make a (mostly shallow) copy of this context.   Predecessors are deeply copied.  
+        /// </summary>
+        /// <returns></returns>
+        abstract protected T CopyForDeeper();
 
         /// <summary>
         /// Gets the builder from which this context derives.
@@ -90,7 +94,7 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         internal T Deeper(elm.Element expression)
         {
-            var subContext = DeepCopy();
+            var subContext = CopyForDeeper();
             subContext.Predecessors.Add(expression);
             return subContext;
         }

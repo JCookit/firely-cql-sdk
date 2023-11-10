@@ -14,7 +14,6 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
@@ -24,44 +23,11 @@ namespace Hl7.Cql.Compiler
     /// 
     /// in sql, it also contains state information for the currently-building sql construct
     /// </summary>
-    /// <remarks>
-    /// The scope information in this class is useful for <see cref="IExpressionMutator"/> and is supplied to <see cref="IExpressionMutator.Mutate(Expression, elm.Element, ExpressionBuilderContext)"/>.
-    /// </remarks>
     internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder>
     {
-        internal SqlExpressionBuilderContext(
-            SqlExpressionBuilder builder,
-            IDictionary<string, string> localLibraryIdentifiers,
-            DefinitionDictionary<TSqlFragment> definitions)
-            : base(builder, localLibraryIdentifiers)
-        {
-            // TODO:  should this contain the AST for the function call or not?  currently it does not
-            this.Definitions = definitions;
-        }
+        private TableReference? currentFromTables;
 
-        private SqlExpressionBuilderContext(
-            SqlExpressionBuilderContext other)
-            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList())
-        {
-            Libraries = other.Libraries;
-            //RuntimeContextParameter = other.RuntimeContextParameter;
-            Definitions = other.Definitions;
-            //Operands = other.Operands;
-            //Scopes = other.Scopes;
-            Predecessors = other.Predecessors.ToList(); // copy it
-        }
-
-        protected override SqlExpressionBuilderContext DeepCopy()
-        {
-            return new SqlExpressionBuilderContext(this);
-        }
-
-
-        //private SqlExpressionBuilderContext(ExpressionBuilderContext other,
-        //    Dictionary<string, (Expression, elm.Element)> scopes) : this(other)
-        //{
-        //    Scopes = scopes;
-        //}
+        public TableReference? FromTables => currentFromTables;
 
         internal DefinitionDictionary<TSqlFragment> Definitions { get; }
 
@@ -72,8 +38,94 @@ namespace Hl7.Cql.Compiler
 
         internal IDictionary<string, DefinitionDictionary<TSqlFragment>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<TSqlFragment>>();
 
+        internal SqlExpressionBuilderContext(
+            SqlExpressionBuilder builder,
+            IDictionary<string, string> localLibraryIdentifiers,
+            DefinitionDictionary<TSqlFragment> definitions)
+            : base(builder, localLibraryIdentifiers)
+        {
+            this.Definitions = definitions;
 
+            AddNullTableReference();
+        }
 
+        private SqlExpressionBuilderContext(
+            SqlExpressionBuilderContext other)
+            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList())
+        {
+            Libraries = other.Libraries;
+            //RuntimeContextParameter = other.RuntimeContextParameter;
+            Definitions = other.Definitions;
+            currentFromTables = other.FromTables;
+
+            //Operands = other.Operands;
+            //Scopes = other.Scopes;
+            Predecessors = other.Predecessors.ToList(); // copy it
+        }
+
+        protected override SqlExpressionBuilderContext CopyForDeeper()
+        {
+            return new SqlExpressionBuilderContext(this);
+        }
+
+        private void AddNullTableReference()
+        {
+            this.currentFromTables = new QueryDerivedTable
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                                {
+                                    new SelectScalarExpression
+                                    {
+                                        Expression = new NullLiteral(),
+                                        ColumnName = new IdentifierOrValueExpression
+                                        {
+                                            Identifier = new Identifier { Value = "unused_column" }
+                                        }
+                                    }
+                                }
+                },
+                Alias = new Identifier { Value = "UNUSED" }
+            };
+        }
+
+        internal void AddJoinFunctionReference(string functionName, string alias)
+        {
+            // TODO:  need to change singleton of the From clause --- right now this is just changing the deepest context
+
+            var functionTableReference = new SchemaObjectFunctionTableReference
+            {
+                SchemaObject = new SchemaObjectName
+                {
+                    Identifiers =
+                    {
+                        new Identifier { Value = functionName }
+                    }
+                },
+                Alias = new Identifier { Value = alias }
+            };
+
+            if (this.currentFromTables == null)
+            {
+                throw new InvalidOperationException("Table clause should already be populated");
+            }
+            else
+            {
+                this.currentFromTables = new UnqualifiedJoin
+                {
+                    FirstTableReference = this.currentFromTables,
+                    SecondTableReference = functionTableReference,
+                    UnqualifiedJoinType = UnqualifiedJoinType.CrossApply
+                };
+            }
+        }
+
+        //private SqlExpressionBuilderContext(ExpressionBuilderContext other,
+        //    Dictionary<string, (Expression, elm.Element)> scopes) : this(other)
+        //{
+        //    Scopes = scopes;
+        //}
 
         //internal Expression GetScopeExpression(string elmAlias)
         //{

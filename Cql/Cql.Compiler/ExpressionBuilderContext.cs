@@ -73,7 +73,7 @@ namespace Hl7.Cql.Compiler
             Scopes = scopes;
         }
 
-        protected override ExpressionBuilderContext DeepCopy()
+        protected override ExpressionBuilderContext CopyForDeeper()
         {
             return new ExpressionBuilderContext(this);
         }
