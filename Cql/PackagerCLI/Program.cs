@@ -140,7 +140,7 @@ namespace Hl7.Cql.Packager
                 // TODO: at the moment, N ELM libraries are reduced to 1 SQL output.  Think about this.
 
                 var sqlGenerator = new SqlGenerator();
-                string sqlStatement = sqlGenerator.GenerateSql(graph, logFactory);
+                string sqlStatement = sqlGenerator.GenerateSql(graph, typeResolver, logFactory);
 
                 var file = new FileInfo(Path.Combine(sqlDir.FullName, $"output.sql"));
                 cliLogger.LogInformation($"Writing {file.FullName}");

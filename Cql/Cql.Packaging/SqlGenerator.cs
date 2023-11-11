@@ -15,16 +15,16 @@ namespace Hl7.Cql.Compiler
 {
     internal class SqlGenerator
     {
-        internal string GenerateSql(DirectedGraph packageGraph, ILoggerFactory logFactory)
+        internal string GenerateSql(DirectedGraph packageGraph, Fhir.FhirTypeResolver typeResolver, ILoggerFactory logFactory)
         {
             var generatorLogger = logFactory.CreateLogger<SqlGenerator>();
 
-            DefinitionDictionary<TSqlFragment> allFragments = CompileSql(packageGraph, logFactory, generatorLogger);
+            DefinitionDictionary<TSqlFragment> allFragments = CompileSql(packageGraph, typeResolver, logFactory);
 
             return BuildSqlString(allFragments, generatorLogger);
         }
 
-        private static DefinitionDictionary<TSqlFragment> CompileSql(DirectedGraph packageGraph, ILoggerFactory logFactory, ILogger<SqlGenerator> generatorLogger)
+        private static DefinitionDictionary<TSqlFragment> CompileSql(DirectedGraph packageGraph, Fhir.FhirTypeResolver typeResolver, ILoggerFactory logFactory)
         {
             var elmLibraries = packageGraph.Nodes.Values
                 .Select(node => node.Properties?[Hl7.Cql.Elm.Library.LibraryNodeProperty] as Hl7.Cql.Elm.Library)
@@ -36,9 +36,9 @@ namespace Hl7.Cql.Compiler
             var allFragments = new DefinitionDictionary<TSqlFragment>();
             foreach (var library in elmLibraries)
             {
-                generatorLogger.LogInformation($"Building expressions for {library.NameAndVersion}");
+                builderLogger.LogInformation($"Building expressions for {library.NameAndVersion}");
 
-                var builder = new SqlExpressionBuilder(library, builderLogger);
+                var builder = new SqlExpressionBuilder(library, typeResolver, builderLogger);
                 var sqlFragment = builder.Build();
                 allFragments.Merge(sqlFragment);
             }

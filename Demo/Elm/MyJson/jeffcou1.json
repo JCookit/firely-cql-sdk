@@ -27,29 +27,54 @@
       "statements" : {
          "def" : [ {
             "locator" : "5:1-6:15",
+            "name" : "Query",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Observation",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "6:3-6:15",
+               "dataType" : "{http://hl7.org/fhir}Observation",
+               "templateId" : "http://hl7.org/fhir/StructureDefinition/Observation",
+               "type" : "Retrieve",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Observation",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            }
+         }, {
+            "locator" : "8:1-9:15",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "Thing",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "6:3-6:15",
+               "locator" : "9:3-9:15",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "type" : "Divide",
                "operand" : [ {
-                  "locator" : "6:3-6:9",
+                  "locator" : "9:3-9:9",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "type" : "Add",
                   "operand" : [ {
                      "type" : "ToDecimal",
                      "operand" : {
-                        "locator" : "6:4",
+                        "locator" : "9:4",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "3",
                         "type" : "Literal"
                      }
                   }, {
-                     "locator" : "6:6-6:8",
+                     "locator" : "9:6-9:8",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
                      "value" : "4.0",
@@ -58,17 +83,17 @@
                }, {
                   "type" : "ToDecimal",
                   "operand" : {
-                     "locator" : "6:11-6:15",
+                     "locator" : "9:11-9:15",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "type" : "Add",
                      "operand" : [ {
-                        "locator" : "6:12",
+                        "locator" : "9:12",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "1",
                         "type" : "Literal"
                      }, {
-                        "locator" : "6:14",
+                        "locator" : "9:14",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "2",
@@ -78,59 +103,59 @@
                } ]
             }
          }, {
-            "locator" : "8:1-9:11",
+            "locator" : "11:1-12:11",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "Thing2",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "9:3-9:11",
+               "locator" : "12:3-12:11",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "type" : "Add",
                "operand" : [ {
                   "type" : "ToDecimal",
                   "operand" : {
-                     "locator" : "9:3",
+                     "locator" : "12:3",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "1",
                      "type" : "Literal"
                   }
                }, {
-                  "locator" : "9:7-9:11",
+                  "locator" : "12:7-12:11",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "name" : "Thing",
                   "type" : "ExpressionRef"
                } ]
             }
          }, {
-            "locator" : "11:1-12:20",
+            "locator" : "14:1-15:20",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "Thing3",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "12:3-12:20",
+               "locator" : "15:3-15:20",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "type" : "Add",
                "operand" : [ {
-                  "locator" : "12:3-12:8",
+                  "locator" : "15:3-15:8",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "name" : "Thing2",
                   "type" : "ExpressionRef"
                }, {
-                  "locator" : "12:12-12:20",
+                  "locator" : "15:12-15:20",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "type" : "Multiply",
                   "operand" : [ {
-                     "locator" : "12:12-12:16",
+                     "locator" : "15:12-15:16",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                      "name" : "Thing",
                      "type" : "ExpressionRef"
                   }, {
                      "type" : "ToDecimal",
                      "operand" : {
-                        "locator" : "12:20",
+                        "locator" : "15:20",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "2",

@@ -1,4 +1,6 @@
-﻿using Hl7.Cql.Elm;
+﻿using Hl7.Cql.Abstractions;
+using Hl7.Cql.Elm;
+using Hl7.Cql.Model;
 using Hl7.Cql.Primitives;
 using Hl7.Cql.Runtime;
 
@@ -8,7 +10,7 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,9 +21,12 @@ namespace Hl7.Cql.Compiler
 {
     internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder>
     {
-        public SqlExpressionBuilder(Library library, ILogger<SqlExpressionBuilder> builderLogger)
+        protected internal override TypeResolver TypeResolver { get; }
+
+        public SqlExpressionBuilder(Library library, TypeResolver typeResolver, ILogger<SqlExpressionBuilder> builderLogger)
             : base(library, builderLogger)
         {
+            TypeResolver = typeResolver ?? throw new ArgumentNullException(nameof(typeResolver));
         }
 
         internal DefinitionDictionary<TSqlFragment> Build()
@@ -788,7 +793,7 @@ namespace Hl7.Cql.Compiler
                     // result = ReplaceMatches(e, ctx);
                     break;
                 case Retrieve re:
-                    // result = Retrieve(re, ctx);
+                    result = Retrieve(re, ctx);
                     break;
                 case Round rnd:
                     // result = Round(rnd, ctx);
@@ -920,6 +925,78 @@ namespace Hl7.Cql.Compiler
 
             return result!;
         }
+
+        private TSqlFragment? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
+        {
+            Type? sourceElementType;
+            string? cqlRetrieveResultType;
+
+            // SingletonFrom does not have this specified; in this case use DataType instead
+            if (retrieve.resultTypeSpecifier == null)
+            {
+                if (string.IsNullOrWhiteSpace(retrieve.dataType.Name))
+                    throw new ArgumentException("If a Retrieve lacks a ResultTypeSpecifier it must have a DataType", nameof(retrieve));
+                cqlRetrieveResultType = retrieve.dataType.Name;
+
+                sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType);
+            }
+            else
+            {
+                if (retrieve.resultTypeSpecifier is Elm.ListTypeSpecifier listTypeSpecifier)
+                {
+                    cqlRetrieveResultType = listTypeSpecifier.elementType is Elm.NamedTypeSpecifier nts ? nts.name.Name : null;
+                    sourceElementType = TypeManager.TypeFor(listTypeSpecifier.elementType, ctx);
+                }
+                else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
+            }
+
+            Expression? codeProperty;
+
+            var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
+            var isDefaultCodeProperty = retrieve.codeProperty is null ||
+                (cqlRetrieveResultType is not null &&
+                 modelMapping.TryGetValue(cqlRetrieveResultType, out ClassInfo? classInfo) &&
+                 classInfo.primaryCodePath == retrieve.codeProperty);
+
+            if (hasCodePropertySpecified && !isDefaultCodeProperty)
+            {
+                var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
+                codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
+            }
+            else
+            {
+                codeProperty = Expression.Constant(null, typeof(PropertyInfo));
+            }
+
+            if (retrieve.codes != null)
+            {
+                if (retrieve.codes is ValueSetRef valueSetRef)
+                {
+                    if (string.IsNullOrWhiteSpace(valueSetRef.name))
+                        throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
+                    var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
+                    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                        Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
+                    return call;
+                }
+                else
+                {
+                    // In this construct, instead of querying a value set, we're testing resources
+                    // against a list of codes, e.g., as defined by the code from or codesystem construct
+                    var codes = TranslateExpression(retrieve.codes, ctx);
+                    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                        Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
+                    return call;
+                }
+            }
+            else
+            {
+                var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                    Expression.Constant(sourceElementType, typeof(Type)), Expression.Constant(null, typeof(CqlValueSet)), codeProperty!);
+                return call;
+            }
+        }
+        
 
         private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {

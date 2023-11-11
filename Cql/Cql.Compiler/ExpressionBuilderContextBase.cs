@@ -20,7 +20,6 @@ namespace Hl7.Cql.Compiler
         where T : ExpressionBuilderContextBase<T, B>
         where B : ExpressionBuilderBase<B>
     {
-
         /// <summary>
         /// Used for mappings such as:
         ///     include canonical_id version '1.0.0' called alias

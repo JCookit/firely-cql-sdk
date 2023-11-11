@@ -1,4 +1,5 @@
-﻿using Hl7.Cql.Elm;
+﻿using Hl7.Cql.Abstractions;
+using Hl7.Cql.Elm;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -7,7 +8,7 @@ using System;
 
 namespace Hl7.Cql.Compiler
 {
-    internal class ExpressionBuilderBase<T>
+    internal abstract class ExpressionBuilderBase<T>
     {
         public ExpressionBuilderBase(Library elm, ILogger<T> logger)
         {
@@ -26,5 +27,7 @@ namespace Hl7.Cql.Compiler
 
         internal string ThisLibraryKey => Library.NameAndVersion
             ?? throw new InvalidOperationException("Name and version is null.");
+
+        abstract protected internal TypeResolver TypeResolver { get; }
     }
 }

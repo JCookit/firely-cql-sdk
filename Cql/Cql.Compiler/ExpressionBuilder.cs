@@ -81,7 +81,7 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         public TypeManager TypeManager { get; }
 
-        protected internal TypeResolver TypeResolver => TypeManager.Resolver;
+        override protected internal TypeResolver TypeResolver => TypeManager.Resolver;
 
         /// <summary>
         /// The expression visitors that will be executed (in order) on translated expressions.
