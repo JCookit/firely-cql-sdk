@@ -31,7 +31,7 @@ namespace Hl7.Cql.Compiler
     /// <summary>
     /// The ExpressionBuilder translates ELM <see cref="elm.Expression"/>s into <see cref="Expression"/>.
     /// </summary>
-    internal partial class ExpressionBuilder : ExpressionBuilderBase<ExpressionBuilder>
+    internal partial class ExpressionBuilder : ExpressionBuilderBase<ExpressionBuilder, LambdaExpression>
     {
         private readonly ExpressionBuilderOptions options;
 
@@ -57,11 +57,6 @@ namespace Hl7.Cql.Compiler
             this.options = options ?? new(EmitStackTraces: false);
         }
 
-        /// <summary>
-        /// Gets the settings used during <see cref="Build"/>.
-        /// These should be set as desired before <see cref="Build"/> is called.
-        /// </summary>
-        public ExpressionBuilderSettings Settings { get; } = new ExpressionBuilderSettings();
         /// <summary>
         /// A dictionary which maps qualified definition names in the form of {<see cref="Library.NameAndVersion"/>}.{<c>Definition.name"</c>}
         /// to a factory which will produce a <see cref="LambdaExpression"/> given the values of <see cref="ParameterExpression"/>.
@@ -93,7 +88,7 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         /// <returns>The <see cref="DefinitionDictionary{LambdaExpression}"/> for this <see cref="Library"/>.</returns>
         /// <exception cref="InvalidOperationException">If any fatal translation errors occur.</exception>
-        public DefinitionDictionary<LambdaExpression> Build()
+        public override DefinitionDictionary<LambdaExpression> Build()
         {
             var definitions = new DefinitionDictionary<LambdaExpression>();
             var localLibraryIdentifiers = new Dictionary<string, string>();

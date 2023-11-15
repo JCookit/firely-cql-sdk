@@ -100,7 +100,7 @@ namespace Hl7.Cql.Compiler
     /// 
     /// in sql, it also contains state information for the currently-building sql construct
     /// </summary>
-    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, ScopedSqlExpression>
+    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, ScopedSqlExpression, TSqlFragment>
     {
         internal DefinitionDictionary<TSqlFragment> Definitions { get; }
 
@@ -123,8 +123,9 @@ namespace Hl7.Cql.Compiler
         }
 
         private SqlExpressionBuilderContext(
-            SqlExpressionBuilderContext other)
-            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList())
+            SqlExpressionBuilderContext other,
+            Dictionary<string, ScopedSqlExpression>? scopes = null)
+            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList(), other.Scopes)
         {
             Libraries = other.Libraries;
             //RuntimeContextParameter = other.RuntimeContextParameter;
@@ -134,14 +135,14 @@ namespace Hl7.Cql.Compiler
             //Operands = other.Operands;
             //Scopes = other.Scopes;
             Predecessors = other.Predecessors.ToList(); // copy it
+
+            if (scopes != null)
+                Scopes = scopes;
         }
 
-        protected override SqlExpressionBuilderContext Copy(Dictionary<string, ScopedSqlExpression>? optionalScopes = null)
+        protected override SqlExpressionBuilderContext Copy(Dictionary<string, ScopedSqlExpression>? scopes)
         {
-            if (optionalScopes == null)
-                return new SqlExpressionBuilderContext(this);
-            else
-                return new SqlExpressionBuilderContext(this, optionalScopes);
+            return new SqlExpressionBuilderContext(this, scopes);
         }
 
         //private SqlExpressionBuilderContext(ExpressionBuilderContext other,

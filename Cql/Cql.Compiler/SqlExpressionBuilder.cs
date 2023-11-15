@@ -19,7 +19,7 @@ using Expression = System.Linq.Expressions.Expression;
 
 namespace Hl7.Cql.Compiler
 {
-    internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder>
+    internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder, TSqlFragment>
     {
         protected internal override TypeResolver TypeResolver { get; }
 
@@ -29,7 +29,7 @@ namespace Hl7.Cql.Compiler
             TypeResolver = typeResolver ?? throw new ArgumentNullException(nameof(typeResolver));
         }
 
-        internal DefinitionDictionary<TSqlFragment> Build()
+        public override DefinitionDictionary<TSqlFragment> Build()
         {
             var definitions = new DefinitionDictionary<TSqlFragment>();
             var localLibraryIdentifiers = new Dictionary<string, string>();

@@ -60,7 +60,7 @@ namespace Hl7.Cql.Compiler
     /// <remarks>
     /// The scope information in this class is useful for <see cref="IExpressionMutator"/> and is supplied to <see cref="IExpressionMutator.Mutate(Expression, elm.Element, ExpressionBuilderContext)"/>.
     /// </remarks>
-    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder, ScopedExpression>
+    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder, ScopedExpression, LambdaExpression>
     {
         internal ExpressionBuilderContext(ExpressionBuilder builder,
             ParameterExpression contextParameter,
@@ -72,20 +72,14 @@ namespace Hl7.Cql.Compiler
             Definitions = definitions;
         }
 
-        private ExpressionBuilderContext(ExpressionBuilderContext other)
+        private ExpressionBuilderContext(ExpressionBuilderContext other, Dictionary<string, ScopedExpression>? scopes = null)
             : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors, other.Scopes)
         {
             Libraries = other.Libraries;
             RuntimeContextParameter = other.RuntimeContextParameter;
             Definitions = other.Definitions;
             Operands = other.Operands;
-        }
 
-        private ExpressionBuilderContext(
-            ExpressionBuilderContext other,
-            Dictionary<string, ScopedExpression>? scopes = null) 
-            : this(other)
-        {
             if (scopes != null)
                 Scopes = scopes;
         }

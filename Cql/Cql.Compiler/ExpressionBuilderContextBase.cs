@@ -17,10 +17,18 @@ using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
 {
-    internal abstract class ExpressionBuilderContextBase<T, B, S>
-        where T : ExpressionBuilderContextBase<T, B, S>
-        where B : ExpressionBuilderBase<B>
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="B"></typeparam>
+    /// <typeparam name="S"></typeparam>
+    /// <typeparam name="E"></typeparam>
+    internal abstract class ExpressionBuilderContextBase<T, B, S, E>
+        where T : ExpressionBuilderContextBase<T, B, S, E>
+        where B : ExpressionBuilderBase<B, E>
         where S : ScopedExpressionBase
+        where E : class
     {
         /// <summary>
         /// Used for mappings such as:
@@ -178,7 +186,7 @@ namespace Hl7.Cql.Compiler
             Builder.Logger.LogWarning(FormatMessage(message, expression));
         }
 
-        internal ScopedExpressionBase GetScope(string elmAlias)
+        internal S GetScope(string elmAlias)
         {
             var normalized = NormalizeIdentifier(elmAlias!)!;
             if (Scopes.TryGetValue(normalized, out var expression))
