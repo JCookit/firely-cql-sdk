@@ -928,73 +928,75 @@ namespace Hl7.Cql.Compiler
 
         private TSqlFragment? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
         {
-            Type? sourceElementType;
-            string? cqlRetrieveResultType;
+            throw new NotImplementedException();
 
-            // SingletonFrom does not have this specified; in this case use DataType instead
-            if (retrieve.resultTypeSpecifier == null)
-            {
-                if (string.IsNullOrWhiteSpace(retrieve.dataType.Name))
-                    throw new ArgumentException("If a Retrieve lacks a ResultTypeSpecifier it must have a DataType", nameof(retrieve));
-                cqlRetrieveResultType = retrieve.dataType.Name;
+            //Type? sourceElementType;
+            //string? cqlRetrieveResultType;
 
-                sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType);
-            }
-            else
-            {
-                if (retrieve.resultTypeSpecifier is Elm.ListTypeSpecifier listTypeSpecifier)
-                {
-                    cqlRetrieveResultType = listTypeSpecifier.elementType is Elm.NamedTypeSpecifier nts ? nts.name.Name : null;
-                    sourceElementType = TypeManager.TypeFor(listTypeSpecifier.elementType, ctx);
-                }
-                else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
-            }
+            //// SingletonFrom does not have this specified; in this case use DataType instead
+            //if (retrieve.resultTypeSpecifier == null)
+            //{
+            //    if (string.IsNullOrWhiteSpace(retrieve.dataType.Name))
+            //        throw new ArgumentException("If a Retrieve lacks a ResultTypeSpecifier it must have a DataType", nameof(retrieve));
+            //    cqlRetrieveResultType = retrieve.dataType.Name;
 
-            Expression? codeProperty;
+            //    sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType);
+            //}
+            //else
+            //{
+            //    if (retrieve.resultTypeSpecifier is Elm.ListTypeSpecifier listTypeSpecifier)
+            //    {
+            //        cqlRetrieveResultType = listTypeSpecifier.elementType is Elm.NamedTypeSpecifier nts ? nts.name.Name : null;
+            //        sourceElementType = TypeManager.TypeFor(listTypeSpecifier.elementType, ctx);
+            //    }
+            //    else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
+            //}
 
-            var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
-            var isDefaultCodeProperty = retrieve.codeProperty is null ||
-                (cqlRetrieveResultType is not null &&
-                 modelMapping.TryGetValue(cqlRetrieveResultType, out ClassInfo? classInfo) &&
-                 classInfo.primaryCodePath == retrieve.codeProperty);
+            //Expression? codeProperty;
 
-            if (hasCodePropertySpecified && !isDefaultCodeProperty)
-            {
-                var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
-                codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
-            }
-            else
-            {
-                codeProperty = Expression.Constant(null, typeof(PropertyInfo));
-            }
+            //var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
+            //var isDefaultCodeProperty = retrieve.codeProperty is null ||
+            //    (cqlRetrieveResultType is not null &&
+            //     modelMapping.TryGetValue(cqlRetrieveResultType, out ClassInfo? classInfo) &&
+            //     classInfo.primaryCodePath == retrieve.codeProperty);
 
-            if (retrieve.codes != null)
-            {
-                if (retrieve.codes is ValueSetRef valueSetRef)
-                {
-                    if (string.IsNullOrWhiteSpace(valueSetRef.name))
-                        throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
-                    var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
-                    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-                        Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
-                    return call;
-                }
-                else
-                {
-                    // In this construct, instead of querying a value set, we're testing resources
-                    // against a list of codes, e.g., as defined by the code from or codesystem construct
-                    var codes = TranslateExpression(retrieve.codes, ctx);
-                    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-                        Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
-                    return call;
-                }
-            }
-            else
-            {
-                var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-                    Expression.Constant(sourceElementType, typeof(Type)), Expression.Constant(null, typeof(CqlValueSet)), codeProperty!);
-                return call;
-            }
+            //if (hasCodePropertySpecified && !isDefaultCodeProperty)
+            //{
+            //    var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
+            //    codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
+            //}
+            //elsef
+            //{
+            //    codeProperty = Expression.Constant(null, typeof(PropertyInfo));
+            //}
+
+            //if (retrieve.codes != null)
+            //{
+            //    if (retrieve.codes is ValueSetRef valueSetRef)
+            //    {
+            //        if (string.IsNullOrWhiteSpace(valueSetRef.name))
+            //            throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
+            //        var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
+            //        var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+            //            Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
+            //        return call;
+            //    }
+            //    else
+            //    {
+            //        // In this construct, instead of querying a value set, we're testing resources
+            //        // against a list of codes, e.g., as defined by the code from or codesystem construct
+            //        var codes = TranslateExpression(retrieve.codes, ctx);
+            //        var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+            //            Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
+            //        return call;
+            //    }
+            //}
+            //else
+            //{
+            //    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+            //        Expression.Constant(sourceElementType, typeof(Type)), Expression.Constant(null, typeof(CqlValueSet)), codeProperty!);
+            //    return call;
+            //}
         }
         
 
@@ -1024,7 +1026,7 @@ namespace Hl7.Cql.Compiler
             Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
 
             // TODO: would this need to force type in some cases?
-            switch (lit.valueType.Name.ToLower())
+            switch (lit.valueType.Name.ToLowerInvariant())
             {
                 case "{urn:hl7-org:elm-types:r1}integer":
                     // TODO:  validate?

@@ -18,15 +18,38 @@ using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
 {
-    internal class ScopedExpression
+    internal class ScopedExpressionBase
     {
-        public Expression Expression { get; }
         public elm.Element ElmExpression { get; }
 
+        public Type Type { get; }
+
+        public ScopedExpressionBase(elm.Element elmExpression, Type type)
+        {
+            ElmExpression = elmExpression;
+            Type = type;
+        }
+    }
+
+    internal class ScopedExpression : ScopedExpressionBase
+    {
+        public Expression Expression { get; }
+
         public ScopedExpression(Expression expression, elm.Element elmExpression)
+            : base(elmExpression, expression.Type)
         {
             Expression = expression;
-            ElmExpression = elmExpression;
+        }
+    }
+    
+    internal class ScopedSqlExpression : ScopedExpressionBase
+    {
+        public TSqlFragment SqlExpressionBuilder { get; }
+
+        public ScopedSqlExpression(TSqlFragment sql, elm.Element elmExpression, Type type)
+            : base(elmExpression, type)
+        {
+            SqlExpressionBuilder = sql;
         }
     }
 
@@ -37,16 +60,8 @@ namespace Hl7.Cql.Compiler
     /// <remarks>
     /// The scope information in this class is useful for <see cref="IExpressionMutator"/> and is supplied to <see cref="IExpressionMutator.Mutate(Expression, elm.Element, ExpressionBuilderContext)"/>.
     /// </remarks>
-    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder>
+    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder, ScopedExpression>
     {
-        internal bool HasScope(string elmAlias) => Scopes.ContainsKey(elmAlias);
-
-        /// <summary>
-        /// Contains query aliases and let declarations, and any other symbol that is now "in scope"
-        /// </summary>
-        protected IDictionary<string, ScopedExpression> Scopes { get; } = new Dictionary<string, ScopedExpression>();
-
-
         internal ExpressionBuilderContext(ExpressionBuilder builder,
             ParameterExpression contextParameter,
             DefinitionDictionary<LambdaExpression> definitions,
@@ -58,25 +73,28 @@ namespace Hl7.Cql.Compiler
         }
 
         private ExpressionBuilderContext(ExpressionBuilderContext other)
-            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors)
+            : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors, other.Scopes)
         {
             Libraries = other.Libraries;
             RuntimeContextParameter = other.RuntimeContextParameter;
             Definitions = other.Definitions;
             Operands = other.Operands;
-            Scopes = other.Scopes;
         }
 
-        private ExpressionBuilderContext(ExpressionBuilderContext other,
-            Dictionary<string, ScopedExpression> scopes) : this(other)
+        private ExpressionBuilderContext(
+            ExpressionBuilderContext other,
+            Dictionary<string, ScopedExpression>? scopes = null) 
+            : this(other)
         {
-            Scopes = scopes;
+            if (scopes != null)
+                Scopes = scopes;
         }
 
-        protected override ExpressionBuilderContext CopyForDeeper()
+        protected override ExpressionBuilderContext Copy(Dictionary<string, ScopedExpression>? scopes)
         {
-            return new ExpressionBuilderContext(this);
+            return new ExpressionBuilderContext(this, scopes);
         }
+
 
 
         /// <summary>
@@ -96,59 +114,7 @@ namespace Hl7.Cql.Compiler
 
         internal IDictionary<string, DefinitionDictionary<LambdaExpression>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<LambdaExpression>>();
 
-        internal Expression GetScopeExpression(string elmAlias)
-        {
-            var normalized = NormalizeIdentifier(elmAlias!)!;
-            if (Scopes.TryGetValue(normalized, out var expression))
-                return expression.Expression;
-            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
-        }
-
-        internal ScopedExpression GetScope(string elmAlias)
-        {
-            var normalized = NormalizeIdentifier(elmAlias!)!;
-            if (Scopes.TryGetValue(normalized, out var expression))
-                return expression;
-            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
-        }
-
-        internal Expression? ImpliedAliasExpression => ImpliedAlias != null ? GetScopeExpression(ImpliedAlias) : null;
-
-        /// <summary>
-        /// Creates a copy with the scopes provided.
-        /// </summary>
-        internal ExpressionBuilderContext WithScopes(params KeyValuePair<string, ScopedExpression>[] kvps)
-        {
-            var scopes = new Dictionary<string, ScopedExpression>(Scopes);
-            if (Builder.Settings.AllowScopeRedefinition)
-            {
-                foreach (var kvp in kvps)
-                {
-                    var normalized = NormalizeIdentifier(kvp.Key);
-                    if (!string.IsNullOrWhiteSpace(normalized))
-                    {
-                        scopes[normalized] = kvp.Value;
-                    }
-                    else throw new InvalidOperationException();
-                }
-            }
-            else
-            {
-                foreach (var kvp in kvps)
-                {
-                    var normalized = NormalizeIdentifier(kvp.Key);
-                    if (!string.IsNullOrWhiteSpace(normalized))
-                    {
-                        if (scopes.ContainsKey(normalized))
-                            throw new InvalidOperationException($"Scope {kvp.Key}, normalized to {NormalizeIdentifier(kvp.Key)}, is already defined and this builder does not allow scope redefinition.  Check the CQL source, or set {nameof(ExpressionBuilderSettings.AllowScopeRedefinition)} to true");
-                        scopes.Add(normalized, kvp.Value);
-                    }
-                    else throw new InvalidOperationException();
-                }
-            }
-            var subContext = new ExpressionBuilderContext(this, scopes);
-            return subContext;
-        }
+        internal Expression? ImpliedAliasExpression => ImpliedAlias != null ? GetScope(ImpliedAlias).Expression : null;
 
         // TODO: does this get hoisted into the base class?   are Scopes common handling?
         internal ExpressionBuilderContext WithImpliedAlias(string aliasName, Expression linqExpression, elm.Element elmExpression)

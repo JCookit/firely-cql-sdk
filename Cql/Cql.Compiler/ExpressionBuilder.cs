@@ -371,7 +371,7 @@ namespace Hl7.Cql.Compiler
                                     }
                                 }
                             }
-                            definitions.Add(ThisLibraryKey, def.name, functionParameterTypes, lambda);
+                            definitions.Add(ThisLibraryKey, def.name, functionParameterTypes!, lambda);
                         }
                     }
                     else throw new InvalidOperationException($"Definition {def.name} does not have an expression property");
@@ -994,7 +994,7 @@ namespace Hl7.Cql.Compiler
         {
             if (string.Equals("$this", ire.name) && ctx.ImpliedAlias != null)
             {
-                var scopeExpression = ctx.GetScopeExpression(ctx.ImpliedAlias);
+                var scopeExpression = ctx.GetScope(ctx.ImpliedAlias).Expression;
                 return scopeExpression;
             }
             var pe = new Property
@@ -1491,13 +1491,13 @@ namespace Hl7.Cql.Compiler
         protected Expression QueryLetRef(QueryLetRef qlre, ExpressionBuilderContext ctx)
         {
             var name = qlre.name!;
-            var expr = ctx.GetScopeExpression(name);
+            var expr = ctx.GetScope(name).Expression;
             return expr;
         }
 
         protected Expression AliasRef(AliasRef ar, ExpressionBuilderContext ctx)
         {
-            var expr = ctx.GetScopeExpression(ar.name!);
+            var expr = ctx.GetScope(ar.name!).Expression;
             return expr;
         }
 
@@ -2197,7 +2197,7 @@ namespace Hl7.Cql.Compiler
             var path = op.path;
             if (!string.IsNullOrWhiteSpace(op.scope))
             {
-                var scopeExpression = ctx.GetScopeExpression(op.scope!);
+                var scopeExpression = ctx.GetScope(op.scope!).Expression;
                 var expectedType = TypeManager.TypeFor(op, ctx, false) ?? typeof(object);
                 var pathMemberInfo = TypeResolver.GetProperty(scopeExpression.Type, path!) ??
                     TypeResolver.GetProperty(scopeExpression.Type, op.path);

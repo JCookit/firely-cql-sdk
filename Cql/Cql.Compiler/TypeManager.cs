@@ -38,7 +38,7 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         public string TupleTypeNamespace { get; }
         /// <summary>
-        /// Gets the tuple types created by this <see cref="TypeManager"/>.
+        /// Gets the tuple types created by this <see cref="TypeManager"/> 
         /// </summary>
         public IEnumerable<Type> TupleTypes => TupleTypeList;
 

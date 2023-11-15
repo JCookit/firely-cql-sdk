@@ -14,6 +14,8 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Formats.Asn1.AsnWriter;
+
 using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
@@ -98,7 +100,7 @@ namespace Hl7.Cql.Compiler
     /// 
     /// in sql, it also contains state information for the currently-building sql construct
     /// </summary>
-    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder>
+    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, ScopedSqlExpression>
     {
         internal DefinitionDictionary<TSqlFragment> Definitions { get; }
 
@@ -134,9 +136,12 @@ namespace Hl7.Cql.Compiler
             Predecessors = other.Predecessors.ToList(); // copy it
         }
 
-        protected override SqlExpressionBuilderContext CopyForDeeper()
+        protected override SqlExpressionBuilderContext Copy(Dictionary<string, ScopedSqlExpression>? optionalScopes = null)
         {
-            return new SqlExpressionBuilderContext(this);
+            if (optionalScopes == null)
+                return new SqlExpressionBuilderContext(this);
+            else
+                return new SqlExpressionBuilderContext(this, optionalScopes);
         }
 
         //private SqlExpressionBuilderContext(ExpressionBuilderContext other,

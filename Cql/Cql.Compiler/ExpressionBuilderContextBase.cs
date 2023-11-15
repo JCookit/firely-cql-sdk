@@ -9,6 +9,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -16,9 +17,10 @@ using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
 {
-    internal abstract class ExpressionBuilderContextBase<T, B>
-        where T : ExpressionBuilderContextBase<T, B>
+    internal abstract class ExpressionBuilderContextBase<T, B, S>
+        where T : ExpressionBuilderContextBase<T, B, S>
         where B : ExpressionBuilderBase<B>
+        where S : ScopedExpressionBase
     {
         /// <summary>
         /// Used for mappings such as:
@@ -55,18 +57,20 @@ namespace Hl7.Cql.Compiler
             B builder, 
             IDictionary<string, string> localLibraryIdentifiers, 
             string? impliedAlias, 
-            IList<elm.Element> predecessors) 
+            IList<elm.Element> predecessors,
+            IDictionary<string, S> scopes) 
             : this(builder, localLibraryIdentifiers)
         {
             ImpliedAlias = impliedAlias;
             this.Predecessors = predecessors.ToList(); // copy
+            this.Scopes = scopes;  // not copy
         }
 
         /// <summary>
         /// Make a (mostly shallow) copy of this context.   Predecessors are deeply copied.  
         /// </summary>
         /// <returns></returns>
-        abstract protected T CopyForDeeper();
+        abstract protected T Copy(Dictionary<string, S>? optionalScopes = null);
 
         /// <summary>
         /// Gets the builder from which this context derives.
@@ -93,7 +97,7 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         internal T Deeper(elm.Element expression)
         {
-            var subContext = CopyForDeeper();
+            var subContext = Copy();
             subContext.Predecessors.Add(expression);
             return subContext;
         }
@@ -111,6 +115,11 @@ namespace Hl7.Cql.Compiler
                     yield return kvp;
             }
         }
+
+        /// <summary>
+        /// Contains query aliases and let declarations, and any other symbol that is now "in scope"
+        /// </summary>
+        protected IDictionary<string, S> Scopes { get;  init; } = new Dictionary<string, S>();
 
         // TODO: is this sufficient for SQL also?
         internal static string? NormalizeIdentifier(string? identifier)
@@ -168,6 +177,52 @@ namespace Hl7.Cql.Compiler
         {
             Builder.Logger.LogWarning(FormatMessage(message, expression));
         }
+
+        internal ScopedExpressionBase GetScope(string elmAlias)
+        {
+            var normalized = NormalizeIdentifier(elmAlias!)!;
+            if (Scopes.TryGetValue(normalized, out var expression))
+                return expression;
+            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
+        }
+
+        /// <summary>
+        /// Creates a copy with the scopes provided.
+        /// </summary>
+        internal T WithScopes(params KeyValuePair<string, S>[] kvps)
+        {
+            var scopes = new Dictionary<string, S>(Scopes);
+            if (Builder.Settings.AllowScopeRedefinition)
+            {
+                foreach (var kvp in kvps)
+                {
+                    var normalized = NormalizeIdentifier(kvp.Key);
+                    if (!string.IsNullOrWhiteSpace(normalized))
+                    {
+                        scopes[normalized] = kvp.Value;
+                    }
+                    else throw new InvalidOperationException();
+                }
+            }
+            else
+            {
+                foreach (var kvp in kvps)
+                {
+                    var normalized = NormalizeIdentifier(kvp.Key);
+                    if (!string.IsNullOrWhiteSpace(normalized))
+                    {
+                        if (scopes.ContainsKey(normalized))
+                            throw new InvalidOperationException($"Scope {kvp.Key}, normalized to {NormalizeIdentifier(kvp.Key)}, is already defined and this builder does not allow scope redefinition.  Check the CQL source, or set {nameof(ExpressionBuilderSettings.AllowScopeRedefinition)} to true");
+                        scopes.Add(normalized, kvp.Value);
+                    }
+                    else throw new InvalidOperationException();
+                }
+            }
+            var subContext = this.Copy(scopes);
+            return subContext;
+        }
+
+        internal bool HasScope(string elmAlias) => Scopes.ContainsKey(elmAlias);
 
     }
 }
