@@ -18,7 +18,7 @@ using elm = Hl7.Cql.Elm;
 namespace Hl7.Cql.Compiler
 {
     /// <summary>
-    /// 
+    /// TODO: make a base class with minimal generics (with copy and scope operations?)
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <typeparam name="B"></typeparam>
@@ -186,6 +186,12 @@ namespace Hl7.Cql.Compiler
             Builder.Logger.LogWarning(FormatMessage(message, expression));
         }
 
+        /// <summary>
+        /// TODO: make version of GetScope which returns ScopedExpressionBase
+        /// </summary>
+        /// <param name="elmAlias"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         internal S GetScope(string elmAlias)
         {
             var normalized = NormalizeIdentifier(elmAlias!)!;
