@@ -965,7 +965,7 @@ namespace Hl7.Cql.Compiler
             //    var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
             //    codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
             //}
-            //elsef
+            //else
             //{
             //    codeProperty = Expression.Constant(null, typeof(PropertyInfo));
             //}
@@ -1032,6 +1032,9 @@ namespace Hl7.Cql.Compiler
                     // TODO:  validate?
                     result = new IntegerLiteral { Value = lit.value };
                     break;
+                case "{urn:hl7-org:elm-types:r1}decimal":
+                    result = new NumericLiteral { Value = lit.value };
+                    break;
 
                 case "{urn:hl7-org:elm-types:r1}any":
                 case "{urn:hl7-org:elm-types:r1}date":
@@ -1040,10 +1043,6 @@ namespace Hl7.Cql.Compiler
                 case "{urn:hl7-org:elm-types:r1}long":
                 case "{urn:hl7-org:elm-types:r1}boolean":
                 case "{urn:hl7-org:elm-types:r1}string":
-                case "{urn:hl7-org:elm-types:r1}decimal":
-                    result = new NumericLiteral { Value = lit.value };
-                    break;
-
                 case "{urn:hl7-org:elm-types:r1}ratio":
                 case "{urn:hl7-org:elm-types:r1}code":
                 case "{urn:hl7-org:elm-types:r1}codesystem":
