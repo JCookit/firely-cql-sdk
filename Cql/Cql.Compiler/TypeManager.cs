@@ -68,7 +68,7 @@ namespace Hl7.Cql.Compiler
         }
 
         internal Type? TypeFor(elm.Element element,
-            ExpressionBuilderContext context,
+            ScopedSymbolsContext context,
             bool throwIfNotFound = true)
         {
             if (element?.resultTypeSpecifier != null)
@@ -105,7 +105,7 @@ namespace Hl7.Cql.Compiler
                 else if (propertyExpression.scope != null)
                 {
                     var scope = context.GetScope(propertyExpression.scope);
-                    sourceType = scope.Expression.Type;
+                    sourceType = scope.Type;
                 }
                 if (sourceType != null)
                 {
@@ -118,7 +118,7 @@ namespace Hl7.Cql.Compiler
             else if (element is elm.AliasRef aliasRef && !string.IsNullOrWhiteSpace(aliasRef.name))
             {
                 var scope = context.GetScope(aliasRef.name);
-                return scope.Expression.Type;
+                return scope.Type;
             }
             else if (element is elm.OperandRef operandRef && !string.IsNullOrWhiteSpace(operandRef.name))
             {

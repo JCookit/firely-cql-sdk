@@ -12,6 +12,7 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 
 using elm = Hl7.Cql.Elm;
@@ -41,7 +42,7 @@ namespace Hl7.Cql.Compiler
             Expression = expression;
         }
     }
-    
+
     internal class ScopedSqlExpression : ScopedExpressionBase
     {
         public TSqlFragment SqlExpressionBuilder { get; }
@@ -53,6 +54,40 @@ namespace Hl7.Cql.Compiler
         }
     }
 
+    internal class OperandExpressionBase
+    {
+        public Type Type { get; }
+
+        public OperandExpressionBase(Type type)
+        {
+            Type = type;
+        }
+    }
+
+    internal class OperandExpression : OperandExpressionBase
+    {
+        public ParameterExpression Expression { get; }
+
+        public OperandExpression(ParameterExpression expression)
+            : base(expression.Type)
+        {
+            Expression = expression;
+        }
+    }
+
+    /// <summary>
+    ///  TODO: not sure what this means
+    /// </summary>
+    internal class SqlOperandExpression : OperandExpressionBase
+    {
+        public TSqlFragment SqlExpressionBuilder { get; }
+
+        public SqlOperandExpression(TSqlFragment sql, Type type)
+            : base(type)
+        {
+            SqlExpressionBuilder = sql;
+        }
+    }
 
     /// <summary>
     /// The ExpressionBuilderContext class maintains scope information for the traversal of ElmPackage statements during <see cref="ExpressionBuilder.Build"/>.
@@ -60,7 +95,7 @@ namespace Hl7.Cql.Compiler
     /// <remarks>
     /// The scope information in this class is useful for <see cref="IExpressionMutator"/> and is supplied to <see cref="IExpressionMutator.Mutate(Expression, elm.Element, ExpressionBuilderContext)"/>.
     /// </remarks>
-    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder, ScopedExpression, LambdaExpression>
+    internal class ExpressionBuilderContext : ExpressionBuilderContextBase<ExpressionBuilderContext, ExpressionBuilder, LambdaExpression>
     {
         internal ExpressionBuilderContext(ExpressionBuilder builder,
             ParameterExpression contextParameter,
@@ -72,7 +107,7 @@ namespace Hl7.Cql.Compiler
             Definitions = definitions;
         }
 
-        private ExpressionBuilderContext(ExpressionBuilderContext other, Dictionary<string, ScopedExpression>? scopes = null)
+        private ExpressionBuilderContext(ExpressionBuilderContext other, Dictionary<string, ScopedExpressionBase>? scopes = null)
             : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors, other.Scopes)
         {
             Libraries = other.Libraries;
@@ -84,7 +119,7 @@ namespace Hl7.Cql.Compiler
                 Scopes = scopes;
         }
 
-        protected override ExpressionBuilderContext Copy(Dictionary<string, ScopedExpression>? scopes)
+        protected override ExpressionBuilderContext Copy(Dictionary<string, ScopedExpressionBase>? scopes)
         {
             return new ExpressionBuilderContext(this, scopes);
         }
@@ -101,11 +136,6 @@ namespace Hl7.Cql.Compiler
 
         internal DefinitionDictionary<LambdaExpression> Definitions { get; }
 
-        /// <summary>
-        /// Parameters for function definitions.
-        /// </summary>
-        internal IDictionary<string, ParameterExpression> Operands { get; } = new Dictionary<string, ParameterExpression>();
-
         internal IDictionary<string, DefinitionDictionary<LambdaExpression>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<LambdaExpression>>();
 
         internal Expression? ImpliedAliasExpression => ImpliedAlias != null ? GetScope(ImpliedAlias).Expression : null;
@@ -118,6 +148,29 @@ namespace Hl7.Cql.Compiler
 
             return subContext;
         }
+
+        /// <summary>
+        /// TODO: delightfully inefficient - it copies the list in order to leverage the base class behavior.  Figure out a better way
+        /// </summary>
+        /// <param name="kvps"></param>
+        /// <returns></returns>
+        internal ExpressionBuilderContext WithScopes(params KeyValuePair<string, ScopedExpression>[] kvps)
+        {
+            KeyValuePair<string, ScopedExpressionBase>[] baseType;
+
+            baseType = kvps.Select(kvp => new KeyValuePair<string, ScopedExpressionBase>(kvp.Key, kvp.Value)).ToArray();
+
+            return base.WithScopes(baseType);
+        }
+
+        new internal ScopedExpression GetScope(string elmAlias)
+        {
+            var normalized = NormalizeIdentifier(elmAlias!)!;
+            if (Scopes.TryGetValue(normalized, out var expression))
+                return expression as ScopedExpression ?? throw new InvalidOperationException();
+            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
+        }
+
 
     }
 }

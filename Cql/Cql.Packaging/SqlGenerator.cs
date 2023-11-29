@@ -15,16 +15,22 @@ namespace Hl7.Cql.Compiler
 {
     internal class SqlGenerator
     {
-        internal string GenerateSql(DirectedGraph packageGraph, Fhir.FhirTypeResolver typeResolver, ILoggerFactory logFactory)
+        internal string GenerateSql(
+            DirectedGraph packageGraph, 
+            TypeManager typeManager, 
+            ILoggerFactory logFactory)
         {
             var generatorLogger = logFactory.CreateLogger<SqlGenerator>();
 
-            DefinitionDictionary<TSqlFragment> allFragments = CompileSql(packageGraph, typeResolver, logFactory);
+            DefinitionDictionary<TSqlFragment> allFragments = CompileSql(packageGraph, typeManager, logFactory);
 
             return BuildSqlString(allFragments, generatorLogger);
         }
 
-        private static DefinitionDictionary<TSqlFragment> CompileSql(DirectedGraph packageGraph, Fhir.FhirTypeResolver typeResolver, ILoggerFactory logFactory)
+        private static DefinitionDictionary<TSqlFragment> CompileSql(
+            DirectedGraph packageGraph, 
+            TypeManager typeManager, 
+            ILoggerFactory logFactory)
         {
             var elmLibraries = packageGraph.Nodes.Values
                 .Select(node => node.Properties?[Hl7.Cql.Elm.Library.LibraryNodeProperty] as Hl7.Cql.Elm.Library)
@@ -38,7 +44,7 @@ namespace Hl7.Cql.Compiler
             {
                 builderLogger.LogInformation($"Building expressions for {library.NameAndVersion}");
 
-                var builder = new SqlExpressionBuilder(library, typeResolver, builderLogger);
+                var builder = new SqlExpressionBuilder(library, typeManager, builderLogger);
                 var sqlFragment = builder.Build();
                 allFragments.Merge(sqlFragment);
             }
@@ -63,10 +69,12 @@ namespace Hl7.Cql.Compiler
                     // TODO:  what does this mean when there is more than one overload?
                     foreach (var fragment in define.Value)
                     {
-                        generator.GenerateScript(BuildDropFunction(define.Key), writer);
+                        string normalizedName = ExpressionBuilderContext.NormalizeIdentifier(define.Key) ?? throw new InvalidOperationException();
+
+                        generator.GenerateScript(BuildDropFunction(normalizedName), writer);
                         writer.WriteLine();
                         writer.WriteLine("GO");
-                        generator.GenerateScript(WrapWithFunction(define.Key, fragment.Item2), writer);
+                        generator.GenerateScript(WrapWithFunction(normalizedName, fragment.Item2), writer);
                         writer.WriteLine();
                         writer.WriteLine("GO");
                     }

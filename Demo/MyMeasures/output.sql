@@ -1,33 +1,33 @@
-DROP FUNCTION Thing
+DROP FUNCTION Sucked_into_jet_engine
 GO
-CREATE FUNCTION Thing
+CREATE FUNCTION Sucked_into_jet_engine
 ( )
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT (CAST ((3) AS DECIMAL) + 4.0) / CAST ((1 + 2) AS DECIMAL) AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+    SELECT *
+    FROM   (VALUES ('V97.33', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL)) AS codes(code, codesystem, display, ver)
 
 GO
-DROP FUNCTION Thing2
+DROP FUNCTION Sucked_into_jet_engine__subsequent_encounter
 GO
-CREATE FUNCTION Thing2
+CREATE FUNCTION Sucked_into_jet_engine__subsequent_encounter
 ( )
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT CAST ((1) AS DECIMAL) + Thing.Result AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY Thing() AS Thing)
+    SELECT *
+    FROM   (VALUES ('V97.33XD', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL)) AS codes(code, codesystem, display, ver)
 
 GO
-DROP FUNCTION Thing3
+DROP FUNCTION ICD10
 GO
-CREATE FUNCTION Thing3
+CREATE FUNCTION ICD10
 ( )
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT Thing2.Result + Thing.Result * CAST ((2) AS DECIMAL) AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY Thing2() AS Thing2 CROSS APPLY Thing() AS Thing)
+    SELECT *
+    FROM   (VALUES ('V97.33', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL), ('V97.33XD', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL)) AS codes(code, codesystem, display, ver)
 
 GO

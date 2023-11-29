@@ -100,7 +100,7 @@ namespace Hl7.Cql.Compiler
     /// 
     /// in sql, it also contains state information for the currently-building sql construct
     /// </summary>
-    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, ScopedSqlExpression, TSqlFragment>
+    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, TSqlFragment>
     {
         internal DefinitionDictionary<TSqlFragment> Definitions { get; }
 
@@ -124,7 +124,7 @@ namespace Hl7.Cql.Compiler
 
         private SqlExpressionBuilderContext(
             SqlExpressionBuilderContext other,
-            Dictionary<string, ScopedSqlExpression>? scopes = null)
+            Dictionary<string, ScopedExpressionBase>? scopes = null)
             : base(other.Builder, other.LocalLibraryIdentifiers, other.ImpliedAlias, other.Predecessors.ToList(), other.Scopes)
         {
             Libraries = other.Libraries;
@@ -140,7 +140,7 @@ namespace Hl7.Cql.Compiler
                 Scopes = scopes;
         }
 
-        protected override SqlExpressionBuilderContext Copy(Dictionary<string, ScopedSqlExpression>? scopes)
+        protected override SqlExpressionBuilderContext Copy(Dictionary<string, ScopedExpressionBase>? scopes)
         {
             return new SqlExpressionBuilderContext(this, scopes);
         }

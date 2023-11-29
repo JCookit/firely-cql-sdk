@@ -9,6 +9,7 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -21,12 +22,9 @@ namespace Hl7.Cql.Compiler
 {
     internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder, TSqlFragment>
     {
-        protected internal override TypeResolver TypeResolver { get; }
-
-        public SqlExpressionBuilder(Library library, TypeResolver typeResolver, ILogger<SqlExpressionBuilder> builderLogger)
-            : base(library, builderLogger)
+        public SqlExpressionBuilder(Library library, TypeManager typeManager, ILogger<SqlExpressionBuilder> builderLogger)
+            : base(library, typeManager, builderLogger)
         {
-            TypeResolver = typeResolver ?? throw new ArgumentNullException(nameof(typeResolver));
         }
 
         public override DefinitionDictionary<TSqlFragment> Build()
@@ -77,70 +75,79 @@ namespace Hl7.Cql.Compiler
                 //    typeof(string),
                 //    typeof(string)
                 //})!;
-                //var codeSystemUrls = Library.codeSystems?
-                //    .ToDictionary(cs => cs.name, cs => cs.id) ?? new Dictionary<string, string>();
-                //var codesByName = new Dictionary<string, CqlCode>();
-                //var codesByCodeSystemName = new Dictionary<string, List<CqlCode>>();
+                var codeSystemUrls = Library.codeSystems?
+                    .ToDictionary(cs => cs.name, cs => cs.id) ?? new Dictionary<string, string>();
+                var codesByName = new Dictionary<string, CqlCode>();
+                var codesByCodeSystemName = new Dictionary<string, List<CqlCode>>();
                 if (this.Library.codes != null)
                 {
-                    //foreach (var code in Library.codes)
-                    //{
-                    //    if (code.codeSystem == null)
-                    //        throw new InvalidOperationException("Code definition has a null codeSystem node.");
-                    //    if (!codeSystemUrls.TryGetValue(code.codeSystem.name, out var csUrl))
-                    //        throw new InvalidOperationException($"Undefined code system {code.codeSystem.name!}");
-                    //    var existingCode = codesByName.Values.SingleOrDefault(c => c.code == code.id && c.system == csUrl);
-                    //    if (existingCode != null)
-                    //        throw new InvalidOperationException($"Duplicate code detected: {code.id} from {code.codeSystem.name} ({csUrl})");
-                    //    var systemCode = new CqlCode(code.id, csUrl, null, null);
-                    //    codesByName.Add(code.name, systemCode);
-                    //    if (!codesByCodeSystemName.TryGetValue(code.codeSystem!.name!, out var codings))
-                    //    {
-                    //        codings = new List<CqlCode>();
-                    //        codesByCodeSystemName.Add(code.codeSystem!.name!, codings);
-                    //    }
-                    //    codings.Add(systemCode);
+                    foreach (var code in Library.codes)
+                    {
+                        if (code.codeSystem == null)
+                            throw new InvalidOperationException("Code definition has a null codeSystem node.");
+                        if (!codeSystemUrls.TryGetValue(code.codeSystem.name, out var csUrl))
+                            throw new InvalidOperationException($"Undefined code system {code.codeSystem.name!}");
+                        var existingCode = codesByName.Values.SingleOrDefault(c => c.code == code.id && c.system == csUrl);
+                        if (existingCode != null)
+                            throw new InvalidOperationException($"Duplicate code detected: {code.id} from {code.codeSystem.name} ({csUrl})");
+                        var systemCode = new CqlCode(code.id, csUrl, null, null);
+                        codesByName.Add(code.name, systemCode);
+                        if (!codesByCodeSystemName.TryGetValue(code.codeSystem!.name!, out var codings))
+                        {
+                            codings = new List<CqlCode>();
+                            codesByCodeSystemName.Add(code.codeSystem!.name!, codings);
+                        }
+                        codings.Add(systemCode);
 
-                    //    var newCodingExpression = Expression.New(codeCtor,
-                    //        Expression.Constant(code.id),
-                    //        Expression.Constant(csUrl),
-                    //        Expression.Constant(null, typeof(string)),
-                    //        Expression.Constant(null, typeof(string))!
-                    //    );
-                    //    var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
-                    //    var lambda = Expression.Lambda(newCodingExpression, contextParameter);
-                    //    definitions.Add(ThisLibraryKey, code.name!, lambda);
-                    //}
+                        TSqlFragment codeSqlExpression = BuildSelectForCode(systemCode);
+                        definitions.Add(ThisLibraryKey, code.name!, codeSqlExpression);
+
+                        //var newCodingExpression = Expression.New(codeCtor,
+                        //    Expression.Constant(code.id),
+                        //    Expression.Constant(csUrl),
+                        //    Expression.Constant(null, typeof(string)),
+                        //    Expression.Constant(null, typeof(string))!
+                        //);
+                        //var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
+                        //var lambda = Expression.Lambda(newCodingExpression, contextParameter);
+                        //definitions.Add(ThisLibraryKey, code.name!, lambda);
+                    }
                 }
 
                 if (this.Library.codeSystems != null)
                 {
-                    //foreach (var codeSystem in Library.codeSystems)
-                    //{
-                    //    if (codesByCodeSystemName.TryGetValue(codeSystem.name, out var codes))
-                    //    {
-                    //        var initMembers = codes
-                    //            .Select(coding =>
-                    //                Expression.New(codeCtor,
-                    //                    Expression.Constant(coding.code),
-                    //                    Expression.Constant(coding.system),
-                    //                    Expression.Constant(null, typeof(string)),
-                    //                    Expression.Constant(null, typeof(string))
-                    //                ))
-                    //            .ToArray();
-                    //        var arrayOfCodesInitializer = Expression.NewArrayInit(typeof(CqlCode), initMembers);
-                    //        var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
-                    //        var lambda = Expression.Lambda(arrayOfCodesInitializer, contextParameter);
-                    //        definitions.Add(ThisLibraryKey, codeSystem.name, lambda);
-                    //    }
-                    //    else
-                    //    {
-                    //        var newArray = Expression.NewArrayBounds(typeof(CqlCode), Expression.Constant(0, typeof(int)));
-                    //        var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
-                    //        var lambda = Expression.Lambda(newArray, contextParameter);
-                    //        definitions.Add(ThisLibraryKey, codeSystem.name, lambda);
-                    //    }
-                    //}
+                    foreach (var codeSystem in Library.codeSystems)
+                    {
+                        if (codesByCodeSystemName.TryGetValue(codeSystem.name, out var codes))
+                        {
+                            TSqlFragment codesystemSqlExpression = BuildSelectForCodeSystem(codes);
+
+                            definitions.Add(ThisLibraryKey, codeSystem.name, codesystemSqlExpression);
+
+                            //var initMembers = codes
+                            //    .Select(coding =>
+                            //        Expression.New(codeCtor,
+                            //            Expression.Constant(coding.code),
+                            //            Expression.Constant(coding.system),
+                            //            Expression.Constant(null, typeof(string)),
+                            //            Expression.Constant(null, typeof(string))
+                            //        ))
+                            //    .ToArray();
+                            //var arrayOfCodesInitializer = Expression.NewArrayInit(typeof(CqlCode), initMembers);
+                            //var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
+                            //var lambda = Expression.Lambda(arrayOfCodesInitializer, contextParameter);
+                            //definitions.Add(ThisLibraryKey, codeSystem.name, lambda);
+                        }
+                        else
+                        {
+                            throw new NotImplementedException("Empty codesystem declared");
+
+                            //var newArray = Expression.NewArrayBounds(typeof(CqlCode), Expression.Constant(0, typeof(int)));
+                            //var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
+                            //var lambda = Expression.Lambda(newArray, contextParameter);
+                            //definitions.Add(ThisLibraryKey, codeSystem.name, lambda);
+                        }
+                    }
                 }
 
                 if (this.Library.concepts != null)
@@ -339,6 +346,61 @@ namespace Hl7.Cql.Compiler
             {
                 throw new InvalidOperationException("This package does not have a name and version.");
             }
+        }
+
+        private TSqlFragment BuildSelectForCodeSystem(List<CqlCode> codes)
+        {
+            InlineDerivedTable inlineTable = new InlineDerivedTable
+            {
+                Columns =
+                {
+                    new Identifier { Value = "code" },
+                    new Identifier { Value = "codesystem" },
+                    new Identifier { Value = "display" },
+                    new Identifier { Value = "ver" },
+                },
+                Alias = new Identifier { Value = "codes" }
+            };
+
+            foreach (var code in codes)
+            {
+                var rowValue = new RowValue
+                {
+                    ColumnValues =
+                    {
+                        new StringLiteral { Value = code.code },
+                        new StringLiteral { Value = code.system },
+                        code.display != null ? new StringLiteral { Value = code.display } : new NullLiteral(),
+                        code.version != null ? new StringLiteral { Value = code.version } : new NullLiteral()
+                    }
+                };
+                inlineTable.RowValues.Add(rowValue);
+            }
+
+            var select = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectStarExpression()
+                    },
+                    FromClause = new FromClause
+                    {
+                        TableReferences =
+                        {
+                            inlineTable
+                        }
+                    }
+                }
+            };
+
+            return select;
+        }
+
+        private TSqlFragment BuildSelectForCode(CqlCode systemCode)
+        {
+            return BuildSelectForCodeSystem(new List<CqlCode> { systemCode });
         }
 
         private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context)
@@ -781,7 +843,7 @@ namespace Hl7.Cql.Compiler
                     // result = Quantity(qua, ctx);
                     break;
                 case Query qe:
-                    // result = Query(qe, ctx);
+                    result = Query(qe, ctx);
                     break;
                 case QueryLetRef qlre:
                     // result = QueryLetRef(qlre, ctx);
@@ -926,39 +988,266 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
-        private TSqlFragment? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
+        private TSqlFragment? Query(Query query, SqlExpressionBuilderContext ctx)
+        {
+            if (query?.source?.Length == 0)
+                throw new NotSupportedException("Queries must define at least 1 source");
+            else if (query!.source!.Length == 1)
+                return SingleSourceQuery(query, ctx);
+            else
+                return MultiSourceQuery(query, ctx);
+        }
+
+        private TSqlFragment? SingleSourceQuery(Query query, SqlExpressionBuilderContext ctx)
+        {
+            var querySource = query.source![0];
+
+            var querySourceAlias = querySource.alias;
+
+            if (string.IsNullOrWhiteSpace(querySource.alias))
+                throw new ArgumentException("Only aliased query sources are supported.", nameof(query));
+
+            if (querySource.expression == null)
+                throw new ArgumentException("Query sources must have an expression", nameof(query));
+
+            // fully formed SELECT * with table and where
+            var source = TranslateExpression(querySource.expression!, ctx);
+
+            return source;
+
+            // further modification necessary?
+
+            //var isSingle = false;
+            //// promote single objects into enumerables so where works
+            //if (!IsOrImplementsIEnumerableOfT(source.Type))
+            //{
+            //    var arrayInit = Expression.NewArrayInit(source.Type, source);
+            //    source = arrayInit;
+            //    isSingle = true;
+            //}
+            //var @return = source;
+            //Type elementType = TypeResolver.GetListElementType(@return.Type, @throw: true)!;
+
+            //// handle with/such-that
+            //if (query.relationship != null)
+            //{
+            //    foreach (var relationship in query.relationship ?? Enumerable.Empty<RelationshipClause>())
+            //    {
+            //        var selectManyLambda = WithToSelectManyBody(querySourceAlias!, elementType, relationship, ctx);
+
+            //        var selectManyCall = OperatorBinding.Bind(CqlOperator.SelectMany, ctx.RuntimeContextParameter,
+            //            @return, selectManyLambda);
+            //        if (relationship is Without)
+            //        {
+            //            var callExcept = OperatorBinding.Bind(CqlOperator.ListExcept, ctx.RuntimeContextParameter,
+            //                @return, selectManyCall);
+            //            @return = callExcept;
+            //        }
+            //        else
+            //        {
+            //            @return = selectManyCall;
+            //        }
+            //    }
+            //}
+            //// The element type may have changed
+            //elementType = TypeResolver.GetListElementType(@return.Type, @throw: true)!;
+
+            //if (query.where != null)
+            //{
+            //    var parameterName = ExpressionBuilderContext.NormalizeIdentifier(querySourceAlias)
+            //        ?? TypeNameToIdentifier(elementType, ctx);
+            //    var whereLambdaParameter = Expression.Parameter(elementType, parameterName);
+            //    if (querySourceAlias == "ItemOnLine")
+            //    {
+            //    }
+            //    var scopes = new[] { new KeyValuePair<string, ScopedExpression>(querySourceAlias!, new ScopedExpression(whereLambdaParameter, querySource.expression)) };
+            //    var subContext = ctx.WithScopes(scopes);
+
+            //    if (query.let != null)
+            //    {
+            //        var letScopes = new KeyValuePair<string, ScopedExpression>[query.let.Length];
+            //        for (int i = 0; i < query.let.Length; i++)
+            //        {
+            //            var let = query.let[i];
+            //            var expression = TranslateExpression(let.expression!, subContext);
+            //            letScopes[i] = new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!));
+            //        }
+            //        subContext = subContext.WithScopes(letScopes);
+            //    }
+            //    var whereBody = TranslateExpression(query.where, subContext);
+            //    var whereLambda = System.Linq.Expressions.Expression.Lambda(whereBody, whereLambdaParameter);
+            //    var callWhere = OperatorBinding.Bind(CqlOperator.Where, ctx.RuntimeContextParameter, @return, whereLambda);
+            //    @return = callWhere;
+            //}
+
+            //if (query.@return != null)
+            //{
+            //    var parameterName = ExpressionBuilderContext.NormalizeIdentifier(querySourceAlias)
+            //    ?? TypeNameToIdentifier(elementType, ctx);
+
+
+            //    var selectLambdaParameter = Expression.Parameter(elementType, parameterName);
+
+            //    var scopes = new[] { new KeyValuePair<string, ScopedExpression>(querySourceAlias!, new ScopedExpression(selectLambdaParameter, query.@return)) };
+            //    var subContext = ctx.WithScopes(scopes);
+
+            //    if (query.let != null)
+            //    {
+            //        for (int i = 0; i < query.let.Length; i++)
+            //        {
+            //            var let = query.let[i];
+            //            var expression = TranslateExpression(let.expression!, subContext);
+            //            subContext = subContext.WithScopes(new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!)));
+            //        }
+            //    }
+            //    var selectBody = TranslateExpression(query.@return.expression!, subContext);
+            //    var selectLambda = Expression.Lambda(selectBody, selectLambdaParameter);
+            //    var callSelect = OperatorBinding.Bind(CqlOperator.Select, ctx.RuntimeContextParameter, @return, selectLambda);
+            //    @return = callSelect;
+            //}
+
+            //if (query.aggregate != null)
+            //{
+            //    var parameterName = ExpressionBuilderContext.NormalizeIdentifier(querySourceAlias)
+            //    ?? TypeNameToIdentifier(elementType, ctx);
+            //    var sourceAliasParameter = Expression.Parameter(elementType, parameterName);
+            //    var resultAlias = query.aggregate.identifier!;
+            //    Type? resultType = null;
+            //    if (query.aggregate.resultTypeSpecifier != null)
+            //    {
+            //        resultType = TypeManager.TypeFor(query.aggregate.resultTypeSpecifier, ctx);
+            //    }
+            //    else if (!string.IsNullOrWhiteSpace(query.aggregate.resultTypeName.Name!))
+            //    {
+            //        resultType = TypeResolver.ResolveType(query.aggregate.resultTypeName.Name!);
+            //    }
+            //    if (resultType == null)
+            //    {
+            //        throw new InvalidOperationException($"Could not resolve aggregate query result type for query {query.localId} at {query.locator}");
+            //    }
+            //    var resultParameter = Expression.Parameter(resultType, resultAlias);
+            //    var scopes = new[]
+            //    {
+            //            new KeyValuePair < string, ScopedExpression > (querySourceAlias !, new ScopedExpression(sourceAliasParameter, query)),
+            //            new KeyValuePair < string, ScopedExpression > (resultAlias !, new ScopedExpression(resultParameter, query.aggregate))
+            //        };
+            //    var subContext = ctx.WithScopes(scopes);
+            //    if (query.let != null)
+            //    {
+            //        for (int i = 0; i < query.let.Length; i++)
+            //        {
+            //            var let = query.let[i];
+            //            var expression = TranslateExpression(let.expression!, subContext);
+            //            subContext = subContext.WithScopes(new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!)));
+            //        }
+            //    }
+            //    var startingValue = TranslateExpression(query.aggregate.starting!, subContext);
+
+            //    var lambdaBody = TranslateExpression(query.aggregate.expression!, subContext);
+            //    var lambda = Expression.Lambda(lambdaBody, resultParameter, sourceAliasParameter);
+            //    var aggregateCall = OperatorBinding.Bind(CqlOperator.Aggregate, subContext.RuntimeContextParameter, @return, lambda, startingValue);
+            //    @return = aggregateCall;
+            //}
+
+
+            ////[System.Xml.Serialization.XmlIncludeAttribute(typeof(ByExpression))]
+            ////[System.Xml.Serialization.XmlIncludeAttribute(typeof(ByColumn))]
+            ////[System.Xml.Serialization.XmlIncludeAttribute(typeof(ByDirection))]
+            //if (query.sort != null && query.sort.by != null && query.sort.by.Length > 0)
+            //{
+            //    foreach (var by in query.sort.by)
+            //    {
+            //        ListSortDirection order = ExtensionMethods.ListSortOrder(by.direction);
+            //        if (by is ByExpression byExpression)
+            //        {
+            //            var parameterName = "@this";
+            //            var returnElementType = TypeResolver.GetListElementType(@return.Type, true)!;
+            //            var sortMemberParameter = Expression.Parameter(returnElementType, parameterName);
+            //            var subContext = ctx.WithImpliedAlias(parameterName!, sortMemberParameter, byExpression.expression);
+            //            var sortMemberExpression = TranslateExpression(byExpression.expression, subContext);
+            //            var lambdaBody = Expression.Convert(sortMemberExpression, typeof(object));
+            //            var sortLambda = System.Linq.Expressions.Expression.Lambda(lambdaBody, sortMemberParameter);
+            //            var sort = OperatorBinding.Bind(CqlOperator.SortBy, ctx.RuntimeContextParameter,
+            //                @return, sortLambda, Expression.Constant(order, typeof(ListSortDirection)));
+            //            @return = sort;
+            //        }
+            //        else if (by is ByColumn byColumn)
+            //        {
+            //            var parameterName = "@this";
+            //            var returnElementType = TypeResolver.GetListElementType(@return.Type, true)!;
+            //            var sortMemberParameter = Expression.Parameter(returnElementType, parameterName);
+            //            var pathMemberType = TypeManager.TypeFor(byColumn, ctx);
+            //            if (pathMemberType == null)
+            //            {
+            //                var msg = $"Type specifier {by.resultTypeName} at {by.locator ?? "unknown"} could not be resolved.";
+            //                ctx.LogError(msg);
+            //                throw new InvalidOperationException(msg);
+            //            }
+            //            var pathExpression = PropertyHelper(sortMemberParameter, byColumn.path, pathMemberType!, ctx);
+            //            var lambdaBody = Expression.Convert(pathExpression, typeof(object));
+            //            var sortLambda = System.Linq.Expressions.Expression.Lambda(lambdaBody, sortMemberParameter);
+            //            var sort = OperatorBinding.Bind(CqlOperator.SortBy, ctx.RuntimeContextParameter,
+            //                @return, sortLambda, Expression.Constant(order, typeof(ListSortDirection)));
+            //            @return = sort;
+            //        }
+            //        else
+            //        {
+            //            var sort = OperatorBinding.Bind(CqlOperator.Sort, ctx.RuntimeContextParameter,
+            //                @return, Expression.Constant(order, typeof(ListSortDirection)));
+            //            @return = sort;
+            //        }
+            //    }
+            //}
+
+            //if (isSingle)
+            //{
+            //    var callSingle = OperatorBinding.Bind(CqlOperator.Single, ctx.RuntimeContextParameter, @return);
+            //    @return = callSingle;
+            //}
+
+            //return @return;
+        }
+
+        private TSqlFragment? MultiSourceQuery(Query query, SqlExpressionBuilderContext ctx)
         {
             throw new NotImplementedException();
+        }
 
-            //Type? sourceElementType;
-            //string? cqlRetrieveResultType;
+        private TSqlFragment? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
+        {
+            Type? sourceElementType;
+            string? cqlRetrieveResultType;
 
-            //// SingletonFrom does not have this specified; in this case use DataType instead
-            //if (retrieve.resultTypeSpecifier == null)
-            //{
-            //    if (string.IsNullOrWhiteSpace(retrieve.dataType.Name))
-            //        throw new ArgumentException("If a Retrieve lacks a ResultTypeSpecifier it must have a DataType", nameof(retrieve));
-            //    cqlRetrieveResultType = retrieve.dataType.Name;
+            // SingletonFrom does not have this specified; in this case use DataType instead
+            if (retrieve.resultTypeSpecifier == null)
+            {
+                if (string.IsNullOrWhiteSpace(retrieve.dataType.Name))
+                    throw new ArgumentException("If a Retrieve lacks a ResultTypeSpecifier it must have a DataType", nameof(retrieve));
+                cqlRetrieveResultType = retrieve.dataType.Name;
 
-            //    sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType);
-            //}
-            //else
-            //{
-            //    if (retrieve.resultTypeSpecifier is Elm.ListTypeSpecifier listTypeSpecifier)
-            //    {
-            //        cqlRetrieveResultType = listTypeSpecifier.elementType is Elm.NamedTypeSpecifier nts ? nts.name.Name : null;
-            //        sourceElementType = TypeManager.TypeFor(listTypeSpecifier.elementType, ctx);
-            //    }
-            //    else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
-            //}
+                sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType);
+            }
+            else
+            {
+                if (retrieve.resultTypeSpecifier is Elm.ListTypeSpecifier listTypeSpecifier)
+                {
+                    cqlRetrieveResultType = listTypeSpecifier.elementType is Elm.NamedTypeSpecifier nts ? nts.name.Name : null;
+                    sourceElementType = TypeManager.TypeFor(listTypeSpecifier.elementType, ctx);
+                }
+                else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
+            }
 
             //Expression? codeProperty;
 
-            //var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
-            //var isDefaultCodeProperty = retrieve.codeProperty is null ||
-            //    (cqlRetrieveResultType is not null &&
-            //     modelMapping.TryGetValue(cqlRetrieveResultType, out ClassInfo? classInfo) &&
-            //     classInfo.primaryCodePath == retrieve.codeProperty);
+            var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
+            var isDefaultCodeProperty = retrieve.codeProperty is null ||
+                (cqlRetrieveResultType is not null &&
+                 modelMapping.TryGetValue(cqlRetrieveResultType, out ClassInfo? classInfo) &&
+                 classInfo.primaryCodePath == retrieve.codeProperty);
+
+
+            // TODO: you are here --- continue to convert the elm tree into SQL equivalent based on the FHIR type
+            throw new NotImplementedException();
 
             //if (hasCodePropertySpecified && !isDefaultCodeProperty)
             //{

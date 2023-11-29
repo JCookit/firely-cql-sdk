@@ -19,9 +19,9 @@ public class JeffCou1_1_0_0
 
     #region Cached values
 
-    internal Lazy<decimal?> __Thing;
-    internal Lazy<decimal?> __Thing2;
-    internal Lazy<decimal?> __Thing3;
+    internal Lazy<CqlCode> __Sucked_into_jet_engine;
+    internal Lazy<CqlCode> __Sucked_into_jet_engine__subsequent_encounter;
+    internal Lazy<CqlCode[]> __ICD10;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
@@ -29,56 +29,42 @@ public class JeffCou1_1_0_0
         this.context = context ?? throw new ArgumentNullException("context");
 
 
-        __Thing = new Lazy<decimal?>(this.Thing_Value);
-        __Thing2 = new Lazy<decimal?>(this.Thing2_Value);
-        __Thing3 = new Lazy<decimal?>(this.Thing3_Value);
+        __Sucked_into_jet_engine = new Lazy<CqlCode>(this.Sucked_into_jet_engine_Value);
+        __Sucked_into_jet_engine__subsequent_encounter = new Lazy<CqlCode>(this.Sucked_into_jet_engine__subsequent_encounter_Value);
+        __ICD10 = new Lazy<CqlCode[]>(this.ICD10_Value);
     }
     #region Dependencies
 
 
     #endregion
 
-	private decimal? Thing_Value()
-	{
-		var a_ = context.Operators.ConvertIntegerToDecimal((int?)3);
-		var b_ = context.Operators.Add(a_, (decimal?)4.0m);
-		var c_ = context.Operators.Add((int?)1, (int?)2);
-		var d_ = context.Operators.ConvertIntegerToDecimal(c_);
-		var e_ = context.Operators.Divide(b_, d_);
+	private CqlCode Sucked_into_jet_engine_Value() => 
+		new CqlCode("V97.33", "http://hl7.org/fhir/sid/icd-10", null, null);
 
-		return e_;
+    [CqlDeclaration("Sucked into jet engine")]
+	public CqlCode Sucked_into_jet_engine() => 
+		__Sucked_into_jet_engine.Value;
+
+	private CqlCode Sucked_into_jet_engine__subsequent_encounter_Value() => 
+		new CqlCode("V97.33XD", "http://hl7.org/fhir/sid/icd-10", null, null);
+
+    [CqlDeclaration("Sucked into jet engine, subsequent encounter")]
+	public CqlCode Sucked_into_jet_engine__subsequent_encounter() => 
+		__Sucked_into_jet_engine__subsequent_encounter.Value;
+
+	private CqlCode[] ICD10_Value()
+	{
+		var a_ = new CqlCode[]
+		{
+			new CqlCode("V97.33", "http://hl7.org/fhir/sid/icd-10", null, null),
+			new CqlCode("V97.33XD", "http://hl7.org/fhir/sid/icd-10", null, null),
+		};
+
+		return a_;
 	}
 
-    [CqlDeclaration("Thing")]
-	public decimal? Thing() => 
-		__Thing.Value;
-
-	private decimal? Thing2_Value()
-	{
-		var a_ = context.Operators.ConvertIntegerToDecimal((int?)1);
-		var b_ = this.Thing();
-		var c_ = context.Operators.Add(a_, b_);
-
-		return c_;
-	}
-
-    [CqlDeclaration("Thing2")]
-	public decimal? Thing2() => 
-		__Thing2.Value;
-
-	private decimal? Thing3_Value()
-	{
-		var a_ = this.Thing2();
-		var b_ = this.Thing();
-		var c_ = context.Operators.ConvertIntegerToDecimal((int?)2);
-		var d_ = context.Operators.Multiply(b_, c_);
-		var e_ = context.Operators.Add(a_, d_);
-
-		return e_;
-	}
-
-    [CqlDeclaration("Thing3")]
-	public decimal? Thing3() => 
-		__Thing3.Value;
+    [CqlDeclaration("ICD10")]
+	public CqlCode[] ICD10() => 
+		__ICD10.Value;
 
 }

@@ -45,15 +45,15 @@ namespace Hl7.Cql.Compiler
         /// <param name="options">Optional features for the codegenerator.</param>
         /// <exception cref="ArgumentNullException">If any argument is <see langword="null"/></exception>
         /// <exception cref="ArgumentException">If the <paramref name="elm"/> does not have a valid library or identifier.</exception>
-        public ExpressionBuilder(OperatorBinding operatorBinding,
+        public ExpressionBuilder(
+            OperatorBinding operatorBinding,
             TypeManager typeManager,
             Library elm,
             ILogger<ExpressionBuilder> logger,
             ExpressionBuilderOptions? options = null)
-            : base(elm, logger)
+            : base(elm, typeManager, logger)
         {
             OperatorBinding = operatorBinding;
-            TypeManager = typeManager ?? throw new ArgumentNullException(nameof(typeManager));
             this.options = options ?? new(EmitStackTraces: false);
         }
 
@@ -71,12 +71,6 @@ namespace Hl7.Cql.Compiler
         /// The <see cref="Compiler.OperatorBinding"/> used to invoke <see cref="CqlOperator"/>.
         /// </summary>
         public OperatorBinding OperatorBinding { get; }
-        /// <summary>
-        /// The <see cref="TypeManager"/> used to resolve and create types referenced in <see cref="Library"/>.
-        /// </summary>
-        public TypeManager TypeManager { get; }
-
-        override protected internal TypeResolver TypeResolver => TypeManager.Resolver;
 
         /// <summary>
         /// The expression visitors that will be executed (in order) on translated expressions.
@@ -306,15 +300,16 @@ namespace Hl7.Cql.Compiler
                                     var operandType = TypeManager.TypeFor(operand.operandTypeSpecifier, buildContext)!;
                                     var opName = ExpressionBuilderContext.NormalizeIdentifier(operand.name);
                                     var parameter = Expression.Parameter(operandType, opName);
-                                    buildContext.Operands.Add(operand.name!, parameter);
+                                    buildContext.Operands.Add(operand.name!, new OperandExpression(parameter));
                                     functionParameterTypes[i] = parameter.Type;
                                     i += 1;
                                 }
                                 else throw new InvalidOperationException($"Operand for function {def.name} is missing its {nameof(operand.operandTypeSpecifier)} property");
                             }
 
+                            var newParameters = buildContext.Operands.Select(o => ((OperandExpression)o.Value).Expression).ToArray();
                             parameters = parameters
-                                .Concat(buildContext.Operands.Values)
+                                .Concat(newParameters)
                                 .ToArray();
                             if (CustomImplementations.TryGetValue(customKey, out var factory) && factory != null)
                             {
@@ -1933,7 +1928,7 @@ namespace Hl7.Cql.Compiler
         protected Expression OperandRef(OperandRef ore, ExpressionBuilderContext ctx)
         {
             if (ctx.Operands.TryGetValue(ore.name!, out var expression))
-                return expression;
+                return ((OperandExpression)expression).Expression;
             else throw new ArgumentException($"Operand reference to {ore.name} not found in definition operands.", nameof(ore));
         }
 
@@ -2109,9 +2104,6 @@ namespace Hl7.Cql.Compiler
             var selectManyLambda = Expression.Lambda(callSelectOnWhere, selectManyParameter);
             return selectManyLambda;
         }
-
-        // Yeah, hardwired to FHIR 4.0.1 for now.
-        private static readonly IDictionary<string, ClassInfo> modelMapping = Models.ClassesById(Models.Fhir401);
 
         protected Expression Retrieve(Retrieve retrieve, ExpressionBuilderContext ctx)
         {

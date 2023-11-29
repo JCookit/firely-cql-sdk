@@ -17,117 +17,19 @@ using elm = Hl7.Cql.Elm;
 
 namespace Hl7.Cql.Compiler
 {
-    /// <summary>
-    /// TODO: make a base class with minimal generics (with copy and scope operations?)
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <typeparam name="B"></typeparam>
-    /// <typeparam name="S"></typeparam>
-    /// <typeparam name="E"></typeparam>
-    internal abstract class ExpressionBuilderContextBase<T, B, S, E>
-        where T : ExpressionBuilderContextBase<T, B, S, E>
-        where B : ExpressionBuilderBase<B, E>
-        where S : ScopedExpressionBase
-        where E : class
+    internal abstract class ScopedSymbolsContext
     {
-        /// <summary>
-        /// Used for mappings such as:
-        ///     include canonical_id version '1.0.0' called alias
-        /// The key is "alias" and the value is "canonical_id.1.0.0"
-        /// </summary>
-        internal readonly IDictionary<string, string> LocalLibraryIdentifiers = new Dictionary<string, string>();
-
-        protected IList<elm.Element> Predecessors { get; init; } = new List<elm.Element>();
-
-        /// <summary>
-        /// In dodgy sort expressions where the properties are named using the undocumented IdentifierRef expression type,
-        /// this value is the implied alias name that should qualify it, e.g. from DRR-E 2022:
-        /// <code>
-        ///     "PHQ-9 Assessments" PHQ
-        ///      where ...
-        ///      sort by date from start of FHIRBase."Normalize Interval"(effective) asc
-        /// </code> 
-        /// The use of "effective" here is unqualified and is implied to be PHQ.effective
-        /// No idea how this is supposed to work with queries with multiple sources (e.g., with let statements)
-        /// </summary>
-        protected internal string? ImpliedAlias { get; protected set; } = null;
-
-
-        internal ExpressionBuilderContextBase(
-            B builder, 
-            IDictionary<string, string> localLibraryIdentifiers)
-        {
-            Builder = builder;
-            LocalLibraryIdentifiers = localLibraryIdentifiers;
-        }
-
-        public ExpressionBuilderContextBase(
-            B builder, 
-            IDictionary<string, string> localLibraryIdentifiers, 
-            string? impliedAlias, 
-            IList<elm.Element> predecessors,
-            IDictionary<string, S> scopes) 
-            : this(builder, localLibraryIdentifiers)
-        {
-            ImpliedAlias = impliedAlias;
-            this.Predecessors = predecessors.ToList(); // copy
-            this.Scopes = scopes;  // not copy
-        }
-
-        /// <summary>
-        /// Make a (mostly shallow) copy of this context.   Predecessors are deeply copied.  
-        /// </summary>
-        /// <returns></returns>
-        abstract protected T Copy(Dictionary<string, S>? optionalScopes = null);
-
-        /// <summary>
-        /// Gets the builder from which this context derives.
-        /// </summary>
-        public B Builder { get; }
-
-        /// <summary>
-        /// Gets the parent of the context's current expression.
-        /// </summary>
-        public elm.Element? Parent
-        {
-            get
-            {
-                if (Predecessors.Count < 0)
-                    return null;
-                else if (Predecessors.Count == 1)
-                    return Predecessors[0];
-                else return Predecessors[Predecessors.Count - 2];
-            }
-        }
-
-        /// <summary>
-        /// Clones this ExpressionBuilderContext, adding the current context as a predecessor.
-        /// </summary>
-        internal T Deeper(elm.Element expression)
-        {
-            var subContext = Copy();
-            subContext.Predecessors.Add(expression);
-            return subContext;
-        }
-
-
-        /// <summary>
-        /// Gets key value pairs mapping the library identifier to its library-local alias.
-        /// </summary>
-        public IEnumerable<KeyValuePair<string, string>> LibraryIdentifiers
-        {
-            // Don't return the dictionary, to protect against cast attacks.  The source dictionary must be readonly.
-            get
-            {
-                foreach (var kvp in LibraryIdentifiers)
-                    yield return kvp;
-            }
-        }
 
         /// <summary>
         /// Contains query aliases and let declarations, and any other symbol that is now "in scope"
+        /// 
+        /// TODO: this is ugly --- basically maintaining the dictionary of the base class, and doing an explicit case to derived type only if needed
+        /// it's the lazy approach for now to prevent having to change more code
+        /// 
+        /// TODO: this probably makes more sense as a has-a, not is-a relationship?
         /// </summary>
-        protected IDictionary<string, S> Scopes { get;  init; } = new Dictionary<string, S>();
+        protected IDictionary<string, ScopedExpressionBase> Scopes { get;  init; } = new Dictionary<string, ScopedExpressionBase>();
+
 
         // TODO: is this sufficient for SQL also?
         internal static string? NormalizeIdentifier(string? identifier)
@@ -165,6 +67,123 @@ namespace Hl7.Cql.Compiler
             return identifier;
         }
 
+        /// <summary>
+        /// TODO: make version of GetScope which returns ScopedExpressionBase
+        /// </summary>
+        /// <param name="elmAlias"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        internal ScopedExpressionBase GetScope(string elmAlias)
+        {
+            var normalized = NormalizeIdentifier(elmAlias!)!;
+            if (Scopes.TryGetValue(normalized, out var expression))
+                return expression;
+            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
+        }
+
+        internal bool HasScope(string elmAlias) => Scopes.ContainsKey(elmAlias);
+
+        /// <summary>
+        /// Parameters for function definitions.
+        /// </summary>
+        internal IDictionary<string, OperandExpressionBase> Operands { get; init; } = new Dictionary<string, OperandExpressionBase>();
+
+    }
+
+
+    /// <summary>
+    /// TODO: make a base class with minimal generics (with copy and scope operations?)
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="B"></typeparam>
+    /// <typeparam name="E"></typeparam>
+    internal abstract class ExpressionBuilderContextBase<T, B, E> : ScopedSymbolsContext
+        where T : ExpressionBuilderContextBase<T, B, E>
+        where B : ExpressionBuilderBase<B, E>
+        where E : class
+    {
+        internal ExpressionBuilderContextBase(
+            B builder, 
+            IDictionary<string, string> localLibraryIdentifiers)
+        {
+            Builder = builder;
+            LocalLibraryIdentifiers = localLibraryIdentifiers;
+        }
+
+        public ExpressionBuilderContextBase(
+            B builder, 
+            IDictionary<string, string> localLibraryIdentifiers, 
+            string? impliedAlias, 
+            IList<elm.Element> predecessors,
+            IDictionary<string, ScopedExpressionBase> scopes) 
+            : this(builder, localLibraryIdentifiers)
+        {
+            ImpliedAlias = impliedAlias;
+            this.Predecessors = predecessors.ToList(); // copy
+            this.Scopes = scopes;  // not copy
+        }
+
+        /// <summary>
+        /// Make a (mostly shallow) copy of this context.   Predecessors are deeply copied.  
+        /// </summary>
+        /// <returns></returns>
+        abstract protected T Copy(Dictionary<string, ScopedExpressionBase>? optionalScopes = null);
+
+        protected IList<elm.Element> Predecessors { get; init; } = new List<elm.Element>();
+
+        /// <summary>
+        /// Gets the builder from which this context derives.
+        /// </summary>
+        public B Builder { get; }
+
+        /// <summary>
+        /// Gets the parent of the context's current expression.
+        /// </summary>
+        public elm.Element? Parent
+        {
+            get
+            {
+                if (Predecessors.Count < 0)
+                    return null;
+                else if (Predecessors.Count == 1)
+                    return Predecessors[0];
+                else return Predecessors[Predecessors.Count - 2];
+            }
+        }
+
+        /// <summary>
+        /// Used for mappings such as:
+        ///     include canonical_id version '1.0.0' called alias
+        /// The key is "alias" and the value is "canonical_id.1.0.0"
+        /// </summary>
+        internal IDictionary<string, string> LocalLibraryIdentifiers = new Dictionary<string, string>();
+
+
+        /// <summary>
+        /// Gets key value pairs mapping the library identifier to its library-local alias.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string>> LibraryIdentifiers
+        {
+            // Don't return the dictionary, to protect against cast attacks.  The source dictionary must be readonly.
+            get
+            {
+                foreach (var kvp in LibraryIdentifiers)
+                    yield return kvp;
+            }
+        }
+
+        /// <summary>
+        /// In dodgy sort expressions where the properties are named using the undocumented IdentifierRef expression type,
+        /// this value is the implied alias name that should qualify it, e.g. from DRR-E 2022:
+        /// <code>
+        ///     "PHQ-9 Assessments" PHQ
+        ///      where ...
+        ///      sort by date from start of FHIRBase."Normalize Interval"(effective) asc
+        /// </code> 
+        /// The use of "effective" here is unqualified and is implied to be PHQ.effective
+        /// No idea how this is supposed to work with queries with multiple sources (e.g., with let statements)
+        /// </summary>
+        protected internal string? ImpliedAlias { get; protected set; } = null;
         internal string FormatMessage(string message, elm.Element? element)
         {
             var locator = element?.locator;
@@ -174,7 +193,6 @@ namespace Hl7.Cql.Compiler
             }
             else return $"{Builder.ThisLibraryKey}: {message}";
         }
-
 
         internal void LogError(string message, elm.Element? element = null)
         {
@@ -187,25 +205,21 @@ namespace Hl7.Cql.Compiler
         }
 
         /// <summary>
-        /// TODO: make version of GetScope which returns ScopedExpressionBase
+        /// Clones this ExpressionBuilderContext, adding the current context as a predecessor.
         /// </summary>
-        /// <param name="elmAlias"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        internal S GetScope(string elmAlias)
+        internal T Deeper(elm.Element expression)
         {
-            var normalized = NormalizeIdentifier(elmAlias!)!;
-            if (Scopes.TryGetValue(normalized, out var expression))
-                return expression;
-            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
+            var subContext = Copy();
+            subContext.Predecessors.Add(expression);
+            return subContext;
         }
 
         /// <summary>
         /// Creates a copy with the scopes provided.
         /// </summary>
-        internal T WithScopes(params KeyValuePair<string, S>[] kvps)
+        internal T WithScopes(params KeyValuePair<string, ScopedExpressionBase>[] kvps)
         {
-            var scopes = new Dictionary<string, S>(Scopes);
+            var scopes = new Dictionary<string, ScopedExpressionBase>(Scopes);
             if (Builder.Settings.AllowScopeRedefinition)
             {
                 foreach (var kvp in kvps)
@@ -235,8 +249,5 @@ namespace Hl7.Cql.Compiler
             var subContext = this.Copy(scopes);
             return subContext;
         }
-
-        internal bool HasScope(string elmAlias) => Scopes.ContainsKey(elmAlias);
-
     }
 }
