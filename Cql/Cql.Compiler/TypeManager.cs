@@ -132,7 +132,7 @@ namespace Hl7.Cql.Compiler
         }
 
         internal Type TypeFor(elm.TypeSpecifier resultTypeSpecifier,
-            ExpressionBuilderContext context)
+            ScopedSymbolsContext context)
         {
             if (resultTypeSpecifier == null) return typeof(object);
             else if (resultTypeSpecifier is IntervalTypeSpecifier interval)
@@ -207,7 +207,7 @@ namespace Hl7.Cql.Compiler
             return typeName;
         }
 
-        internal Type TupleTypeFor(TupleTypeSpecifier tuple, ExpressionBuilderContext context, Func<Type, Type>? changeType = null)
+        internal Type TupleTypeFor(TupleTypeSpecifier tuple, ScopedSymbolsContext context, Func<Type, Type>? changeType = null)
         {
             var elements = tuple.element;
 
@@ -222,7 +222,7 @@ namespace Hl7.Cql.Compiler
             }
         }
 
-        internal Type TupleTypeFor(elm.Tuple tuple, ExpressionBuilderContext context, Func<Type, Type>? changeType = null)
+        internal Type TupleTypeFor(elm.Tuple tuple, ScopedSymbolsContext context, Func<Type, Type>? changeType = null)
         {
             var elements = tuple.element;
 
@@ -238,7 +238,7 @@ namespace Hl7.Cql.Compiler
             }
         }
 
-        internal Type TupleTypeFor((string name, TypeSpecifier elementType)[] elements, ExpressionBuilderContext context, Func<Type, Type>? changeType)
+        internal Type TupleTypeFor((string name, TypeSpecifier elementType)[] elements, ScopedSymbolsContext context, Func<Type, Type>? changeType)
         {
             var elementInfo = elements!
                                 .ToDictionary(el => el.name, el =>
@@ -249,7 +249,7 @@ namespace Hl7.Cql.Compiler
                                     else
                                     {
                                         var msg = $"Tuple element {el.name} has a null {nameof(el.elementType)} property.  This property is required.";
-                                        context.LogError(msg);
+                                        //context.LogError(msg);  // TODO: figure out the inheritence hierarchy so this works
                                         throw new InvalidOperationException(msg);
                                     }
                                     if (changeType != null)

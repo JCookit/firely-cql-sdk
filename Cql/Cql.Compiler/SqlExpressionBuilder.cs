@@ -1237,7 +1237,7 @@ namespace Hl7.Cql.Compiler
                 else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
             }
 
-            //Expression? codeProperty;
+            Expression? codeProperty;
 
             var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
             var isDefaultCodeProperty = retrieve.codeProperty is null ||
@@ -1245,49 +1245,96 @@ namespace Hl7.Cql.Compiler
                  modelMapping.TryGetValue(cqlRetrieveResultType, out ClassInfo? classInfo) &&
                  classInfo.primaryCodePath == retrieve.codeProperty);
 
+            if (hasCodePropertySpecified && !isDefaultCodeProperty)
+            {
+                var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
+                codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
+            }
+            else
+            {
+                codeProperty = Expression.Constant(null, typeof(PropertyInfo));
+            }
 
-            // TODO: you are here --- continue to convert the elm tree into SQL equivalent based on the FHIR type
-            throw new NotImplementedException();
+            List<SelectElement> selectElements = new List<SelectElement>();
+            List<TableReference> tableReferences = new List<TableReference>();
 
-            //if (hasCodePropertySpecified && !isDefaultCodeProperty)
-            //{
-            //    var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
-            //    codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
-            //}
-            //else
-            //{
-            //    codeProperty = Expression.Constant(null, typeof(PropertyInfo));
-            //}
+            if (retrieve.codes != null)
+            {
+                //if (retrieve.codes is ValueSetRef valueSetRef)
+                //{
+                //    if (string.IsNullOrWhiteSpace(valueSetRef.name))
+                //        throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
+                //    var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
+                //    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                //        Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
+                //    return call;
+                //}
+                //else
+                //{
+                //    // In this construct, instead of querying a value set, we're testing resources
+                //    // against a list of codes, e.g., as defined by the code from or codesystem construct
+                //    var codes = TranslateExpression(retrieve.codes, ctx);
+                //    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                //        Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
+                //    return call;
+                //}
+            }
+            else
+            {
+                // think this is the SELECT * case
 
-            //if (retrieve.codes != null)
-            //{
-            //    if (retrieve.codes is ValueSetRef valueSetRef)
-            //    {
-            //        if (string.IsNullOrWhiteSpace(valueSetRef.name))
-            //            throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
-            //        var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
-            //        var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-            //            Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
-            //        return call;
-            //    }
-            //    else
-            //    {
-            //        // In this construct, instead of querying a value set, we're testing resources
-            //        // against a list of codes, e.g., as defined by the code from or codesystem construct
-            //        var codes = TranslateExpression(retrieve.codes, ctx);
-            //        var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-            //            Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
-            //        return call;
-            //    }
-            //}
-            //else
-            //{
-            //    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-            //        Expression.Constant(sourceElementType, typeof(Type)), Expression.Constant(null, typeof(CqlValueSet)), codeProperty!);
-            //    return call;
-            //}
+                selectElements.Add(new SelectStarExpression());
+
+                if (!FhirSqlTableMap.TryGetValue(cqlRetrieveResultType!, out var sqlTableEntry))
+                {
+                    throw new InvalidOperationException($"Could not find SQL table mapping for type {cqlRetrieveResultType}");
+                }
+
+                tableReferences.Add(new NamedTableReference
+                {
+                    SchemaObject = new SchemaObjectName
+                    {
+                        Identifiers =
+                        {
+                            new Identifier { Value = sqlTableEntry.SqlTableName }
+                        }
+                    }
+                });
+            }
+
+            // map type to query clause and from clause
+            SelectStatement select = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    FromClause = new FromClause()
+                }
+            };
+
+            IList<SelectElement> se = ((QuerySpecification)(select.QueryExpression)).SelectElements;
+            selectElements.ForEach(e => se.Add(e));
+
+            IList<TableReference> tr = ((QuerySpecification)(select.QueryExpression)).FromClause.TableReferences;
+            tableReferences.ForEach(t => tr.Add(t));
+
+            return select;
         }
-        
+
+        public class FhirSqlTableMapEntry
+        {
+            public string SqlTableName { get; init; } = String.Empty;
+            
+            // TODO: spot for default coded property?  and patient id extraction expression?
+        }
+
+        public Dictionary<string, FhirSqlTableMapEntry> FhirSqlTableMap { get; } = new Dictionary<string, FhirSqlTableMapEntry>
+        {
+            { "{http://hl7.org/fhir}Patient", new FhirSqlTableMapEntry { SqlTableName = "patient" } },
+            { "{http://hl7.org/fhir}Encounter", new FhirSqlTableMapEntry { SqlTableName = "encounter" } },
+            { "{http://hl7.org/fhir}Condition", new FhirSqlTableMapEntry { SqlTableName = "condition" } },
+            { "{http://hl7.org/fhir}Observation", new FhirSqlTableMapEntry { SqlTableName = "observation" } },
+        };
+
 
         private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {

@@ -22,6 +22,8 @@ public class JeffCou1_1_0_0
     internal Lazy<CqlCode> __Sucked_into_jet_engine;
     internal Lazy<CqlCode> __Sucked_into_jet_engine__subsequent_encounter;
     internal Lazy<CqlCode[]> __ICD10;
+    internal Lazy<IEnumerable<Condition>> __Jet_engine_conditions2;
+    internal Lazy<IEnumerable<Condition>> __Jet_engine_conditions;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
@@ -32,6 +34,8 @@ public class JeffCou1_1_0_0
         __Sucked_into_jet_engine = new Lazy<CqlCode>(this.Sucked_into_jet_engine_Value);
         __Sucked_into_jet_engine__subsequent_encounter = new Lazy<CqlCode>(this.Sucked_into_jet_engine__subsequent_encounter_Value);
         __ICD10 = new Lazy<CqlCode[]>(this.ICD10_Value);
+        __Jet_engine_conditions2 = new Lazy<IEnumerable<Condition>>(this.Jet_engine_conditions2_Value);
+        __Jet_engine_conditions = new Lazy<IEnumerable<Condition>>(this.Jet_engine_conditions_Value);
     }
     #region Dependencies
 
@@ -66,5 +70,29 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("ICD10")]
 	public CqlCode[] ICD10() => 
 		__ICD10.Value;
+
+	private IEnumerable<Condition> Jet_engine_conditions2_Value()
+	{
+		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
+
+		return a_;
+	}
+
+    [CqlDeclaration("Jet engine conditions2")]
+	public IEnumerable<Condition> Jet_engine_conditions2() => 
+		__Jet_engine_conditions2.Value;
+
+	private IEnumerable<Condition> Jet_engine_conditions_Value()
+	{
+		var a_ = this.Sucked_into_jet_engine();
+		var b_ = context.Operators.ToList<CqlCode>(a_);
+		var c_ = context.Operators.RetrieveByCodes<Condition>(b_, null);
+
+		return c_;
+	}
+
+    [CqlDeclaration("Jet engine conditions")]
+	public IEnumerable<Condition> Jet_engine_conditions() => 
+		__Jet_engine_conditions.Value;
 
 }
