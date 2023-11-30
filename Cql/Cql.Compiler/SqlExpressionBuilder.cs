@@ -406,10 +406,16 @@ namespace Hl7.Cql.Compiler
         private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context)
         {
             TSqlFragment? select = null;
+            bool isSelectAlready = queryExpression is SelectStatement;
 
+            if (isSelectAlready)
+            {
+                // TODO: could also use information in the context object to determine if we need to wrap
+                select = queryExpression;
+            }
             // does the queryExpression have literals?
             // create a wrapping scalar expression
-            if (ExpressionHasLiterals(queryExpression))
+            else if (ExpressionHasLiterals(queryExpression))
             {
                 var selectQueryExpression = new SelectScalarExpression
                 {
