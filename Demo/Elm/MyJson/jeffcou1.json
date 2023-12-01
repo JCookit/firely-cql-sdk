@@ -7,10 +7,21 @@
       }, {
          "libraryId" : "JeffCou1",
          "libraryVersion" : "1.0.0",
-         "startLine" : 22,
+         "startLine" : 25,
          "startChar" : 2,
-         "endLine" : 22,
+         "endLine" : 25,
          "endChar" : 38,
+         "message" : "Could not resolve membership operator for terminology target of the retrieve.",
+         "errorType" : "semantic",
+         "errorSeverity" : "warning",
+         "type" : "CqlToElmError"
+      }, {
+         "libraryId" : "JeffCou1",
+         "libraryVersion" : "1.0.0",
+         "startLine" : 28,
+         "startChar" : 2,
+         "endLine" : 28,
+         "endChar" : 22,
          "message" : "Could not resolve membership operator for terminology target of the retrieve.",
          "errorType" : "semantic",
          "errorSeverity" : "warning",
@@ -42,36 +53,53 @@
             "name" : "ICD10",
             "id" : "http://hl7.org/fhir/sid/icd-10",
             "accessLevel" : "Public"
+         }, {
+            "locator" : "6:1-6:50",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+            "name" : "NumbersInMyBrain",
+            "id" : "http://brain.org",
+            "accessLevel" : "Public"
          } ]
       },
       "codes" : {
          "def" : [ {
-            "locator" : "6:1-6:52",
+            "locator" : "8:1-8:52",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
             "name" : "Sucked into jet engine",
             "id" : "V97.33",
             "accessLevel" : "Public",
             "codeSystem" : {
-               "locator" : "6:46-6:52",
+               "locator" : "8:46-8:52",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
                "name" : "ICD10"
             }
          }, {
-            "locator" : "7:1-7:76",
+            "locator" : "9:1-9:76",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
             "name" : "Sucked into jet engine, subsequent encounter",
             "id" : "V97.33XD",
             "accessLevel" : "Public",
             "codeSystem" : {
-               "locator" : "7:70-7:76",
+               "locator" : "9:70-9:76",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
                "name" : "ICD10"
+            }
+         }, {
+            "locator" : "10:1-10:50",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+            "name" : "Ouchie",
+            "id" : "59621000",
+            "accessLevel" : "Public",
+            "codeSystem" : {
+               "locator" : "10:33-10:50",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+               "name" : "NumbersInMyBrain"
             }
          } ]
       },
       "statements" : {
          "def" : [ {
-            "locator" : "18:1-19:14",
+            "locator" : "21:1-22:14",
             "name" : "Jet engine conditions2",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -83,7 +111,7 @@
                }
             },
             "expression" : {
-               "locator" : "19:2-19:14",
+               "locator" : "22:2-22:14",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -93,7 +121,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "19:2-19:14",
+                  "locator" : "22:2-22:14",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -103,7 +131,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "19:2-19:12",
+                     "locator" : "22:2-22:12",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "type" : "Retrieve",
@@ -119,7 +147,7 @@
                "relationship" : [ ]
             }
          }, {
-            "locator" : "21:1-22:40",
+            "locator" : "24:1-25:40",
             "name" : "Jet engine conditions",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -131,7 +159,7 @@
                }
             },
             "expression" : {
-               "locator" : "22:2-22:40",
+               "locator" : "25:2-25:40",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -141,7 +169,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "22:2-22:40",
+                  "locator" : "25:2-25:40",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -151,7 +179,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "22:2-22:38",
+                     "locator" : "25:2-25:38",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "codeProperty" : "code",
@@ -167,9 +195,68 @@
                      "codes" : {
                         "type" : "ToList",
                         "operand" : {
-                           "locator" : "22:14-22:37",
+                           "locator" : "25:14-25:37",
                            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
                            "name" : "Sucked into jet engine",
+                           "type" : "CodeRef"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ]
+            }
+         }, {
+            "locator" : "27:1-28:24",
+            "name" : "Ouch",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "28:2-28:24",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "28:2-28:24",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "28:2-28:22",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "codeProperty" : "code",
+                     "codeComparator" : "~",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     },
+                     "codes" : {
+                        "type" : "ToList",
+                        "operand" : {
+                           "locator" : "28:14-28:21",
+                           "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+                           "name" : "Ouchie",
                            "type" : "CodeRef"
                         }
                      }

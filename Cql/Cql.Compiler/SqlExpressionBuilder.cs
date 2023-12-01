@@ -516,7 +516,7 @@ namespace Hl7.Cql.Compiler
                     // result = Coalesce(cle, ctx);
                     break;
                 case CodeRef cre:
-                    // result = CodeRef(cre, ctx);
+                    result = CodeRef(cre, ctx);
                     break;
                 case CodeSystemRef csr:
                     // result = CodeSystemRef(csr, ctx);
@@ -939,7 +939,7 @@ namespace Hl7.Cql.Compiler
                     // result = ToInteger(tde, ctx);
                     break;
                 case ToList tle:
-                    // result = ToList(tle, ctx);
+                    result = ToList(tle, ctx);
                     break;
                 case ToLong toLong:
                     // result = ToLong(toLong, ctx);
@@ -992,6 +992,51 @@ namespace Hl7.Cql.Compiler
             //}
 
             return result!;
+        }
+
+        private TSqlFragment? ToList(ToList tle, SqlExpressionBuilderContext ctx)
+        {
+            // big hack -- everything is a list already
+            return TranslateExpression(tle.operand, ctx);
+        }
+
+        /// <summary>
+        /// Return a QueryExpression (expected to be integrated into another statement)
+        /// </summary>
+        /// <param name="cre"></param>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        private TSqlFragment? CodeRef(CodeRef cre, SqlExpressionBuilderContext ctx)
+        {
+            var select = new QuerySpecification
+            {
+                SelectElements =
+                {
+                    new SelectStarExpression()
+                },
+                FromClause = new FromClause
+                {
+                    TableReferences =
+                        {
+                            new SchemaObjectFunctionTableReference
+                            {
+                                SchemaObject = new SchemaObjectName
+                                {
+                                    Identifiers =
+                                    {
+                                        new Identifier { Value = ScopedSymbolsContext.NormalizeIdentifier(cre.name) }
+                                    }
+                                }
+                            }
+                        }
+                },
+                TopRowFilter = new TopRowFilter
+                {
+                    Expression = new IntegerLiteral { Value = "1" }
+                }
+            };
+
+            return select;
         }
 
         private TSqlFragment? Query(Query query, SqlExpressionBuilderContext ctx)
@@ -1243,7 +1288,34 @@ namespace Hl7.Cql.Compiler
                 else throw new NotImplementedException($"Sources with type {retrieve.resultTypeSpecifier.GetType().Name} are not implemented.");
             }
 
-            Expression? codeProperty;
+            if (!FhirSqlTableMap.TryGetValue(cqlRetrieveResultType!, out var sqlTableEntry))
+            {
+                throw new InvalidOperationException($"Could not find SQL table mapping for type {cqlRetrieveResultType}");
+            }
+
+            List<SelectElement> selectElements = new List<SelectElement>();
+            List<TableReference> tableReferences = new List<TableReference>();
+            WhereClause? whereClause = null;
+            ScalarExpression? codeColumnExpression = sqlTableEntry.DefaultCodingCodeExpression;
+
+
+            // TODO: for now select * --- maybe will have to shape the result later
+            selectElements.Add(new SelectStarExpression());
+
+            TableReference sourceTableReference = new NamedTableReference
+            {
+                SchemaObject = new SchemaObjectName
+                {
+                    Identifiers =
+                                {
+                                    new Identifier { Value = sqlTableEntry.SqlTableName }
+                                }
+                },
+                Alias = new Identifier { Value = "sourceTable" }  // TODO: should this be a dynamic name?  see joins below
+            };
+
+
+            //Expression? codeProperty;
 
             var hasCodePropertySpecified = sourceElementType != null && retrieve.codeProperty != null;
             var isDefaultCodeProperty = retrieve.codeProperty is null ||
@@ -1253,59 +1325,94 @@ namespace Hl7.Cql.Compiler
 
             if (hasCodePropertySpecified && !isDefaultCodeProperty)
             {
-                var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
-                codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
+                throw new NotImplementedException();
+
+                //var codePropertyInfo = TypeResolver.GetProperty(sourceElementType!, retrieve.codeProperty!);
+                //codeProperty = Expression.Constant(codePropertyInfo, typeof(PropertyInfo));
             }
             else
             {
-                codeProperty = Expression.Constant(null, typeof(PropertyInfo));
+                //codeProperty = Expression.Constant(null, typeof(PropertyInfo));
             }
-
-            List<SelectElement> selectElements = new List<SelectElement>();
-            List<TableReference> tableReferences = new List<TableReference>();
 
             if (retrieve.codes != null)
             {
-                //if (retrieve.codes is ValueSetRef valueSetRef)
-                //{
-                //    if (string.IsNullOrWhiteSpace(valueSetRef.name))
-                //        throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
-                //    var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
-                //    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-                //        Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
-                //    return call;
-                //}
-                //else
-                //{
-                //    // In this construct, instead of querying a value set, we're testing resources
-                //    // against a list of codes, e.g., as defined by the code from or codesystem construct
-                //    var codes = TranslateExpression(retrieve.codes, ctx);
-                //    var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
-                //        Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
-                //    return call;
-                //}
+                if (retrieve.codes is ValueSetRef valueSetRef)
+                {
+                    //if (string.IsNullOrWhiteSpace(valueSetRef.name))
+                    //    throw new ArgumentException($"The ValueSetRef at {valueSetRef.locator} is missing a name.", nameof(retrieve));
+                    //var valueSet = InvokeDefinitionThroughRuntimeContext(valueSetRef.name!, valueSetRef!.libraryName, typeof(CqlValueSet), ctx);
+                    //var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                    //    Expression.Constant(sourceElementType, typeof(Type)), valueSet, codeProperty!);
+                    //return call;
+
+                    throw new NotImplementedException();
+                }
+                else
+                {
+                    // In this construct, instead of querying a value set, we're testing resources
+                    // against a list of codes, e.g., as defined by the code from or codesystem construct
+
+                    // this should return a subselect that can be used in a where or join clause
+                    QuerySpecification codeSelect = TranslateExpression(retrieve.codes, ctx) as QuerySpecification ?? throw new InvalidOperationException();
+
+                    tableReferences.Add(new QualifiedJoin
+                    {
+                        FirstTableReference = sourceTableReference,
+                        SecondTableReference = new QueryDerivedTable
+                        {
+                            QueryExpression = codeSelect,
+                            Alias = new Identifier { Value = "codeTable" }
+                        },
+                        SearchCondition = new BooleanBinaryExpression
+                        {
+                            BinaryExpressionType = BooleanBinaryExpressionType.And,
+                            FirstExpression = new BooleanComparisonExpression
+                            {
+                                ComparisonType = BooleanComparisonType.Equals,
+                                FirstExpression = sqlTableEntry.DefaultCodingCodeExpression,
+                                SecondExpression = new ColumnReferenceExpression
+                                {
+                                    MultiPartIdentifier = new MultiPartIdentifier
+                                    {
+                                        Identifiers =
+                                        {
+                                            new Identifier { Value = "codeTable" },
+                                            new Identifier { Value = "code" }
+                                        }
+                                    }
+                                }
+                            },
+                            SecondExpression = new BooleanComparisonExpression
+                            {
+                                ComparisonType = BooleanComparisonType.Equals,
+                                FirstExpression = sqlTableEntry.DefaultCodingCodeSystemExpression,
+                                SecondExpression = new ColumnReferenceExpression
+                                {
+                                    MultiPartIdentifier = new MultiPartIdentifier
+                                    {
+                                        Identifiers =
+                                        {
+                                            new Identifier { Value = "codeTable" },
+                                            new Identifier { Value = "codesystem" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+
+                    //var call = OperatorBinding.Bind(CqlOperator.Retrieve, ctx.RuntimeContextParameter,
+                    //    Expression.Constant(sourceElementType, typeof(Type)), codes, codeProperty!);
+                    //return call;
+                }
             }
             else
             {
-                // think this is the SELECT * case
+                // think this is the unfiltered case - everything from the table
 
-                selectElements.Add(new SelectStarExpression());
-
-                if (!FhirSqlTableMap.TryGetValue(cqlRetrieveResultType!, out var sqlTableEntry))
-                {
-                    throw new InvalidOperationException($"Could not find SQL table mapping for type {cqlRetrieveResultType}");
-                }
-
-                tableReferences.Add(new NamedTableReference
-                {
-                    SchemaObject = new SchemaObjectName
-                    {
-                        Identifiers =
-                        {
-                            new Identifier { Value = sqlTableEntry.SqlTableName }
-                        }
-                    }
-                });
+                tableReferences.Add(sourceTableReference);
             }
 
             // map type to query clause and from clause
@@ -1313,10 +1420,12 @@ namespace Hl7.Cql.Compiler
             {
                 QueryExpression = new QuerySpecification
                 {
-                    FromClause = new FromClause()
+                    FromClause = new FromClause(),
+                    WhereClause = whereClause
                 }
             };
 
+            // gotta copy 'cause the SQL dom list properties are read-only
             IList<SelectElement> se = ((QuerySpecification)(select.QueryExpression)).SelectElements;
             selectElements.ForEach(e => se.Add(e));
 
@@ -1329,15 +1438,38 @@ namespace Hl7.Cql.Compiler
         public class FhirSqlTableMapEntry
         {
             public string SqlTableName { get; init; } = String.Empty;
-            
-            // TODO: spot for default coded property?  and patient id extraction expression?
+
+            // how to find the default code property into sql (typically a column reference)
+            public ScalarExpression? DefaultCodingCodeExpression { get; init; } = null;
+            public ScalarExpression? DefaultCodingCodeSystemExpression { get; init; } = null;
         }
 
         public Dictionary<string, FhirSqlTableMapEntry> FhirSqlTableMap { get; } = new Dictionary<string, FhirSqlTableMapEntry>
         {
             { "{http://hl7.org/fhir}Patient", new FhirSqlTableMapEntry { SqlTableName = "patient" } },
             { "{http://hl7.org/fhir}Encounter", new FhirSqlTableMapEntry { SqlTableName = "encounter" } },
-            { "{http://hl7.org/fhir}Condition", new FhirSqlTableMapEntry { SqlTableName = "condition" } },
+            { "{http://hl7.org/fhir}Condition", 
+                new FhirSqlTableMapEntry
+                {
+                    SqlTableName = "condition", 
+                    DefaultCodingCodeExpression = new ColumnReferenceExpression 
+                    { 
+                        MultiPartIdentifier = new MultiPartIdentifier 
+                        { 
+                            // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
+                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_code"  } }
+                        }
+                    },
+                    DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        {
+                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_system" } }
+                        }
+                    }
+
+                }
+            },
             { "{http://hl7.org/fhir}Observation", new FhirSqlTableMapEntry { SqlTableName = "observation" } },
         };
 
