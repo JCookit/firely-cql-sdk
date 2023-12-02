@@ -1,25 +1,3 @@
-DROP FUNCTION Sucked_into_jet_engine
-GO
-CREATE FUNCTION Sucked_into_jet_engine
-( )
-RETURNS TABLE 
-AS
-RETURN 
-    SELECT *
-    FROM   (VALUES ('V97.33', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL)) AS codes(code, codesystem, display, ver)
-
-GO
-DROP FUNCTION Sucked_into_jet_engine__subsequent_encounter
-GO
-CREATE FUNCTION Sucked_into_jet_engine__subsequent_encounter
-( )
-RETURNS TABLE 
-AS
-RETURN 
-    SELECT *
-    FROM   (VALUES ('V97.33XD', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL)) AS codes(code, codesystem, display, ver)
-
-GO
 DROP FUNCTION Ouchie
 GO
 CREATE FUNCTION Ouchie
@@ -31,20 +9,9 @@ RETURN
     FROM   (VALUES ('59621000', 'http://brain.org', NULL, NULL)) AS codes(code, codesystem, display, ver)
 
 GO
-DROP FUNCTION ICD10
+DROP FUNCTION SnoMed
 GO
-CREATE FUNCTION ICD10
-( )
-RETURNS TABLE 
-AS
-RETURN 
-    SELECT *
-    FROM   (VALUES ('V97.33', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL), ('V97.33XD', 'http://hl7.org/fhir/sid/icd-10', NULL, NULL)) AS codes(code, codesystem, display, ver)
-
-GO
-DROP FUNCTION NumbersInMyBrain
-GO
-CREATE FUNCTION NumbersInMyBrain
+CREATE FUNCTION SnoMed
 ( )
 RETURNS TABLE 
 AS
@@ -53,9 +20,9 @@ RETURN
     FROM   (VALUES ('59621000', 'http://brain.org', NULL, NULL)) AS codes(code, codesystem, display, ver)
 
 GO
-DROP FUNCTION Jet_engine_conditions2
+DROP FUNCTION SimpleTest
 GO
-CREATE FUNCTION Jet_engine_conditions2
+CREATE FUNCTION SimpleTest
 ( )
 RETURNS TABLE 
 AS
@@ -64,25 +31,9 @@ RETURN
     FROM   condition AS sourceTable
 
 GO
-DROP FUNCTION Jet_engine_conditions
+DROP FUNCTION CodeTest
 GO
-CREATE FUNCTION Jet_engine_conditions
-( )
-RETURNS TABLE 
-AS
-RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
-           INNER JOIN
-           (SELECT TOP 1 *
-            FROM   Sucked_into_jet_engine()) AS codeTable
-           ON sourceTable.code_coding_code = codeTable.code
-              AND sourceTable.code_coding_system = codeTable.codesystem
-
-GO
-DROP FUNCTION Ouch
-GO
-CREATE FUNCTION Ouch
+CREATE FUNCTION CodeTest
 ( )
 RETURNS TABLE 
 AS
@@ -94,5 +45,27 @@ RETURN
             FROM   Ouchie()) AS codeTable
            ON sourceTable.code_coding_code = codeTable.code
               AND sourceTable.code_coding_system = codeTable.codesystem
+
+GO
+DROP FUNCTION DateTest
+GO
+CREATE FUNCTION DateTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT *
+    FROM   condition AS sourceTable
+
+GO
+DROP FUNCTION DateTest2
+GO
+CREATE FUNCTION DateTest2
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT *
+    FROM   condition AS sourceTable
 
 GO

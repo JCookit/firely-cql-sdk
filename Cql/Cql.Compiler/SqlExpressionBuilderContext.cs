@@ -214,6 +214,20 @@ namespace Hl7.Cql.Compiler
         //    return subContext;
         //}
 
+        /// <summary>
+        /// TODO: delightfully inefficient - it copies the list in order to leverage the base class behavior.  Figure out a better way
+        /// </summary>
+        /// <param name="kvps"></param>
+        /// <returns></returns>
+        internal SqlExpressionBuilderContext WithScopes(params KeyValuePair<string, ScopedSqlExpression>[] kvps)
+        {
+            KeyValuePair<string, ScopedExpressionBase>[] baseType;
+
+            baseType = kvps.Select(kvp => new KeyValuePair<string, ScopedExpressionBase>(kvp.Key, kvp.Value)).ToArray();
+
+            return base.WithScopes(baseType);
+        }
+
         //internal ExpressionBuilderContext WithImpliedAlias(string aliasName, Expression linqExpression, elm.Element elmExpression)
         //{
         //    var subContext = WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(aliasName, (linqExpression, elmExpression)));

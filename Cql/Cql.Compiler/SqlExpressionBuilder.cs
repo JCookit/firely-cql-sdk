@@ -474,7 +474,7 @@ namespace Hl7.Cql.Compiler
                     result = Add(add, ctx);
                     break;
                 case After after:
-                    // result = After(after, ctx);
+                    result = After(after, ctx);
                     break;
                 case AliasRef ar:
                     // result = AliasRef(ar, ctx);
@@ -486,7 +486,7 @@ namespace Hl7.Cql.Compiler
                     // result = And(and, ctx);
                     break;
                 case As @as:
-                    // result = As(@as, ctx);
+                    result = As(@as, ctx);
                     break;
                 case AnyTrue ate:
                     // result = AnyTrue(ate, ctx);
@@ -627,7 +627,7 @@ namespace Hl7.Cql.Compiler
                     // result = ExpandValueSet(evs, ctx);
                     break;
                 case FunctionRef fre:
-                    // result = FunctionRef(fre, ctx);
+                    result = FunctionRef(fre, ctx);
                     break;
                 case ExpressionRef ere:
                     result = ExpressionRef(ere, ctx);
@@ -843,7 +843,7 @@ namespace Hl7.Cql.Compiler
                     // result = ProperIncludedIn(pie, ctx);
                     break;
                 case Property pe:
-                    // result = Property(pe, ctx);
+                    result = Property(pe, ctx);
                     break;
                 case Quantity qua:
                     // result = Quantity(qua, ctx);
@@ -994,6 +994,39 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        private TSqlFragment? Property(Property pe, SqlExpressionBuilderContext ctx)
+        {
+            // TODO: translate into a tsqlfragment which is a column reference with multi-part identifier?
+            throw new NotImplementedException();
+        }
+
+        private TSqlFragment? As(As @as, SqlExpressionBuilderContext ctx)
+        {
+            // TODO: make this no-op for now
+
+            return TranslateExpression(@as.operand, ctx);
+        }
+
+        private TSqlFragment? FunctionRef(FunctionRef fre, SqlExpressionBuilderContext ctx)
+        {
+            if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.libraryName, "FHIRHelpers") == 0)
+            {
+                if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.name, "ToDateTime") == 0)
+                {
+                    // TODO: no-op the ToDateTime function since we'll assume it already is a datetime
+                    return TranslateExpression(fre.operand[0], ctx);
+
+                }
+            }
+            throw new NotImplementedException();
+        }
+
+        private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx)
+        {
+            // TODO: decend down lhs (usually a column ref) and rhs (usually a datetime literal) and build a where clause
+            throw new NotImplementedException();
+        }
+
         private TSqlFragment? ToList(ToList tle, SqlExpressionBuilderContext ctx)
         {
             // big hack -- everything is a list already
@@ -1064,7 +1097,6 @@ namespace Hl7.Cql.Compiler
             // fully formed SELECT * with table and where
             var source = TranslateExpression(querySource.expression!, ctx);
 
-            return source;
 
             // further modification necessary?
 
@@ -1076,7 +1108,6 @@ namespace Hl7.Cql.Compiler
             //    source = arrayInit;
             //    isSingle = true;
             //}
-            //var @return = source;
             //Type elementType = TypeResolver.GetListElementType(@return.Type, @throw: true)!;
 
             //// handle with/such-that
@@ -1100,36 +1131,44 @@ namespace Hl7.Cql.Compiler
             //        }
             //    }
             //}
-            //// The element type may have changed
+            // The element type may have changed
             //elementType = TypeResolver.GetListElementType(@return.Type, @throw: true)!;
 
-            //if (query.where != null)
-            //{
-            //    var parameterName = ExpressionBuilderContext.NormalizeIdentifier(querySourceAlias)
-            //        ?? TypeNameToIdentifier(elementType, ctx);
-            //    var whereLambdaParameter = Expression.Parameter(elementType, parameterName);
-            //    if (querySourceAlias == "ItemOnLine")
-            //    {
-            //    }
-            //    var scopes = new[] { new KeyValuePair<string, ScopedExpression>(querySourceAlias!, new ScopedExpression(whereLambdaParameter, querySource.expression)) };
-            //    var subContext = ctx.WithScopes(scopes);
+            if (query.where != null)
+            {
+                var parameterName = ExpressionBuilderContext.NormalizeIdentifier(querySourceAlias)
+                    ?? throw new NotImplementedException();
+                //    var whereLambdaParameter = Expression.Parameter(elementType, parameterName);
+                //    if (querySourceAlias == "ItemOnLine")
+                //    {
+                //    }
+                var resultType = TypeResolver.ResolveType(query.aggregate.resultTypeName.Name!) ?? throw new NotImplementedException("not sure what this means");
+                var scopes = new[]
+                {
+                    new KeyValuePair<string, ScopedSqlExpression>(
+                        querySourceAlias!,
+                        new ScopedSqlExpression(new Identifier { Value = querySourceAlias }, querySource.expression, resultType))
+                };
+                var subContext = ctx.WithScopes(scopes);
 
-            //    if (query.let != null)
-            //    {
-            //        var letScopes = new KeyValuePair<string, ScopedExpression>[query.let.Length];
-            //        for (int i = 0; i < query.let.Length; i++)
-            //        {
-            //            var let = query.let[i];
-            //            var expression = TranslateExpression(let.expression!, subContext);
-            //            letScopes[i] = new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!));
-            //        }
-            //        subContext = subContext.WithScopes(letScopes);
-            //    }
-            //    var whereBody = TranslateExpression(query.where, subContext);
-            //    var whereLambda = System.Linq.Expressions.Expression.Lambda(whereBody, whereLambdaParameter);
-            //    var callWhere = OperatorBinding.Bind(CqlOperator.Where, ctx.RuntimeContextParameter, @return, whereLambda);
-            //    @return = callWhere;
-            //}
+                //    if (query.let != null)
+                //    {
+                //        var letScopes = new KeyValuePair<string, ScopedExpression>[query.let.Length];
+                //        for (int i = 0; i < query.let.Length; i++)
+                //        {
+                //            var let = query.let[i];
+                //            var expression = TranslateExpression(let.expression!, subContext);
+                //            letScopes[i] = new KeyValuePair<string, ScopedExpression>(let.identifier!, new ScopedExpression(expression, let.expression!));
+                //        }
+                //        subContext = subContext.WithScopes(letScopes);
+                //    }
+
+                var whereBody = TranslateExpression(query.where, subContext);
+
+                //    var whereLambda = System.Linq.Expressions.Expression.Lambda(whereBody, whereLambdaParameter);
+                //    var callWhere = OperatorBinding.Bind(CqlOperator.Where, ctx.RuntimeContextParameter, @return, whereLambda);
+                //    @return = callWhere;
+            }
 
             //if (query.@return != null)
             //{
@@ -1256,8 +1295,40 @@ namespace Hl7.Cql.Compiler
             //    @return = callSingle;
             //}
 
+            return source;
+
             //return @return;
         }
+
+        protected string TypeNameToIdentifier(Type type, SqlExpressionBuilderContext? ctx)
+        {
+            var typeName = type.Name.ToLowerInvariant();
+            if (type.IsGenericType)
+            {
+                var genericTypeNames = string.Join("_", type.GetGenericArguments().Select(t => TypeNameToIdentifier(t, null)));
+                var tick = typeName.IndexOf('`');
+                if (tick > -1)
+                    typeName = typeName[..tick];
+                var fullName = $"{typeName}_{genericTypeNames}";
+                typeName = fullName;
+            }
+
+            if (ctx != null)
+            {
+                int i = 1;
+                var uniqueTypeName = typeName;
+                while (ctx.HasScope(uniqueTypeName))
+                {
+                    uniqueTypeName = $"{typeName}{i}";
+                    i++;
+                }
+                typeName = uniqueTypeName;
+            }
+
+            return ScopedSymbolsContext.NormalizeIdentifier(typeName!)!;
+        }
+
+
 
         private TSqlFragment? MultiSourceQuery(Query query, SqlExpressionBuilderContext ctx)
         {
@@ -1444,6 +1515,10 @@ namespace Hl7.Cql.Compiler
             public ScalarExpression? DefaultCodingCodeSystemExpression { get; init; } = null;
         }
 
+        /// <summary>
+        /// for now, harded metadata about the FHIR tables. 
+        /// this should be data-driven, and also may have some dynamic components 
+        /// </summary>
         public Dictionary<string, FhirSqlTableMapEntry> FhirSqlTableMap { get; } = new Dictionary<string, FhirSqlTableMapEntry>
         {
             { "{http://hl7.org/fhir}Patient", new FhirSqlTableMapEntry { SqlTableName = "patient" } },
@@ -1467,10 +1542,29 @@ namespace Hl7.Cql.Compiler
                             Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_system" } }
                         }
                     }
-
                 }
             },
-            { "{http://hl7.org/fhir}Observation", new FhirSqlTableMapEntry { SqlTableName = "observation" } },
+            { "{http://hl7.org/fhir}Observation", 
+                new FhirSqlTableMapEntry
+                {
+                    SqlTableName = "observation",
+                    DefaultCodingCodeExpression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        { 
+                            // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
+                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_code"  } }
+                        }
+                    },
+                    DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        {
+                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_system" } }
+                        }
+                    }
+                }
+            },
         };
 
 

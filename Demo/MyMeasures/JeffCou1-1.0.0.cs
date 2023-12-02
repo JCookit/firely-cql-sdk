@@ -19,48 +19,32 @@ public class JeffCou1_1_0_0
 
     #region Cached values
 
-    internal Lazy<CqlCode> __Sucked_into_jet_engine;
-    internal Lazy<CqlCode> __Sucked_into_jet_engine__subsequent_encounter;
     internal Lazy<CqlCode> __Ouchie;
-    internal Lazy<CqlCode[]> __ICD10;
-    internal Lazy<CqlCode[]> __NumbersInMyBrain;
-    internal Lazy<IEnumerable<Condition>> __Jet_engine_conditions2;
-    internal Lazy<IEnumerable<Condition>> __Jet_engine_conditions;
-    internal Lazy<IEnumerable<Condition>> __Ouch;
+    internal Lazy<CqlCode[]> __SnoMed;
+    internal Lazy<IEnumerable<Condition>> __SimpleTest;
+    internal Lazy<IEnumerable<Condition>> __CodeTest;
+    internal Lazy<IEnumerable<Condition>> __DateTest;
+    internal Lazy<IEnumerable<Condition>> __DateTest2;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
     {
         this.context = context ?? throw new ArgumentNullException("context");
 
+        FHIRHelpers_4_0_001 = new FHIRHelpers_4_0_001(context);
 
-        __Sucked_into_jet_engine = new Lazy<CqlCode>(this.Sucked_into_jet_engine_Value);
-        __Sucked_into_jet_engine__subsequent_encounter = new Lazy<CqlCode>(this.Sucked_into_jet_engine__subsequent_encounter_Value);
         __Ouchie = new Lazy<CqlCode>(this.Ouchie_Value);
-        __ICD10 = new Lazy<CqlCode[]>(this.ICD10_Value);
-        __NumbersInMyBrain = new Lazy<CqlCode[]>(this.NumbersInMyBrain_Value);
-        __Jet_engine_conditions2 = new Lazy<IEnumerable<Condition>>(this.Jet_engine_conditions2_Value);
-        __Jet_engine_conditions = new Lazy<IEnumerable<Condition>>(this.Jet_engine_conditions_Value);
-        __Ouch = new Lazy<IEnumerable<Condition>>(this.Ouch_Value);
+        __SnoMed = new Lazy<CqlCode[]>(this.SnoMed_Value);
+        __SimpleTest = new Lazy<IEnumerable<Condition>>(this.SimpleTest_Value);
+        __CodeTest = new Lazy<IEnumerable<Condition>>(this.CodeTest_Value);
+        __DateTest = new Lazy<IEnumerable<Condition>>(this.DateTest_Value);
+        __DateTest2 = new Lazy<IEnumerable<Condition>>(this.DateTest2_Value);
     }
     #region Dependencies
 
+    public FHIRHelpers_4_0_001 FHIRHelpers_4_0_001 { get; }
 
     #endregion
-
-	private CqlCode Sucked_into_jet_engine_Value() => 
-		new CqlCode("V97.33", "http://hl7.org/fhir/sid/icd-10", null, null);
-
-    [CqlDeclaration("Sucked into jet engine")]
-	public CqlCode Sucked_into_jet_engine() => 
-		__Sucked_into_jet_engine.Value;
-
-	private CqlCode Sucked_into_jet_engine__subsequent_encounter_Value() => 
-		new CqlCode("V97.33XD", "http://hl7.org/fhir/sid/icd-10", null, null);
-
-    [CqlDeclaration("Sucked into jet engine, subsequent encounter")]
-	public CqlCode Sucked_into_jet_engine__subsequent_encounter() => 
-		__Sucked_into_jet_engine__subsequent_encounter.Value;
 
 	private CqlCode Ouchie_Value() => 
 		new CqlCode("59621000", "http://brain.org", null, null);
@@ -69,22 +53,7 @@ public class JeffCou1_1_0_0
 	public CqlCode Ouchie() => 
 		__Ouchie.Value;
 
-	private CqlCode[] ICD10_Value()
-	{
-		var a_ = new CqlCode[]
-		{
-			new CqlCode("V97.33", "http://hl7.org/fhir/sid/icd-10", null, null),
-			new CqlCode("V97.33XD", "http://hl7.org/fhir/sid/icd-10", null, null),
-		};
-
-		return a_;
-	}
-
-    [CqlDeclaration("ICD10")]
-	public CqlCode[] ICD10() => 
-		__ICD10.Value;
-
-	private CqlCode[] NumbersInMyBrain_Value()
+	private CqlCode[] SnoMed_Value()
 	{
 		var a_ = new CqlCode[]
 		{
@@ -94,35 +63,22 @@ public class JeffCou1_1_0_0
 		return a_;
 	}
 
-    [CqlDeclaration("NumbersInMyBrain")]
-	public CqlCode[] NumbersInMyBrain() => 
-		__NumbersInMyBrain.Value;
+    [CqlDeclaration("SnoMed")]
+	public CqlCode[] SnoMed() => 
+		__SnoMed.Value;
 
-	private IEnumerable<Condition> Jet_engine_conditions2_Value()
+	private IEnumerable<Condition> SimpleTest_Value()
 	{
 		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
 
 		return a_;
 	}
 
-    [CqlDeclaration("Jet engine conditions2")]
-	public IEnumerable<Condition> Jet_engine_conditions2() => 
-		__Jet_engine_conditions2.Value;
+    [CqlDeclaration("SimpleTest")]
+	public IEnumerable<Condition> SimpleTest() => 
+		__SimpleTest.Value;
 
-	private IEnumerable<Condition> Jet_engine_conditions_Value()
-	{
-		var a_ = this.Sucked_into_jet_engine();
-		var b_ = context.Operators.ToList<CqlCode>(a_);
-		var c_ = context.Operators.RetrieveByCodes<Condition>(b_, null);
-
-		return c_;
-	}
-
-    [CqlDeclaration("Jet engine conditions")]
-	public IEnumerable<Condition> Jet_engine_conditions() => 
-		__Jet_engine_conditions.Value;
-
-	private IEnumerable<Condition> Ouch_Value()
+	private IEnumerable<Condition> CodeTest_Value()
 	{
 		var a_ = this.Ouchie();
 		var b_ = context.Operators.ToList<CqlCode>(a_);
@@ -131,8 +87,48 @@ public class JeffCou1_1_0_0
 		return c_;
 	}
 
-    [CqlDeclaration("Ouch")]
-	public IEnumerable<Condition> Ouch() => 
-		__Ouch.Value;
+    [CqlDeclaration("CodeTest")]
+	public IEnumerable<Condition> CodeTest() => 
+		__CodeTest.Value;
+
+	private IEnumerable<Condition> DateTest_Value()
+	{
+		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
+		bool? b_(Condition c)
+		{
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((c?.Onset as FhirDateTime));
+			var e_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var f_ = context.Operators.After(d_, e_, null);
+
+			return f_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("DateTest")]
+	public IEnumerable<Condition> DateTest() => 
+		__DateTest.Value;
+
+	private IEnumerable<Condition> DateTest2_Value()
+	{
+		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
+		bool? b_(Condition c)
+		{
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((c?.Onset as FhirDateTime));
+			var e_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var f_ = context.Operators.After(d_, e_, null);
+
+			return f_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("DateTest2")]
+	public IEnumerable<Condition> DateTest2() => 
+		__DateTest2.Value;
 
 }
