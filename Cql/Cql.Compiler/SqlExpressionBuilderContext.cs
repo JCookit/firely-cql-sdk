@@ -228,6 +228,15 @@ namespace Hl7.Cql.Compiler
             return base.WithScopes(baseType);
         }
 
+        new internal ScopedSqlExpression GetScope(string elmAlias)
+        {
+            var normalized = NormalizeIdentifier(elmAlias!)!;
+            if (Scopes.TryGetValue(normalized, out var expression))
+                return expression as ScopedSqlExpression ?? throw new InvalidOperationException();
+            else throw new ArgumentException($"The scope alias {elmAlias}, normalized to {normalized}, is not present in the scopes dictionary.", nameof(elmAlias));
+        }
+
+
         //internal ExpressionBuilderContext WithImpliedAlias(string aliasName, Expression linqExpression, elm.Element elmExpression)
         //{
         //    var subContext = WithScopes(new KeyValuePair<string, (Expression, elm.Element)>(aliasName, (linqExpression, elmExpression)));

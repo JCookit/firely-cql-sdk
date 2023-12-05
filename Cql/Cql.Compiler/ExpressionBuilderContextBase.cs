@@ -68,7 +68,6 @@ namespace Hl7.Cql.Compiler
         }
 
         /// <summary>
-        /// TODO: make version of GetScope which returns ScopedExpressionBase
         /// </summary>
         /// <param name="elmAlias"></param>
         /// <returns></returns>

@@ -996,8 +996,41 @@ namespace Hl7.Cql.Compiler
 
         private TSqlFragment? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
-            // TODO: translate into a tsqlfragment which is a column reference with multi-part identifier?
-            throw new NotImplementedException();
+            ColumnReferenceExpression? columnReferenceExpression = null;
+
+            var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException(); 
+            var sourceTableType = sourceTable.Type;
+            var sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
+
+            // map the property name to a column name -- TODO: should be a lookup
+            switch (sourceTableType.Name.ToLowerInvariant())
+            {
+                case "condition":
+                    {
+                        switch (pe.path)
+                        {
+                            case "onset":
+                                columnReferenceExpression = new ColumnReferenceExpression
+                                {
+                                    MultiPartIdentifier = new MultiPartIdentifier
+                                    {
+                                        Identifiers =
+                                        {
+                                            sourceTableIdentifier,
+                                            new Identifier { Value = "onsetDateTime" }
+                                        }
+                                    }
+                                };
+                                break;
+                        }
+                        break;
+                    }
+            }
+
+            if (columnReferenceExpression == null)
+                throw new NotImplementedException();
+
+            return columnReferenceExpression;
         }
 
         private TSqlFragment? As(As @as, SqlExpressionBuilderContext ctx)
@@ -1021,9 +1054,17 @@ namespace Hl7.Cql.Compiler
             throw new NotImplementedException();
         }
 
+        // returns a boolean expression
         private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx)
         {
             // TODO: decend down lhs (usually a column ref) and rhs (usually a datetime literal) and build a where clause
+            var lhs = TranslateExpression(after.operand[0], ctx);
+
+            // TODO: build datetime into subselect (like other scalar functions)
+            var rhs = TranslateExpression(after.operand[1], ctx);
+
+            // TODO: join with sql operator
+
             throw new NotImplementedException();
         }
 
@@ -1094,7 +1135,7 @@ namespace Hl7.Cql.Compiler
             if (querySource.expression == null)
                 throw new ArgumentException("Query sources must have an expression", nameof(query));
 
-            // fully formed SELECT * with table and where
+            // fully formed SELECT * with table (and possible where code)
             var source = TranslateExpression(querySource.expression!, ctx);
 
 
@@ -1142,12 +1183,34 @@ namespace Hl7.Cql.Compiler
                 //    if (querySourceAlias == "ItemOnLine")
                 //    {
                 //    }
-                var resultType = TypeResolver.ResolveType(query.aggregate.resultTypeName.Name!) ?? throw new NotImplementedException("not sure what this means");
+
+                // TODO: lifted this pattern from Retrieve; unclear if Query follows same
+                Type sourceElementType;
+                if (query.resultTypeSpecifier == null)
+                {
+                    if (string.IsNullOrWhiteSpace(query.resultTypeName.Name))
+                        throw new ArgumentException("If a Query lacks a ResultTypeSpecifier it must have a ResultTypeName", nameof(query));
+                    string cqlQueryResultType = query.resultTypeName.Name;
+
+                    sourceElementType = TypeResolver.ResolveType(cqlQueryResultType) ?? throw new InvalidOperationException();
+                }
+                else
+                {
+                    if (query.resultTypeSpecifier is Elm.ListTypeSpecifier listTypeSpecifier)
+                    {
+                        //cqlQueryResultType = listTypeSpecifier.elementType is Elm.NamedTypeSpecifier nts ? nts.name.Name : null;
+                        sourceElementType = TypeManager.TypeFor(listTypeSpecifier.elementType, ctx);
+                    }
+                    else throw new NotImplementedException($"Sources with type {query.resultTypeSpecifier.GetType().Name} are not implemented.");
+                }
+
+                // create a new scope with the given alias, a table reference, and the FHIR type of the table
+                Identifier tableIdentifier = new Identifier { Value = "sourceTable" };  // TODO: this should be the same as what was used in the retrieve
                 var scopes = new[]
                 {
                     new KeyValuePair<string, ScopedSqlExpression>(
                         querySourceAlias!,
-                        new ScopedSqlExpression(new Identifier { Value = querySourceAlias }, querySource.expression, resultType))
+                        new ScopedSqlExpression(tableIdentifier, querySource.expression, sourceElementType))
                 };
                 var subContext = ctx.WithScopes(scopes);
 
@@ -1164,6 +1227,8 @@ namespace Hl7.Cql.Compiler
                 //    }
 
                 var whereBody = TranslateExpression(query.where, subContext);
+
+                // TODO:  join with existing query (possibly adding WHERE clause or AND with existing)
 
                 //    var whereLambda = System.Linq.Expressions.Expression.Lambda(whereBody, whereLambdaParameter);
                 //    var callWhere = OperatorBinding.Bind(CqlOperator.Where, ctx.RuntimeContextParameter, @return, whereLambda);
@@ -1369,7 +1434,6 @@ namespace Hl7.Cql.Compiler
             WhereClause? whereClause = null;
             ScalarExpression? codeColumnExpression = sqlTableEntry.DefaultCodingCodeExpression;
 
-
             // TODO: for now select * --- maybe will have to shape the result later
             selectElements.Add(new SelectStarExpression());
 
@@ -1482,6 +1546,8 @@ namespace Hl7.Cql.Compiler
             else
             {
                 // think this is the unfiltered case - everything from the table
+
+                // TODO:  create WHERE 1=1 clause so there is always a where clause?
 
                 tableReferences.Add(sourceTableReference);
             }

@@ -45,12 +45,12 @@ namespace Hl7.Cql.Compiler
 
     internal class ScopedSqlExpression : ScopedExpressionBase
     {
-        public TSqlFragment SqlExpressionBuilder { get; }
+        public TSqlFragment SqlExpression { get; }
 
         public ScopedSqlExpression(TSqlFragment sql, elm.Element elmExpression, Type type)
             : base(elmExpression, type)
         {
-            SqlExpressionBuilder = sql;
+            SqlExpression = sql;
         }
     }
 
