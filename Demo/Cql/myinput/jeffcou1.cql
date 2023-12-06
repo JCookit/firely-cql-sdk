@@ -31,7 +31,17 @@ define "CodeTest":
 define "DateTest2":
 	[Condition] c
 		where 
-			(c.onset) after @2020-01-01T00:00:00.000Z
+			(c.onset) after @2020-01-01T00:00:00.000Z 
+
+define "DateTest3":
+	[Condition] c
+		where 
+			(c.onset) after @2020-01-01T00:00:00.000Z and (c.onset) before @2022-02-01T00:00:00.000Z
+
+define "DateTest4":
+	[Condition: "Ouchie"] c
+		where 
+			(c.onset) after @2020-01-01T00:00:00.000Z and (c.onset) before @2022-02-01T00:00:00.000Z
 
 //define "DateIntervalTest":
 //	[Condition] c

@@ -47,17 +47,6 @@ RETURN
               AND sourceTable.code_coding_system = codeTable.codesystem
 
 GO
-DROP FUNCTION DateTest
-GO
-CREATE FUNCTION DateTest
-( )
-RETURNS TABLE 
-AS
-RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
-
-GO
 DROP FUNCTION DateTest2
 GO
 CREATE FUNCTION DateTest2
@@ -67,5 +56,42 @@ AS
 RETURN 
     SELECT *
     FROM   condition AS sourceTable
+    WHERE  sourceTable.onsetDateTime > ((SELECT DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
+                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
+
+GO
+DROP FUNCTION DateTest3
+GO
+CREATE FUNCTION DateTest3
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT *
+    FROM   condition AS sourceTable
+    WHERE  sourceTable.onsetDateTime > ((SELECT DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
+                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
+           AND sourceTable.onsetDateTime < ((SELECT DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
+                                             FROM   (SELECT NULL AS unused_column) AS UNUSED))
+
+GO
+DROP FUNCTION DateTest4
+GO
+CREATE FUNCTION DateTest4
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT *
+    FROM   condition AS sourceTable
+           INNER JOIN
+           (SELECT TOP 1 *
+            FROM   Ouchie()) AS codeTable
+           ON sourceTable.code_coding_code = codeTable.code
+              AND sourceTable.code_coding_system = codeTable.codesystem
+    WHERE  sourceTable.onsetDateTime > ((SELECT DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
+                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
+           AND sourceTable.onsetDateTime < ((SELECT DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
+                                             FROM   (SELECT NULL AS unused_column) AS UNUSED))
 
 GO

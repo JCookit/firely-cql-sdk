@@ -10,6 +10,7 @@ using Microsoft.SqlServer.TransactSql.ScriptDom;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -403,7 +404,7 @@ namespace Hl7.Cql.Compiler
             return BuildSelectForCodeSystem(new List<CqlCode> { systemCode });
         }
 
-        private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context)
+        private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context, bool createScalarSubquery = false)
         {
             TSqlFragment? select = null;
             bool isSelectAlready = queryExpression is SelectStatement;
@@ -426,26 +427,38 @@ namespace Hl7.Cql.Compiler
                     }
                 };
 
-                select = new SelectStatement
+                var selectQuerySpecification = new QueryParenthesisExpression
                 {
-                    QueryExpression = new QueryParenthesisExpression
+                    QueryExpression = new QuerySpecification
                     {
-                        QueryExpression = new QuerySpecification
-                        {
-                            SelectElements = 
-                            {
-                                selectQueryExpression
-                            },
-                            FromClause = new FromClause
-                            {
-                                TableReferences =
+                        SelectElements =
                                 {
-                                    context.OutputContext.FromTables
-                                }
-                            }
-                        },
-                    }
+                                    selectQueryExpression
+                                },
+                        FromClause = new FromClause
+                        {
+                            TableReferences =
+                                    {
+                                        context.OutputContext.FromTables
+                                    }
+                        }
+                    },
                 };
+
+                if (!createScalarSubquery)
+                {
+                    select = new SelectStatement
+                    {
+                        QueryExpression = selectQuerySpecification
+                    };
+                }
+                else
+                {
+                    select = new ScalarSubquery
+                    {
+                        QueryExpression = selectQuerySpecification
+                    };
+                }
             }
 
             if (select == null)
@@ -483,7 +496,7 @@ namespace Hl7.Cql.Compiler
                     // result = AllTrue(alt, ctx);
                     break;
                 case And and:
-                    // result = And(and, ctx);
+                    result = And(and, ctx);
                     break;
                 case As @as:
                     result = As(@as, ctx);
@@ -498,7 +511,7 @@ namespace Hl7.Cql.Compiler
                     // result = Avg(avg, ctx);
                     break;
                 case Before before:
-                    // result = Before(before, ctx);
+                    result = Before(before, ctx);
                     break;
                 case CalculateAgeAt caa:
                     // result = CalculateAgeAt(caa, ctx);
@@ -573,7 +586,7 @@ namespace Hl7.Cql.Compiler
                     // result = DateFrom(dfe, ctx);
                     break;
                 case Elm.DateTime dt:
-                    // result = DateTime(dt, ctx);
+                    result = DateTime(dt, ctx);
                     break;
                 case Date d:
                     // result = Date(d, ctx);
@@ -994,6 +1007,78 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        // returns a boolean expression
+        private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx)
+        {
+            var lhs = TranslateExpression(after.operand[0], ctx);
+
+            // TODO: build datetime into subselect (like other scalar functions)
+            var rhs = TranslateExpression(after.operand[1], ctx);
+
+            var binaryExpression = new BooleanComparisonExpression
+            {
+                FirstExpression = lhs as ScalarExpression ?? throw new InvalidOperationException(),
+                ComparisonType = BooleanComparisonType.GreaterThan,
+                SecondExpression = rhs as ScalarExpression ?? throw new InvalidOperationException()
+            };
+
+            return binaryExpression;
+        }
+
+        private TSqlFragment? Before(Before before, SqlExpressionBuilderContext ctx)
+        {
+            var lhs = TranslateExpression(before.operand[0], ctx);
+
+            // TODO: build datetime into subselect (like other scalar functions)
+            var rhs = TranslateExpression(before.operand[1], ctx);
+
+            var binaryExpression = new BooleanComparisonExpression
+            {
+                FirstExpression = lhs as ScalarExpression ?? throw new InvalidOperationException(),
+                ComparisonType = BooleanComparisonType.LessThan,
+                SecondExpression = rhs as ScalarExpression ?? throw new InvalidOperationException()
+            };
+
+            return binaryExpression;
+        }
+
+        // returns a boolean expression
+        private TSqlFragment? And(And and, SqlExpressionBuilderContext ctx)
+        {
+            var lhs = TranslateExpression(and.operand[0], ctx);
+            var rhs = TranslateExpression(and.operand[1], ctx);
+
+            return new BooleanBinaryExpression
+            {
+                FirstExpression = lhs as BooleanExpression ?? throw new InvalidOperationException(),
+                BinaryExpressionType = BooleanBinaryExpressionType.And,
+                SecondExpression = rhs as BooleanExpression ?? throw new InvalidOperationException()
+            };
+        }
+
+
+        // create a subselect expression that builds a datetime2
+        private TSqlFragment? DateTime(Elm.DateTime dt, SqlExpressionBuilderContext ctx)
+        {
+            var functionExpression = new FunctionCall
+            {
+                FunctionName = new Identifier { Value = "DATETIME2FROMPARTS" },
+                Parameters =
+                {
+                    TranslateExpression(dt.year, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    TranslateExpression(dt.month, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    TranslateExpression(dt.day, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    TranslateExpression(dt.hour, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    TranslateExpression(dt.minute, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    TranslateExpression(dt.second, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    TranslateExpression(dt.millisecond, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    new IntegerLiteral { Value = "7" }, // precision hardcoded
+                }
+            };
+
+            return WrapWithSelect(functionExpression, ctx, true);
+        }
+
         private TSqlFragment? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
             ColumnReferenceExpression? columnReferenceExpression = null;
@@ -1051,20 +1136,6 @@ namespace Hl7.Cql.Compiler
 
                 }
             }
-            throw new NotImplementedException();
-        }
-
-        // returns a boolean expression
-        private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx)
-        {
-            // TODO: decend down lhs (usually a column ref) and rhs (usually a datetime literal) and build a where clause
-            var lhs = TranslateExpression(after.operand[0], ctx);
-
-            // TODO: build datetime into subselect (like other scalar functions)
-            var rhs = TranslateExpression(after.operand[1], ctx);
-
-            // TODO: join with sql operator
-
             throw new NotImplementedException();
         }
 
@@ -1135,7 +1206,7 @@ namespace Hl7.Cql.Compiler
             if (querySource.expression == null)
                 throw new ArgumentException("Query sources must have an expression", nameof(query));
 
-            // fully formed SELECT * with table (and possible where code)
+            // fully formed SELECT * with table (and _for now_ no where clause)
             var source = TranslateExpression(querySource.expression!, ctx);
 
 
@@ -1227,6 +1298,15 @@ namespace Hl7.Cql.Compiler
                 //    }
 
                 var whereBody = TranslateExpression(query.where, subContext);
+
+                var sourceSelect = source as SelectStatement ?? throw new InvalidOperationException();
+                var queryExpression = sourceSelect.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
+
+                queryExpression.WhereClause = new WhereClause
+                {
+                    SearchCondition = whereBody as BooleanExpression ?? throw new InvalidOperationException()
+                };
+                
 
                 // TODO:  join with existing query (possibly adding WHERE clause or AND with existing)
 
@@ -1431,7 +1511,7 @@ namespace Hl7.Cql.Compiler
 
             List<SelectElement> selectElements = new List<SelectElement>();
             List<TableReference> tableReferences = new List<TableReference>();
-            WhereClause? whereClause = null;
+            //WhereClause? whereClause = null;
             ScalarExpression? codeColumnExpression = sqlTableEntry.DefaultCodingCodeExpression;
 
             // TODO: for now select * --- maybe will have to shape the result later
@@ -1547,7 +1627,13 @@ namespace Hl7.Cql.Compiler
             {
                 // think this is the unfiltered case - everything from the table
 
-                // TODO:  create WHERE 1=1 clause so there is always a where clause?
+                // create WHERE 1=1 clause so there is always a where clause
+                //whereClause = new BooleanComparisonExpression
+                //{
+                //    ComparisonType = BooleanComparisonType.Equals,
+                //    FirstExpression = new IntegerLiteral { Value = "1" },
+                //    SecondExpression = new IntegerLiteral { Value = "1" }
+                //};
 
                 tableReferences.Add(sourceTableReference);
             }
@@ -1558,7 +1644,7 @@ namespace Hl7.Cql.Compiler
                 QueryExpression = new QuerySpecification
                 {
                     FromClause = new FromClause(),
-                    WhereClause = whereClause
+                    //WhereClause = whereClause
                 }
             };
 
