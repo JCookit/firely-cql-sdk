@@ -21,11 +21,16 @@ public class JeffCou1_1_0_0
 
     internal Lazy<CqlCode> __Ouchie;
     internal Lazy<CqlCode[]> __SnoMed;
+    internal Lazy<decimal?> __Thing;
+    internal Lazy<decimal?> __Thing2;
+    internal Lazy<decimal?> __Thing3;
+    internal Lazy<decimal?> __Thing4;
     internal Lazy<IEnumerable<Condition>> __SimpleTest;
     internal Lazy<IEnumerable<Condition>> __CodeTest;
     internal Lazy<IEnumerable<Condition>> __DateTest2;
     internal Lazy<IEnumerable<Condition>> __DateTest3;
     internal Lazy<IEnumerable<Condition>> __DateTest4;
+    internal Lazy<IEnumerable<Condition>> __DefinitionReferenceTest;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
@@ -36,11 +41,16 @@ public class JeffCou1_1_0_0
 
         __Ouchie = new Lazy<CqlCode>(this.Ouchie_Value);
         __SnoMed = new Lazy<CqlCode[]>(this.SnoMed_Value);
+        __Thing = new Lazy<decimal?>(this.Thing_Value);
+        __Thing2 = new Lazy<decimal?>(this.Thing2_Value);
+        __Thing3 = new Lazy<decimal?>(this.Thing3_Value);
+        __Thing4 = new Lazy<decimal?>(this.Thing4_Value);
         __SimpleTest = new Lazy<IEnumerable<Condition>>(this.SimpleTest_Value);
         __CodeTest = new Lazy<IEnumerable<Condition>>(this.CodeTest_Value);
         __DateTest2 = new Lazy<IEnumerable<Condition>>(this.DateTest2_Value);
         __DateTest3 = new Lazy<IEnumerable<Condition>>(this.DateTest3_Value);
         __DateTest4 = new Lazy<IEnumerable<Condition>>(this.DateTest4_Value);
+        __DefinitionReferenceTest = new Lazy<IEnumerable<Condition>>(this.DefinitionReferenceTest_Value);
     }
     #region Dependencies
 
@@ -68,6 +78,60 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("SnoMed")]
 	public CqlCode[] SnoMed() => 
 		__SnoMed.Value;
+
+	private decimal? Thing_Value()
+	{
+		var a_ = context.Operators.ConvertIntegerToDecimal((int?)3);
+		var b_ = context.Operators.Add(a_, (decimal?)4.0m);
+		var c_ = context.Operators.Add((int?)1, (int?)2);
+		var d_ = context.Operators.ConvertIntegerToDecimal(c_);
+		var e_ = context.Operators.Divide(b_, d_);
+
+		return e_;
+	}
+
+    [CqlDeclaration("Thing")]
+	public decimal? Thing() => 
+		__Thing.Value;
+
+	private decimal? Thing2_Value()
+	{
+		var a_ = context.Operators.ConvertIntegerToDecimal((int?)1);
+		var b_ = this.Thing();
+		var c_ = context.Operators.Add(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("Thing2")]
+	public decimal? Thing2() => 
+		__Thing2.Value;
+
+	private decimal? Thing3_Value()
+	{
+		var a_ = this.Thing2();
+		var b_ = this.Thing();
+		var c_ = context.Operators.ConvertIntegerToDecimal((int?)2);
+		var d_ = context.Operators.Multiply(b_, c_);
+		var e_ = context.Operators.Add(a_, d_);
+
+		return e_;
+	}
+
+    [CqlDeclaration("Thing3")]
+	public decimal? Thing3() => 
+		__Thing3.Value;
+
+	private decimal? Thing4_Value()
+	{
+		var a_ = this.Thing3();
+
+		return a_;
+	}
+
+    [CqlDeclaration("Thing4")]
+	public decimal? Thing4() => 
+		__Thing4.Value;
 
 	private IEnumerable<Condition> SimpleTest_Value()
 	{
@@ -160,5 +224,25 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("DateTest4")]
 	public IEnumerable<Condition> DateTest4() => 
 		__DateTest4.Value;
+
+	private IEnumerable<Condition> DefinitionReferenceTest_Value()
+	{
+		var a_ = this.SimpleTest();
+		bool? b_(Condition s)
+		{
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((s?.Onset as FhirDateTime));
+			var e_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var f_ = context.Operators.After(d_, e_, null);
+
+			return f_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("DefinitionReferenceTest")]
+	public IEnumerable<Condition> DefinitionReferenceTest() => 
+		__DefinitionReferenceTest.Value;
 
 }

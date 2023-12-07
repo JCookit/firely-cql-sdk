@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Metrics;
@@ -409,14 +410,48 @@ namespace Hl7.Cql.Compiler
             TSqlFragment? select = null;
             bool isSelectAlready = queryExpression is SelectStatement;
 
+            switch(queryExpression)
+            {
+                case SelectStatement selectStatement:
+                    select = selectStatement;
+                    break;
+                case SelectScalarExpression selectScalarExpression:
+                    var selectQueryExpression = new SelectScalarExpression
+                    {
+                        Expression = selectScalarExpression.Expression,
+                        ColumnName = new IdentifierOrValueExpression
+                        {
+                            Identifier = new Identifier { Value = "Result" }
+                        }
+                    };
+                    select = Wrap(context, createScalarSubquery, selectQueryExpression);
+                    break;
+
+                case ScalarExpression scalarExpression:
+                    var selectQueryExpression = new SelectScalarExpression
+                    {
+                        Expression = queryExpression as ScalarExpression ?? throw new ArgumentException(),
+                        ColumnName = new IdentifierOrValueExpression
+                        {
+                            Identifier = new Identifier { Value = "Result" }
+                        }
+                    };
+
+                    select = Wrap(context, createScalarSubquery, selectQueryExpression);
+
+                    break;
+            }
+
             if (isSelectAlready)
             {
                 // TODO: could also use information in the context object to determine if we need to wrap
                 select = queryExpression;
             }
-            // does the queryExpression have literals?
-            // create a wrapping scalar expression
-            else if (ExpressionHasLiterals(queryExpression))
+            else if (queryExpression is SelectScalarExpression)
+            {
+
+            }
+            else if (queryExpression is ScalarExpression)
             {
                 var selectQueryExpression = new SelectScalarExpression
                 {
@@ -427,6 +462,19 @@ namespace Hl7.Cql.Compiler
                     }
                 };
 
+                select = Wrap(context, createScalarSubquery, selectQueryExpression);
+            }
+
+            if (select == null)
+            {
+                throw new NotImplementedException();
+            }
+
+            return select;
+
+            static TSqlFragment Wrap(SqlExpressionBuilderContext context, bool createScalarSubquery, SelectScalarExpression selectQueryExpression)
+            {
+                TSqlFragment? select;
                 var selectQuerySpecification = new QueryParenthesisExpression
                 {
                     QueryExpression = new QuerySpecification
@@ -459,19 +507,9 @@ namespace Hl7.Cql.Compiler
                         QueryExpression = selectQuerySpecification
                     };
                 }
+
+                return select;
             }
-
-            if (select == null)
-            {
-                throw new NotImplementedException();
-            }
-
-            return select;
-        }
-
-        private bool ExpressionHasLiterals(TSqlFragment queryExpression)
-        {
-            return true; // TODO: implement -- walk the tree and look for literals
         }
 
         private TSqlFragment TranslateExpression(Element op, SqlExpressionBuilderContext ctx)
@@ -1720,27 +1758,49 @@ namespace Hl7.Cql.Compiler
         };
 
 
+        // returns a selectelement, which could be a selectscalarexpression or selectstarexpression
+        // also adds a table reference to the context (which later becomes a join)
         private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {
             string functionName = ere.name;
-
             ctx.OutputContext.AddJoinFunctionReference(functionName, functionName);
 
-            var referenceExpression = new ColumnReferenceExpression
-            {
-                MultiPartIdentifier = new MultiPartIdentifier
-                {
-                    Identifiers =
-                    {
-                        new Identifier { Value = functionName},
-                        new Identifier { Value = "Result" }
-                    }
-                }
-            };
+            // is this a scalar or list function?
+            // scalar hardcodes to a column called 'result'
+            // a list (currently) does select *
+            bool isScalar = (ere.resultTypeSpecifier == null || !(ere.resultTypeSpecifier is Elm.ListTypeSpecifier));
 
-            return referenceExpression;
+            if (isScalar)
+            {
+                return WrapInSelectScalarExpression(new ColumnReferenceExpression
+                {
+                    MultiPartIdentifier = new MultiPartIdentifier
+                    {
+                        Identifiers =
+                        {
+                            new Identifier { Value = functionName},
+                            new Identifier { Value = "Result" }
+                        }
+                    }
+                });
+            }
+            else
+            {
+                return new SelectStarExpression
+                {
+                    Qualifier = new MultiPartIdentifier
+                    {
+                        Identifiers =
+                        {
+                            new Identifier { Value = functionName}
+                        }
+                    }
+                };
+
+            }
         }
 
+        // returns SelectScalarExpression
         private TSqlFragment? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)
         {
             Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
@@ -1775,8 +1835,10 @@ namespace Hl7.Cql.Compiler
                     throw new NotImplementedException();
             }
 
-            return result;
+            return WrapInSelectScalarExpression(result);
         }
+
+
 
         private TSqlFragment? Add(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
             => BinaryScalarExpression(BinaryExpressionType.Add, binaryExpression, ctx);
@@ -1790,8 +1852,8 @@ namespace Hl7.Cql.Compiler
 
         private TSqlFragment BinaryScalarExpression(BinaryExpressionType binType, Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
         {
-            ScalarExpression? lhs = TranslateExpression(binaryExpression.operand[0], ctx) as ScalarExpression;
-            ScalarExpression? rhs = TranslateExpression(binaryExpression.operand[1], ctx) as ScalarExpression;
+            ScalarExpression? lhs = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[0], ctx));
+            ScalarExpression? rhs = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[1], ctx));
 
             ScalarExpression fragment = new BinaryExpression
             {
@@ -1809,7 +1871,25 @@ namespace Hl7.Cql.Compiler
 
                 fragment = parenthesis;
             }
-            return fragment;
+            return WrapInSelectScalarExpression(fragment);
+        }
+
+        // expressions are (always?) wrapped as a SelectElement (a SelectScalarExpression)
+        // but if used in a larger expression, need to be unwrapped
+        private ScalarExpression UnwrapScalarSelectElement(TSqlFragment sqlFragment)
+        {
+            if (sqlFragment is SelectScalarExpression selectScalarExpression)
+                return selectScalarExpression.Expression;
+            else
+                throw new NotImplementedException();
+        }
+
+        private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar)
+        {
+            return new SelectScalarExpression
+            {
+                Expression = scalar
+            };
         }
 
         private TSqlFragment? ToDecimal(ToDecimal tde, SqlExpressionBuilderContext ctx)
@@ -1822,11 +1902,11 @@ namespace Hl7.Cql.Compiler
                 },
                 Parameter = new ParenthesisExpression
                 {
-                    Expression = TranslateExpression(tde.operand, ctx) as ScalarExpression
+                    Expression = UnwrapScalarSelectElement(TranslateExpression(tde.operand, ctx))
                 }
             };
 
-            return fragment;
+            return WrapInSelectScalarExpression(fragment);
         }
 
         /// <summary>

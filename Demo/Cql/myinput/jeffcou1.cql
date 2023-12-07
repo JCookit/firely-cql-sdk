@@ -4,18 +4,27 @@ using FHIR version '4.0.1'
 
 include FHIRHelpers version '4.0.001' called FHIRHelpers
 
-codesystem "SnoMed" : 'http://brain.org'
+codesystem "SnoMed" : 'http://snomed.info/sct'
 
 code "Ouchie" : '59621000' from "SnoMed"
 
-//define "Thing":
-//  (3+4.0)/(1+2)
+define "First":
+  1
 
-//define "Thing2":
-//  1 + Thing
+define "Second":
+  1+1
 
-//define "Thing3":
-//  Thing2 + Thing * 2
+define "PEDMASTest":
+  (3+4.0)/(1+2)
+
+define "CompoundMathTest":
+  1 + PEDMASTest
+
+define "MultipleCompoundMathTest":
+  CompoundMathTest + PEDMASTest * 2
+
+define "SimpleRefTest":
+  MultipleCompoundMathTest
 
 define "SimpleTest":
 	[Condition] c
@@ -42,6 +51,9 @@ define "DateTest4":
 	[Condition: "Ouchie"] c
 		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z and (c.onset) before @2022-02-01T00:00:00.000Z
+
+define "DefinitionReferenceTest":
+	SimpleTest s where (s.onset) after @2020-01-01T00:00:00.000Z 
 
 //define "DateIntervalTest":
 //	[Condition] c
