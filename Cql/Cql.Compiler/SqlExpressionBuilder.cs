@@ -454,13 +454,7 @@ namespace Hl7.Cql.Compiler
                                 }
                             }
                         },
-                        FromClause = new FromClause
-                        {
-                            TableReferences =
-                                    {
-                                        context.OutputContext.FromTables
-                                    }
-                        }
+                        FromClause = context.OutputContext.FromClause
                     },
                 };
 
@@ -1019,27 +1013,30 @@ namespace Hl7.Cql.Compiler
         // returns a boolean expression
         private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx)
         {
+            // TODO: this is weird because it's likely a columnref but will it be wrapped as a Select? and what does that mean
             var lhs = TranslateExpression(after.operand[0], ctx);
 
-            // TODO: build datetime into subselect (like other scalar functions)
-            var rhs = TranslateExpression(after.operand[1], ctx);
+            // TODO:  unwrap SelectStatement (and rewrap as ScalarSubquery)
+            var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(after.operand[1], ctx));
 
             var binaryExpression = new BooleanComparisonExpression
             {
                 FirstExpression = lhs as ScalarExpression ?? throw new InvalidOperationException(),
                 ComparisonType = BooleanComparisonType.GreaterThan,
-                SecondExpression = rhs as ScalarExpression ?? throw new InvalidOperationException()
+                SecondExpression = rhs
             };
 
             return binaryExpression;
         }
 
+        // returns BooleanExpression
         private TSqlFragment? Before(Before before, SqlExpressionBuilderContext ctx)
         {
+            // TODO: see notes from After
+
             var lhs = TranslateExpression(before.operand[0], ctx);
 
-            // TODO: build datetime into subselect (like other scalar functions)
-            var rhs = TranslateExpression(before.operand[1], ctx);
+            var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(after.operand[1], ctx));
 
             var binaryExpression = new BooleanComparisonExpression
             {
@@ -1088,6 +1085,8 @@ namespace Hl7.Cql.Compiler
             return WrapWithSelect(functionExpression, ctx, true);
         }
 
+        // returns ColumnReference?
+        // TODO: can this be a full SelectStatement? to be consistent
         private TSqlFragment? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
             ColumnReferenceExpression? columnReferenceExpression = null;
@@ -1203,6 +1202,7 @@ namespace Hl7.Cql.Compiler
                 return MultiSourceQuery(query, ctx);
         }
 
+        // returns a SelectStatement
         private TSqlFragment? SingleSourceQuery(Query query, SqlExpressionBuilderContext ctx)
         {
             var querySource = query.source![0];
@@ -1489,6 +1489,7 @@ namespace Hl7.Cql.Compiler
             throw new NotImplementedException();
         }
 
+        // returns a SelectStatement
         private TSqlFragment? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
         {
             Type? sourceElementType;
@@ -1729,7 +1730,7 @@ namespace Hl7.Cql.Compiler
         };
 
 
-        // returns a selectelement, which could be a selectscalarexpression or selectstarexpression
+        // returns a selectstatement, which could be a selectscalarexpression or selectstarexpression
         // also adds a table reference to the context (which later becomes a join)
         private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {
@@ -1753,25 +1754,40 @@ namespace Hl7.Cql.Compiler
                             new Identifier { Value = "Result" }
                         }
                     }
-                });
+                },
+                ctx.OutputContext.FromClause);
             }
             else
             {
-                return new SelectStarExpression
+                return new SelectStatement
                 {
-                    Qualifier = new MultiPartIdentifier
+                    QueryExpression = new QueryParenthesisExpression
                     {
-                        Identifiers =
+                        QueryExpression = new QuerySpecification
                         {
-                            new Identifier { Value = functionName}
-                        }
-                    }
+                            SelectElements =
+                            {
+                                new SelectStarExpression
+                                {
+                                    Qualifier = new MultiPartIdentifier
+                                    {
+                                        Identifiers =
+                                        {
+                                            new Identifier { Value = functionName}
+                                        }
+                                    }
+                                }
+                            },
+
+                            FromClause = ctx.OutputContext.FromClause
+                        },
+                    },
                 };
 
             }
         }
 
-        // returns SelectScalarExpression
+        // returns SelectStatement
         private TSqlFragment? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)
         {
             Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
@@ -1806,7 +1822,7 @@ namespace Hl7.Cql.Compiler
                     throw new NotImplementedException();
             }
 
-            return WrapInSelectScalarExpression(result);
+            return WrapInSelectScalarExpression(result, ctx.OutputContext.FromClause);
         }
 
 
@@ -1821,10 +1837,11 @@ namespace Hl7.Cql.Compiler
             => BinaryScalarExpression(BinaryExpressionType.Divide, binaryExpression, ctx);
 
 
+        // returns a SelectStatement
         private TSqlFragment BinaryScalarExpression(BinaryExpressionType binType, Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
         {
-            ScalarExpression? lhs = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[0], ctx));
-            ScalarExpression? rhs = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[1], ctx));
+            var (lhs, lhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[0], ctx));
+            var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[1], ctx));
 
             ScalarExpression fragment = new BinaryExpression
             {
@@ -1842,33 +1859,68 @@ namespace Hl7.Cql.Compiler
 
                 fragment = parenthesis;
             }
-            return WrapInSelectScalarExpression(fragment);
+            return WrapInSelectScalarExpression(fragment, ReconcileFromClauses(lhsFrom, rhsFrom));
+        }
+
+        private FromClause ReconcileFromClauses(FromClause lhsFrom, FromClause rhsFrom)
+        {
+            // TODO: for now, just return the first
+            return lhsFrom;
         }
 
         // expressions are (always?) wrapped as a SelectElement (a SelectScalarExpression)
         // but if used in a larger expression, need to be unwrapped
-        private ScalarExpression UnwrapScalarSelectElement(TSqlFragment sqlFragment)
+        private (ScalarExpression, FromClause) UnwrapScalarSelectElement(TSqlFragment sqlFragment)
         {
-            if (sqlFragment is SelectScalarExpression selectScalarExpression)
-                return selectScalarExpression.Expression;
+            if (sqlFragment is SelectStatement selectStatment)
+            {
+                QueryExpression inner = selectStatment.QueryExpression;
+
+                // unwrap brackets
+                while (inner is QueryParenthesisExpression queryParenthesisExpression)
+                    inner = queryParenthesisExpression.QueryExpression;
+                
+                QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
+                SelectScalarExpression selectScalarExpression = querySpecification.SelectElements[0] as SelectScalarExpression ?? throw new InvalidOperationException();
+
+                return (selectScalarExpression.Expression, querySpecification.FromClause);
+            }
             else
-                throw new NotImplementedException();
+                throw new InvalidOperationException();
         }
 
-        // TODO:  YOU ARE HERE
-        // actually i think scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
+        // scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
         // when unwrapping, the return would be the inner expression as well as the tables
         // and then when wrapping, tables are added
-        private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar)
+        // TODO: consider default FromClause (with unused table) - this is used for literals; right now caller must be explicit
+        //
+        // TODO:  YOU ARE HERE --- handle wrapping as a scalarsubquery
+        private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery)
         {
-            return new SelectScalarExpression
+            return new SelectStatement
             {
-                Expression = scalar
+                QueryExpression = new QueryParenthesisExpression
+                {
+                    QueryExpression = new QuerySpecification
+                    {
+                        SelectElements =
+                        {
+                            new SelectScalarExpression
+                            {
+                                Expression = scalar
+                            }
+                        },
+                        FromClause = fromClause
+                    },
+                },
             };
         }
 
+        // returns a SelectStatement
         private TSqlFragment? ToDecimal(ToDecimal tde, SqlExpressionBuilderContext ctx)
         {
+            var (expression, fromClause) = UnwrapScalarSelectElement(TranslateExpression(tde.operand, ctx));
+
             var fragment = new CastCall
             {
                 DataType = new SqlDataTypeReference
@@ -1877,11 +1929,11 @@ namespace Hl7.Cql.Compiler
                 },
                 Parameter = new ParenthesisExpression
                 {
-                    Expression = UnwrapScalarSelectElement(TranslateExpression(tde.operand, ctx))
+                    Expression = expression
                 }
             };
 
-            return WrapInSelectScalarExpression(fragment);
+            return WrapInSelectScalarExpression(fragment, fromClause);
         }
 
         /// <summary>

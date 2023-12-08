@@ -24,7 +24,10 @@ namespace Hl7.Cql.Compiler
     {
         private TableReference? currentFromTables;
 
-        public TableReference? FromTables => currentFromTables;
+        //public TableReference? FromTables => currentFromTables;
+
+        // TODO: this might be obsolete --- because the FROM clause is now carried along with each expression (mostly?)
+        public FromClause FromClause => new FromClause { TableReferences = { currentFromTables } };
 
         public SqlOutputContext()
         {
