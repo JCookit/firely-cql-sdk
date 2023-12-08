@@ -408,7 +408,6 @@ namespace Hl7.Cql.Compiler
         private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context, bool createScalarSubquery = false)
         {
             TSqlFragment? select = null;
-            bool isSelectAlready = queryExpression is SelectStatement;
 
             switch(queryExpression)
             {
@@ -416,53 +415,18 @@ namespace Hl7.Cql.Compiler
                     select = selectStatement;
                     break;
                 case SelectScalarExpression selectScalarExpression:
-                    var selectQueryExpression = new SelectScalarExpression
-                    {
-                        Expression = selectScalarExpression.Expression,
-                        ColumnName = new IdentifierOrValueExpression
-                        {
-                            Identifier = new Identifier { Value = "Result" }
-                        }
-                    };
-                    select = Wrap(context, createScalarSubquery, selectQueryExpression);
+                    select = Wrap(
+                        selectScalarExpression.Expression,
+                        context,
+                        createScalarSubquery);
                     break;
 
                 case ScalarExpression scalarExpression:
-                    var selectQueryExpression = new SelectScalarExpression
-                    {
-                        Expression = queryExpression as ScalarExpression ?? throw new ArgumentException(),
-                        ColumnName = new IdentifierOrValueExpression
-                        {
-                            Identifier = new Identifier { Value = "Result" }
-                        }
-                    };
-
-                    select = Wrap(context, createScalarSubquery, selectQueryExpression);
-
+                    select = Wrap(
+                        scalarExpression,
+                        context,
+                        createScalarSubquery);
                     break;
-            }
-
-            if (isSelectAlready)
-            {
-                // TODO: could also use information in the context object to determine if we need to wrap
-                select = queryExpression;
-            }
-            else if (queryExpression is SelectScalarExpression)
-            {
-
-            }
-            else if (queryExpression is ScalarExpression)
-            {
-                var selectQueryExpression = new SelectScalarExpression
-                {
-                    Expression = queryExpression as ScalarExpression ?? throw new ArgumentException(),
-                    ColumnName = new IdentifierOrValueExpression
-                    {
-                        Identifier = new Identifier { Value = "Result" }
-                    }
-                };
-
-                select = Wrap(context, createScalarSubquery, selectQueryExpression);
             }
 
             if (select == null)
@@ -472,7 +436,7 @@ namespace Hl7.Cql.Compiler
 
             return select;
 
-            static TSqlFragment Wrap(SqlExpressionBuilderContext context, bool createScalarSubquery, SelectScalarExpression selectQueryExpression)
+            static TSqlFragment Wrap(ScalarExpression scalarExpression, SqlExpressionBuilderContext context, bool createScalarSubquery)
             {
                 TSqlFragment? select;
                 var selectQuerySpecification = new QueryParenthesisExpression
@@ -480,9 +444,16 @@ namespace Hl7.Cql.Compiler
                     QueryExpression = new QuerySpecification
                     {
                         SelectElements =
+                        {
+                            new SelectScalarExpression
+                            {
+                                Expression = scalarExpression,
+                                ColumnName = new IdentifierOrValueExpression
                                 {
-                                    selectQueryExpression
-                                },
+                                    Identifier = new Identifier { Value = "Result" }
+                                }
+                            }
+                        },
                         FromClause = new FromClause
                         {
                             TableReferences =
@@ -1884,6 +1855,10 @@ namespace Hl7.Cql.Compiler
                 throw new NotImplementedException();
         }
 
+        // TODO:  YOU ARE HERE
+        // actually i think scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
+        // when unwrapping, the return would be the inner expression as well as the tables
+        // and then when wrapping, tables are added
         private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar)
         {
             return new SelectScalarExpression

@@ -21,10 +21,12 @@ public class JeffCou1_1_0_0
 
     internal Lazy<CqlCode> __Ouchie;
     internal Lazy<CqlCode[]> __SnoMed;
-    internal Lazy<decimal?> __Thing;
-    internal Lazy<decimal?> __Thing2;
-    internal Lazy<decimal?> __Thing3;
-    internal Lazy<decimal?> __Thing4;
+    internal Lazy<int?> __First;
+    internal Lazy<int?> __Second;
+    internal Lazy<decimal?> __PEDMASTest;
+    internal Lazy<decimal?> __CompoundMathTest;
+    internal Lazy<decimal?> __MultipleCompoundMathTest;
+    internal Lazy<decimal?> __SimpleRefTest;
     internal Lazy<IEnumerable<Condition>> __SimpleTest;
     internal Lazy<IEnumerable<Condition>> __CodeTest;
     internal Lazy<IEnumerable<Condition>> __DateTest2;
@@ -41,10 +43,12 @@ public class JeffCou1_1_0_0
 
         __Ouchie = new Lazy<CqlCode>(this.Ouchie_Value);
         __SnoMed = new Lazy<CqlCode[]>(this.SnoMed_Value);
-        __Thing = new Lazy<decimal?>(this.Thing_Value);
-        __Thing2 = new Lazy<decimal?>(this.Thing2_Value);
-        __Thing3 = new Lazy<decimal?>(this.Thing3_Value);
-        __Thing4 = new Lazy<decimal?>(this.Thing4_Value);
+        __First = new Lazy<int?>(this.First_Value);
+        __Second = new Lazy<int?>(this.Second_Value);
+        __PEDMASTest = new Lazy<decimal?>(this.PEDMASTest_Value);
+        __CompoundMathTest = new Lazy<decimal?>(this.CompoundMathTest_Value);
+        __MultipleCompoundMathTest = new Lazy<decimal?>(this.MultipleCompoundMathTest_Value);
+        __SimpleRefTest = new Lazy<decimal?>(this.SimpleRefTest_Value);
         __SimpleTest = new Lazy<IEnumerable<Condition>>(this.SimpleTest_Value);
         __CodeTest = new Lazy<IEnumerable<Condition>>(this.CodeTest_Value);
         __DateTest2 = new Lazy<IEnumerable<Condition>>(this.DateTest2_Value);
@@ -59,7 +63,7 @@ public class JeffCou1_1_0_0
     #endregion
 
 	private CqlCode Ouchie_Value() => 
-		new CqlCode("59621000", "http://brain.org", null, null);
+		new CqlCode("59621000", "http://snomed.info/sct", null, null);
 
     [CqlDeclaration("Ouchie")]
 	public CqlCode Ouchie() => 
@@ -69,7 +73,7 @@ public class JeffCou1_1_0_0
 	{
 		var a_ = new CqlCode[]
 		{
-			new CqlCode("59621000", "http://brain.org", null, null),
+			new CqlCode("59621000", "http://snomed.info/sct", null, null),
 		};
 
 		return a_;
@@ -79,7 +83,25 @@ public class JeffCou1_1_0_0
 	public CqlCode[] SnoMed() => 
 		__SnoMed.Value;
 
-	private decimal? Thing_Value()
+	private int? First_Value() => 
+		(int?)1;
+
+    [CqlDeclaration("First")]
+	public int? First() => 
+		__First.Value;
+
+	private int? Second_Value()
+	{
+		var a_ = context.Operators.Add((int?)1, (int?)1);
+
+		return a_;
+	}
+
+    [CqlDeclaration("Second")]
+	public int? Second() => 
+		__Second.Value;
+
+	private decimal? PEDMASTest_Value()
 	{
 		var a_ = context.Operators.ConvertIntegerToDecimal((int?)3);
 		var b_ = context.Operators.Add(a_, (decimal?)4.0m);
@@ -90,27 +112,27 @@ public class JeffCou1_1_0_0
 		return e_;
 	}
 
-    [CqlDeclaration("Thing")]
-	public decimal? Thing() => 
-		__Thing.Value;
+    [CqlDeclaration("PEDMASTest")]
+	public decimal? PEDMASTest() => 
+		__PEDMASTest.Value;
 
-	private decimal? Thing2_Value()
+	private decimal? CompoundMathTest_Value()
 	{
 		var a_ = context.Operators.ConvertIntegerToDecimal((int?)1);
-		var b_ = this.Thing();
+		var b_ = this.PEDMASTest();
 		var c_ = context.Operators.Add(a_, b_);
 
 		return c_;
 	}
 
-    [CqlDeclaration("Thing2")]
-	public decimal? Thing2() => 
-		__Thing2.Value;
+    [CqlDeclaration("CompoundMathTest")]
+	public decimal? CompoundMathTest() => 
+		__CompoundMathTest.Value;
 
-	private decimal? Thing3_Value()
+	private decimal? MultipleCompoundMathTest_Value()
 	{
-		var a_ = this.Thing2();
-		var b_ = this.Thing();
+		var a_ = this.CompoundMathTest();
+		var b_ = this.PEDMASTest();
 		var c_ = context.Operators.ConvertIntegerToDecimal((int?)2);
 		var d_ = context.Operators.Multiply(b_, c_);
 		var e_ = context.Operators.Add(a_, d_);
@@ -118,20 +140,20 @@ public class JeffCou1_1_0_0
 		return e_;
 	}
 
-    [CqlDeclaration("Thing3")]
-	public decimal? Thing3() => 
-		__Thing3.Value;
+    [CqlDeclaration("MultipleCompoundMathTest")]
+	public decimal? MultipleCompoundMathTest() => 
+		__MultipleCompoundMathTest.Value;
 
-	private decimal? Thing4_Value()
+	private decimal? SimpleRefTest_Value()
 	{
-		var a_ = this.Thing3();
+		var a_ = this.MultipleCompoundMathTest();
 
 		return a_;
 	}
 
-    [CqlDeclaration("Thing4")]
-	public decimal? Thing4() => 
-		__Thing4.Value;
+    [CqlDeclaration("SimpleRefTest")]
+	public decimal? SimpleRefTest() => 
+		__SimpleRefTest.Value;
 
 	private IEnumerable<Condition> SimpleTest_Value()
 	{
