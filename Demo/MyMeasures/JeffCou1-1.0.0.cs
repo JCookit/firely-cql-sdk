@@ -32,6 +32,7 @@ public class JeffCou1_1_0_0
     internal Lazy<IEnumerable<Condition>> __DateTest2;
     internal Lazy<IEnumerable<Condition>> __DateTest3;
     internal Lazy<IEnumerable<Condition>> __DateTest4;
+    internal Lazy<IEnumerable<Condition>> __SimpleReferenceTest;
     internal Lazy<IEnumerable<Condition>> __DefinitionReferenceTest;
 
     #endregion
@@ -54,6 +55,7 @@ public class JeffCou1_1_0_0
         __DateTest2 = new Lazy<IEnumerable<Condition>>(this.DateTest2_Value);
         __DateTest3 = new Lazy<IEnumerable<Condition>>(this.DateTest3_Value);
         __DateTest4 = new Lazy<IEnumerable<Condition>>(this.DateTest4_Value);
+        __SimpleReferenceTest = new Lazy<IEnumerable<Condition>>(this.SimpleReferenceTest_Value);
         __DefinitionReferenceTest = new Lazy<IEnumerable<Condition>>(this.DefinitionReferenceTest_Value);
     }
     #region Dependencies
@@ -246,6 +248,17 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("DateTest4")]
 	public IEnumerable<Condition> DateTest4() => 
 		__DateTest4.Value;
+
+	private IEnumerable<Condition> SimpleReferenceTest_Value()
+	{
+		var a_ = this.SimpleTest();
+
+		return a_;
+	}
+
+    [CqlDeclaration("SimpleReferenceTest")]
+	public IEnumerable<Condition> SimpleReferenceTest() => 
+		__SimpleReferenceTest.Value;
 
 	private IEnumerable<Condition> DefinitionReferenceTest_Value()
 	{

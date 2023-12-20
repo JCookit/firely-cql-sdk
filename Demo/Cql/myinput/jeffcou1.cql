@@ -52,6 +52,9 @@ define "DateTest4":
 		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z and (c.onset) before @2022-02-01T00:00:00.000Z
 
+define "SimpleReferenceTest":
+	SimpleTest s
+
 define "DefinitionReferenceTest":
 	SimpleTest s where (s.onset) after @2020-01-01T00:00:00.000Z 
 

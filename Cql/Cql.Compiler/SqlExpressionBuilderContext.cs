@@ -22,80 +22,80 @@ namespace Hl7.Cql.Compiler
 {
     internal class SqlOutputContext
     {
-        private TableReference? currentFromTables;
+        //private TableReference? currentFromTables;
 
         //public TableReference? FromTables => currentFromTables;
 
         // TODO: this might be obsolete --- because the FROM clause is now carried along with each expression (mostly?)
-        public FromClause FromClause => new FromClause { TableReferences = { currentFromTables } };
+//        public FromClause FromClause => new FromClause { TableReferences = { currentFromTables } };
 
         public SqlOutputContext()
         {
-            AddNullTableReference();
+            //AddNullTableReference();
         }   
 
-        /// <summary>
-        /// builds the first part of the From clause (an empty table)
-        /// TODO: not clear this is needed in all cases, but certainly for scalar math
-        /// </summary>
-        private void AddNullTableReference()
-        {
-            this.currentFromTables = new QueryDerivedTable
-            {
-                QueryExpression = new QuerySpecification
-                {
-                    SelectElements =
-                                {
-                                    new SelectScalarExpression
-                                    {
-                                        Expression = new NullLiteral(),
-                                        ColumnName = new IdentifierOrValueExpression
-                                        {
-                                            Identifier = new Identifier { Value = "unused_column" }
-                                        }
-                                    }
-                                }
-                },
-                Alias = new Identifier { Value = "UNUSED" }
-            };
-        }
+        ///// <summary>
+        ///// builds the first part of the From clause (an empty table)
+        ///// TODO: not clear this is needed in all cases, but certainly for scalar math
+        ///// </summary>
+        //private void AddNullTableReference()
+        //{
+        //    this.currentFromTables = new QueryDerivedTable
+        //    {
+        //        QueryExpression = new QuerySpecification
+        //        {
+        //            SelectElements =
+        //                        {
+        //                            new SelectScalarExpression
+        //                            {
+        //                                Expression = new NullLiteral(),
+        //                                ColumnName = new IdentifierOrValueExpression
+        //                                {
+        //                                    Identifier = new Identifier { Value = "unused_column" }
+        //                                }
+        //                            }
+        //                        }
+        //        },
+        //        Alias = new Identifier { Value = "UNUSED" }
+        //    };
+        //}
 
-        /// <summary>
-        /// Add a table reference to from clause (which corresponds to a scalar function call)
-        /// 
-        /// TODO: think about correct way to de-dupe
-        /// </summary>
-        /// <param name="functionName"></param>
-        /// <param name="alias"></param>
-        /// <exception cref="InvalidOperationException"></exception>
-        internal void AddJoinFunctionReference(string functionName, string alias)
-        {
-            var functionTableReference = new SchemaObjectFunctionTableReference
-            {
-                SchemaObject = new SchemaObjectName
-                {
-                    Identifiers =
-                    {
-                        new Identifier { Value = functionName }
-                    }
-                },
-                Alias = new Identifier { Value = alias }
-            };
+        ///// <summary>
+        ///// Add a table reference to from clause (which corresponds to a scalar function call)
+        ///// 
+        ///// TODO: think about correct way to de-dupe
+        ///// </summary>
+        ///// <param name="functionName"></param>
+        ///// <param name="alias"></param>
+        ///// <exception cref="InvalidOperationException"></exception>
+        //    internal void AddJoinFunctionReference(string functionName, string alias)
+        //    {
+        //        var functionTableReference = new SchemaObjectFunctionTableReference
+        //        {
+        //            SchemaObject = new SchemaObjectName
+        //            {
+        //                Identifiers =
+        //                {
+        //                    new Identifier { Value = functionName }
+        //                }
+        //            },
+        //            Alias = new Identifier { Value = alias }
+        //        };
 
-            if (this.currentFromTables == null)
-            {
-                throw new InvalidOperationException("Table clause should already be populated");
-            }
-            else
-            {
-                this.currentFromTables = new UnqualifiedJoin
-                {
-                    FirstTableReference = this.currentFromTables,
-                    SecondTableReference = functionTableReference,
-                    UnqualifiedJoinType = UnqualifiedJoinType.CrossApply
-                };
-            }
-        }
+        //        if (this.currentFromTables == null)
+        //        {
+        //            throw new InvalidOperationException("Table clause should already be populated");
+        //        }
+        //        else
+        //        {
+        //            this.currentFromTables = new UnqualifiedJoin
+        //            {
+        //                FirstTableReference = this.currentFromTables,
+        //                SecondTableReference = functionTableReference,
+        //                UnqualifiedJoinType = UnqualifiedJoinType.CrossApply
+        //            };
+        //        }
+        //    }
     }
 
     /// <summary>

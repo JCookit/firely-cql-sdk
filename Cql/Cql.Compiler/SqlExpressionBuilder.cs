@@ -4,6 +4,7 @@ using Hl7.Cql.Model;
 using Hl7.Cql.Primitives;
 using Hl7.Cql.Runtime;
 
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
 
@@ -299,9 +300,9 @@ namespace Hl7.Cql.Compiler
                         {
                             buildContext = buildContext.Deeper(def);
 
-                            TSqlFragment queryExpression = TranslateExpression(def.expression, buildContext);
+                            TSqlFragment bodyExpression = TranslateExpression(def.expression, buildContext);
 
-                            var bodyExpression = WrapWithSelect(queryExpression, buildContext);
+                            //var bodyExpression = WrapWithSelect(queryExpression, buildContext);
 
                             definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
                         }
@@ -309,7 +310,7 @@ namespace Hl7.Cql.Compiler
                         {
                             buildContext.LogError("Failed to create SQL expression", def);
                         }
-                        
+
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
                         //if (function?.operand != null && definitions.ContainsKey(ThisLibraryKey, def.name, functionParameterTypes))
                         //{
@@ -405,77 +406,66 @@ namespace Hl7.Cql.Compiler
             return BuildSelectForCodeSystem(new List<CqlCode> { systemCode });
         }
 
-        private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context, bool createScalarSubquery = false)
-        {
-            TSqlFragment? select = null;
+        //private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context)
+        //{
+        //    TSqlFragment? select = null;
 
-            switch(queryExpression)
-            {
-                case SelectStatement selectStatement:
-                    select = selectStatement;
-                    break;
-                case SelectScalarExpression selectScalarExpression:
-                    select = Wrap(
-                        selectScalarExpression.Expression,
-                        context,
-                        createScalarSubquery);
-                    break;
+        //    switch (queryExpression)
+        //    {
+        //        case SelectStatement selectStatement:
+        //            select = selectStatement;
+        //            break;
+        //        case SelectScalarExpression selectScalarExpression:
+        //            select = Wrap(
+        //                selectScalarExpression.Expression,
+        //                context);
+        //            break;
 
-                case ScalarExpression scalarExpression:
-                    select = Wrap(
-                        scalarExpression,
-                        context,
-                        createScalarSubquery);
-                    break;
-            }
+        //        case ScalarExpression scalarExpression:
+        //            select = Wrap(
+        //                scalarExpression,
+        //                context);
+        //            break;
+        //    }
 
-            if (select == null)
-            {
-                throw new NotImplementedException();
-            }
+        //    if (select == null)
+        //    {
+        //        throw new NotImplementedException();
+        //    }
 
-            return select;
+        //    return select;
 
-            static TSqlFragment Wrap(ScalarExpression scalarExpression, SqlExpressionBuilderContext context, bool createScalarSubquery)
-            {
-                TSqlFragment? select;
-                var selectQuerySpecification = new QueryParenthesisExpression
-                {
-                    QueryExpression = new QuerySpecification
-                    {
-                        SelectElements =
-                        {
-                            new SelectScalarExpression
-                            {
-                                Expression = scalarExpression,
-                                ColumnName = new IdentifierOrValueExpression
-                                {
-                                    Identifier = new Identifier { Value = "Result" }
-                                }
-                            }
-                        },
-                        FromClause = context.OutputContext.FromClause
-                    },
-                };
+        //    static TSqlFragment Wrap(ScalarExpression scalarExpression, SqlExpressionBuilderContext context)
+        //    {
+        //        TSqlFragment? select;
+        //        var selectQuerySpecification = new QueryParenthesisExpression
+        //        {
+        //            QueryExpression = new QuerySpecification
+        //            {
+        //                SelectElements =
+        //                {
+        //                    new SelectScalarExpression
+        //                    {
+        //                        Expression = scalarExpression,
+        //                        ColumnName = new IdentifierOrValueExpression
+        //                        {
+        //                            Identifier = new Identifier { Value = "Result" }
+        //                        }
+        //                    }
+        //                },
+        //                FromClause = context.OutputContext.FromClause
+        //            },
+        //        };
 
-                if (!createScalarSubquery)
-                {
-                    select = new SelectStatement
-                    {
-                        QueryExpression = selectQuerySpecification
-                    };
-                }
-                else
-                {
-                    select = new ScalarSubquery
-                    {
-                        QueryExpression = selectQuerySpecification
-                    };
-                }
+        //        select = new SelectStatement
+        //        {
+        //            QueryExpression = selectQuerySpecification
 
-                return select;
-            }
-        }
+        //        };
+
+        //        return select;
+        //    }
+        //}
 
         private TSqlFragment TranslateExpression(Element op, SqlExpressionBuilderContext ctx)
         {
@@ -808,7 +798,7 @@ namespace Hl7.Cql.Compiler
                     // result = OperandRef(ore, ctx);
                     break;
                 case Or or:
-                    // result = Or(or, ctx);
+                    result = Or(or, ctx);
                     break;
                 case Overlaps ole:
                     // result = Overlaps(ole, ctx);
@@ -1010,88 +1000,108 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
-        // returns a boolean expression
-        private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx)
+        // returns BooleanExpression; expects Select operands
+        private TSqlFragment? BooleanComparisonOperator(Elm.BinaryExpression booleanExpression, BooleanComparisonType bct, SqlExpressionBuilderContext ctx)
         {
-            // TODO: this is weird because it's likely a columnref but will it be wrapped as a Select? and what does that mean
-            var lhs = TranslateExpression(after.operand[0], ctx);
+            // unwrap both sides from their Selects, then re-wrap any scalar expression on either side
 
-            // TODO:  unwrap SelectStatement (and rewrap as ScalarSubquery)
-            var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(after.operand[1], ctx));
+            var originalLhs = TranslateExpression(booleanExpression.operand[0], ctx);
+            var lhsIsScalar = IsScalarQuery(originalLhs);
+            var (unwrappedLhs, lhsFrom) = UnwrapScalarSelectElement(originalLhs);
+
+            var originalRhs = TranslateExpression(booleanExpression.operand[1], ctx);
+            var rhsIsScalar = IsScalarQuery(originalRhs);
+            var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElement(originalRhs);
+
+            ScalarExpression newLhs = lhsIsScalar
+                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, true) as ScalarSubquery ?? throw new InvalidOperationException()
+                    : unwrappedLhs;
+            ScalarExpression newRhs = rhsIsScalar
+                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, true) as ScalarSubquery ?? throw new InvalidOperationException()
+                    : unwrappedRhs;
 
             var binaryExpression = new BooleanComparisonExpression
             {
-                FirstExpression = lhs as ScalarExpression ?? throw new InvalidOperationException(),
-                ComparisonType = BooleanComparisonType.GreaterThan,
-                SecondExpression = rhs
+                FirstExpression = newLhs,
+                ComparisonType = bct,
+                SecondExpression = newRhs,
             };
 
             return binaryExpression;
         }
 
-        // returns BooleanExpression
-        private TSqlFragment? Before(Before before, SqlExpressionBuilderContext ctx)
+        private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(after, BooleanComparisonType.GreaterThan, ctx);
+
+        private TSqlFragment? Before(Before before, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(before, BooleanComparisonType.LessThan, ctx);
+
+        private TSqlFragment? BooleanOperator(Elm.BinaryExpression binaryExpression, BooleanBinaryExpressionType bbet, SqlExpressionBuilderContext ctx)
         {
-            // TODO: see notes from After
-
-            var lhs = TranslateExpression(before.operand[0], ctx);
-
-            var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(after.operand[1], ctx));
-
-            var binaryExpression = new BooleanComparisonExpression
-            {
-                FirstExpression = lhs as ScalarExpression ?? throw new InvalidOperationException(),
-                ComparisonType = BooleanComparisonType.LessThan,
-                SecondExpression = rhs as ScalarExpression ?? throw new InvalidOperationException()
-            };
-
-            return binaryExpression;
-        }
-
-        // returns a boolean expression
-        private TSqlFragment? And(And and, SqlExpressionBuilderContext ctx)
-        {
-            var lhs = TranslateExpression(and.operand[0], ctx);
-            var rhs = TranslateExpression(and.operand[1], ctx);
+            var lhs = TranslateExpression(binaryExpression.operand[0], ctx) as BooleanExpression ?? throw new InvalidOperationException();
+            var rhs = TranslateExpression(binaryExpression.operand[1], ctx) as BooleanExpression ?? throw new InvalidOperationException();
 
             return new BooleanBinaryExpression
             {
-                FirstExpression = lhs as BooleanExpression ?? throw new InvalidOperationException(),
-                BinaryExpressionType = BooleanBinaryExpressionType.And,
-                SecondExpression = rhs as BooleanExpression ?? throw new InvalidOperationException()
+                FirstExpression = lhs,
+                BinaryExpressionType = bbet,
+                SecondExpression = rhs,
             };
         }
+
+        // returns a boolean expression; expects BooleanExpression operands
+        private TSqlFragment? And(And and, SqlExpressionBuilderContext ctx) =>
+            BooleanOperator(and, BooleanBinaryExpressionType.And, ctx);
+
+        private TSqlFragment? Or(Or or, SqlExpressionBuilderContext ctx) =>
+            BooleanOperator(or, BooleanBinaryExpressionType.Or, ctx);
 
 
         // create a subselect expression that builds a datetime2
         private TSqlFragment? DateTime(Elm.DateTime dt, SqlExpressionBuilderContext ctx)
         {
+            var (year, fromYear) = UnwrapScalarSelectElement(TranslateExpression(dt.year, ctx));
+            var (month, fromMonth) = UnwrapScalarSelectElement(TranslateExpression(dt.month, ctx));
+            var (day, fromDay) = UnwrapScalarSelectElement(TranslateExpression(dt.day, ctx));
+            var (hour, fromHour) = UnwrapScalarSelectElement(TranslateExpression(dt.hour, ctx));
+            var (minute, fromMinute) = UnwrapScalarSelectElement(TranslateExpression(dt.minute, ctx));
+            var (second, fromSecond) = UnwrapScalarSelectElement(TranslateExpression(dt.second, ctx));
+            var (millisecond, fromMillisecond) = UnwrapScalarSelectElement(TranslateExpression(dt.millisecond, ctx));
+
+
             var functionExpression = new FunctionCall
             {
                 FunctionName = new Identifier { Value = "DATETIME2FROMPARTS" },
                 Parameters =
                 {
-                    TranslateExpression(dt.year, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
-                    TranslateExpression(dt.month, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
-                    TranslateExpression(dt.day, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
-                    TranslateExpression(dt.hour, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
-                    TranslateExpression(dt.minute, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
-                    TranslateExpression(dt.second, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
-                    TranslateExpression(dt.millisecond, ctx) as ScalarExpression ?? throw new InvalidOperationException(),
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                    second,
+                    millisecond,
                     new IntegerLiteral { Value = "7" }, // precision hardcoded
                 }
             };
 
-            return WrapWithSelect(functionExpression, ctx, true);
+            FromClause combinedFrom = ReconcileScalarFromClauses(fromYear, fromMonth, fromDay, fromHour, fromMinute, fromSecond, fromMillisecond);
+
+            return WrapInSelectScalarExpression(functionExpression, combinedFrom);
         }
 
-        // returns ColumnReference?
-        // TODO: can this be a full SelectStatement? to be consistent
+        // returns SelectStatement
+        // TODO: returns a fully formed select with table name, which might not be relevant to all contexts?
         private TSqlFragment? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
             ColumnReferenceExpression? columnReferenceExpression = null;
 
-            var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException(); 
+            // TODO:  something different needs to be added to Scope if it's a Retrieve vs ExpressionRef
+            // in the first case, the From clause is a simple table, in the latter it's a reference to a function
+            // YOU ARE HERE
+
+
+            var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
             var sourceTableType = sourceTable.Type;
             var sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
 
@@ -1123,7 +1133,35 @@ namespace Hl7.Cql.Compiler
             if (columnReferenceExpression == null)
                 throw new NotImplementedException();
 
-            return columnReferenceExpression;
+            return new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = columnReferenceExpression
+                        }
+                    },
+                    FromClause = new FromClause
+                    {
+                        TableReferences =
+                        {
+                            new NamedTableReference
+                            {
+                                SchemaObject = new SchemaObjectName
+                                {
+                                    Identifiers =
+                                    {
+                                        sourceTableIdentifier
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
         }
 
         private TSqlFragment? As(As @as, SqlExpressionBuilderContext ctx)
@@ -1315,7 +1353,7 @@ namespace Hl7.Cql.Compiler
                 {
                     SearchCondition = whereBody as BooleanExpression ?? throw new InvalidOperationException()
                 };
-                
+
 
                 // TODO:  join with existing query (possibly adding WHERE clause or AND with existing)
 
@@ -1685,13 +1723,13 @@ namespace Hl7.Cql.Compiler
         {
             { "{http://hl7.org/fhir}Patient", new FhirSqlTableMapEntry { SqlTableName = "patient" } },
             { "{http://hl7.org/fhir}Encounter", new FhirSqlTableMapEntry { SqlTableName = "encounter" } },
-            { "{http://hl7.org/fhir}Condition", 
+            { "{http://hl7.org/fhir}Condition",
                 new FhirSqlTableMapEntry
                 {
-                    SqlTableName = "condition", 
-                    DefaultCodingCodeExpression = new ColumnReferenceExpression 
-                    { 
-                        MultiPartIdentifier = new MultiPartIdentifier 
+                    SqlTableName = "condition",
+                    DefaultCodingCodeExpression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
                         { 
                             // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
                             Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_code"  } }
@@ -1706,7 +1744,7 @@ namespace Hl7.Cql.Compiler
                     }
                 }
             },
-            { "{http://hl7.org/fhir}Observation", 
+            { "{http://hl7.org/fhir}Observation",
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "observation",
@@ -1735,12 +1773,29 @@ namespace Hl7.Cql.Compiler
         private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {
             string functionName = ere.name;
-            ctx.OutputContext.AddJoinFunctionReference(functionName, functionName);
 
             // is this a scalar or list function?
             // scalar hardcodes to a column called 'result'
             // a list (currently) does select *
             bool isScalar = (ere.resultTypeSpecifier == null || !(ere.resultTypeSpecifier is Elm.ListTypeSpecifier));
+
+            FromClause fromClause = new FromClause
+            {
+                TableReferences =
+                {
+                    new SchemaObjectFunctionTableReference
+                    {
+                        SchemaObject = new SchemaObjectName
+                        {
+                            Identifiers =
+                            {
+                                new Identifier { Value = functionName }
+                            }
+                        },
+                        Alias = new Identifier { Value = functionName },
+                    }
+                }
+            };
 
             if (isScalar)
             {
@@ -1751,11 +1806,11 @@ namespace Hl7.Cql.Compiler
                         Identifiers =
                         {
                             new Identifier { Value = functionName},
-                            new Identifier { Value = "Result" }
+                            new Identifier { Value = ResultColumnName }
                         }
                     }
                 },
-                ctx.OutputContext.FromClause);
+                fromClause);
             }
             else
             {
@@ -1779,7 +1834,7 @@ namespace Hl7.Cql.Compiler
                                 }
                             },
 
-                            FromClause = ctx.OutputContext.FromClause
+                            FromClause = fromClause
                         },
                     },
                 };
@@ -1822,18 +1877,49 @@ namespace Hl7.Cql.Compiler
                     throw new NotImplementedException();
             }
 
-            return WrapInSelectScalarExpression(result, ctx.OutputContext.FromClause);
+            return WrapInSelectScalarExpression(result, NullFromClause());
         }
 
+        // TODO: bad things would happen if user tokens collided with these
+        private const string UnusedTableName = "UNUSED";
+        private const string UnusedColumnName = "unused_column";
+        private const string ResultColumnName = "Result";
 
+        private FromClause NullFromClause()
+        {
+            return new FromClause
+            {
+                TableReferences =
+                {
+                    new QueryDerivedTable
+                    {
+                        QueryExpression = new QuerySpecification
+                        {
+                            SelectElements =
+                                        {
+                                            new SelectScalarExpression
+                                            {
+                                                Expression = new NullLiteral(),
+                                                ColumnName = new IdentifierOrValueExpression
+                                                {
+                                                    Identifier = new Identifier { Value = UnusedColumnName }
+                                                }
+                                            }
+                                        }
+                        },
+                        Alias = new Identifier { Value = UnusedTableName }
+                    }
+                }
+            };
+        }
 
-        private TSqlFragment? Add(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+        private TSqlFragment? Add(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Add, binaryExpression, ctx);
-        private TSqlFragment? Subtract(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+        private TSqlFragment? Subtract(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Subtract, binaryExpression, ctx);
-        private TSqlFragment? Multiply(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+        private TSqlFragment? Multiply(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Multiply, binaryExpression, ctx);
-        private TSqlFragment? Divide(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx) 
+        private TSqlFragment? Divide(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Divide, binaryExpression, ctx);
 
 
@@ -1859,13 +1945,107 @@ namespace Hl7.Cql.Compiler
 
                 fragment = parenthesis;
             }
-            return WrapInSelectScalarExpression(fragment, ReconcileFromClauses(lhsFrom, rhsFrom));
+            return WrapInSelectScalarExpression(fragment, ReconcileScalarFromClauses(lhsFrom, rhsFrom));
         }
 
-        private FromClause ReconcileFromClauses(FromClause lhsFrom, FromClause rhsFrom)
+        private FromClause ReconcileScalarFromClauses(params FromClause[] froms)
         {
-            // TODO: for now, just return the first
-            return lhsFrom;
+            if (froms.Length == 0)
+                throw new InvalidOperationException();
+
+            // loop through the given froms and build a join expression
+            // TODO: only handles scalar (literal or TV function) case.  
+            // Will have to handle lists eventually
+
+            // build a tree out of the froms; suppress duplicate nulls (used in literals)
+
+            bool hasLiteralScalar = false;
+
+            List<FromClause> fromList = froms.ToList();
+
+            // search through the from clauses (backwards); remember if any are literal scalar, and remove them
+            for (int i = fromList.Count() - 1; i >= 0; i--)
+            {
+                FromClause from = froms[i];
+
+                if (from.TableReferences.Count == 1)
+                {
+                    var tableReference = from.TableReferences[0];
+                    if (tableReference is QueryDerivedTable queryDerivedTable)
+                    {
+                        if (queryDerivedTable.QueryExpression is QuerySpecification querySpecification)
+                        {
+                            if (querySpecification.SelectElements.Count == 1)
+                            {
+                                var selectElement = querySpecification.SelectElements[0];
+                                if (selectElement is SelectScalarExpression selectScalarExpression)
+                                {
+                                    if (selectScalarExpression.Expression is NullLiteral)
+                                    {
+                                        hasLiteralScalar = true;
+                                        fromList.RemoveAt(i);
+
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // TODO: there shouldn't be any cases of multiple TableReferences, right?
+                    throw new InvalidOperationException();
+                }
+            }
+
+            FromClause result;
+            bool haveAddedFirst = false;
+
+            if (hasLiteralScalar)
+            {
+                result = NullFromClause();
+                haveAddedFirst = true;
+            }
+            else
+            {
+                result = new FromClause();
+            }
+
+            // now loop through any remaining TV function references and build joins
+            foreach(var from in fromList)
+            {
+                if (from.TableReferences.Count == 1)
+                {
+                    var tableReference = from.TableReferences[0];
+                    if (haveAddedFirst)
+                    {
+                        // TODO: this needs to get a lot more complicated with other table joins
+                        // TODO: do we need to allow for cases of both scalar and set joins?  need an example
+
+                        var existingTable = result.TableReferences[0];
+                        result.TableReferences.RemoveAt(0);
+
+                        result.TableReferences.Add(new UnqualifiedJoin
+                        {
+                            FirstTableReference = existingTable,
+                            SecondTableReference = tableReference,
+                            UnqualifiedJoinType = UnqualifiedJoinType.CrossApply
+                        });
+                    }
+                    else
+                    {
+                        result.TableReferences.Add(tableReference);
+                    }
+                    haveAddedFirst = true;
+                }
+                else
+                {
+                    // duplicate bulletproofing to above
+                    throw new InvalidOperationException();
+                }
+            }
+            return result;
         }
 
         // expressions are (always?) wrapped as a SelectElement (a SelectScalarExpression)
@@ -1879,7 +2059,7 @@ namespace Hl7.Cql.Compiler
                 // unwrap brackets
                 while (inner is QueryParenthesisExpression queryParenthesisExpression)
                     inner = queryParenthesisExpression.QueryExpression;
-                
+
                 QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
                 SelectScalarExpression selectScalarExpression = querySpecification.SelectElements[0] as SelectScalarExpression ?? throw new InvalidOperationException();
 
@@ -1892,28 +2072,81 @@ namespace Hl7.Cql.Compiler
         // scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
         // when unwrapping, the return would be the inner expression as well as the tables
         // and then when wrapping, tables are added
-        // TODO: consider default FromClause (with unused table) - this is used for literals; right now caller must be explicit
         //
-        // TODO:  YOU ARE HERE --- handle wrapping as a scalarsubquery
-        private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery)
+        //
+        // NOTE:  an explicit TOP 1 is added to indicate a scalar.  This pattern is recognized elsewhere
+        private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery = false)
         {
-            return new SelectStatement
+            var queryExpression = new QueryParenthesisExpression
             {
-                QueryExpression = new QueryParenthesisExpression
+                QueryExpression = new QuerySpecification
                 {
-                    QueryExpression = new QuerySpecification
-                    {
-                        SelectElements =
-                        {
-                            new SelectScalarExpression
+                    SelectElements =
                             {
-                                Expression = scalar
-                            }
-                        },
-                        FromClause = fromClause
-                    },
+                                new SelectScalarExpression
+                                {
+                                    Expression = scalar,
+                                    ColumnName = new IdentifierOrValueExpression
+                                    {
+                                        Identifier = new Identifier { Value = ResultColumnName }
+                                    }
+                                }
+                            },
+                    FromClause = fromClause,
+                    TopRowFilter = new TopRowFilter
+                    {
+                        Expression = new IntegerLiteral { Value = "1" }
+                    }
                 },
             };
+
+            if (createScalarSubquery)
+            {
+                return new ScalarSubquery
+                {
+                    QueryExpression = queryExpression
+                };
+            }
+            else
+            {
+                return new SelectStatement
+                {
+                    QueryExpression = queryExpression
+                };
+            }
+        }
+
+        private bool IsScalarQuery(TSqlFragment fragment)
+        {
+            // when wrapping a scalar, we explicitly add TOP 1.  So, diagnose if this is present
+
+            QueryExpression queryExpression;
+            if (fragment is SelectStatement selectStatement)
+            {
+                queryExpression = selectStatement.QueryExpression;
+            }
+            else if (fragment is ScalarSubquery scalarSubquery)
+            {
+                queryExpression = scalarSubquery.QueryExpression;
+            }
+            else
+                throw new InvalidOperationException();
+
+            while (queryExpression is QueryParenthesisExpression queryParenthesisExpression)
+                queryExpression = queryParenthesisExpression.QueryExpression;
+
+            QuerySpecification querySpecification = queryExpression as QuerySpecification ?? throw new InvalidOperationException();
+
+            if (querySpecification.TopRowFilter != null)
+            {
+                if (querySpecification.TopRowFilter.Expression is IntegerLiteral integerLiteral)
+                {
+                    if (integerLiteral.Value == "1")
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         // returns a SelectStatement

@@ -42,6 +42,10 @@ namespace Hl7.Cql.Compiler
             var allFragments = new DefinitionDictionary<TSqlFragment>();
             foreach (var library in elmLibraries)
             {
+                // TODO: cheat and bypass FHIRHelpers 'cause it's not going to work yet anyway
+                if (StringComparer.InvariantCultureIgnoreCase.Compare(library.NameAndVersion, "FHIRHelpers-4.0.001") == 0)
+                    continue;
+
                 builderLogger.LogInformation($"Building expressions for {library.NameAndVersion}");
 
                 var builder = new SqlExpressionBuilder(library, typeManager, builderLogger);

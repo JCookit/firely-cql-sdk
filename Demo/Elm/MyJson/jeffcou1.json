@@ -905,8 +905,8 @@
                }
             }
          }, {
-            "locator" : "55:1-56:61",
-            "name" : "DefinitionReferenceTest",
+            "locator" : "55:1-56:13",
+            "name" : "SimpleReferenceTest",
             "context" : "Patient",
             "accessLevel" : "Public",
             "resultTypeSpecifier" : {
@@ -917,7 +917,7 @@
                }
             },
             "expression" : {
-               "locator" : "56:2-56:61",
+               "locator" : "56:2-56:13",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -949,9 +949,56 @@
                      }
                   }
                } ],
+               "relationship" : [ ]
+            }
+         }, {
+            "locator" : "58:1-59:61",
+            "name" : "DefinitionReferenceTest",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "59:2-59:61",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "59:2-59:13",
+                  "alias" : "s",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "59:2-59:11",
+                     "name" : "SimpleTest",
+                     "type" : "ExpressionRef",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "56:15-56:61",
+                  "locator" : "59:15-59:61",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "After",
                   "operand" : [ {
@@ -962,7 +1009,7 @@
                         "asType" : "{http://hl7.org/fhir}dateTime",
                         "type" : "As",
                         "operand" : {
-                           "locator" : "56:21-56:29",
+                           "locator" : "59:21-59:29",
                            "path" : "onset",
                            "scope" : "s",
                            "type" : "Property",
@@ -988,7 +1035,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "56:37-56:61",
+                     "locator" : "59:37-59:61",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                      "type" : "DateTime",
                      "year" : {
