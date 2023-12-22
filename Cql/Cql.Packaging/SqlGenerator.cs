@@ -22,12 +22,12 @@ namespace Hl7.Cql.Compiler
         {
             var generatorLogger = logFactory.CreateLogger<SqlGenerator>();
 
-            DefinitionDictionary<TSqlFragment> allFragments = CompileSql(packageGraph, typeManager, logFactory);
+            DefinitionDictionary<SqlExpression> allFragments = CompileSql(packageGraph, typeManager, logFactory);
 
             return BuildSqlString(allFragments, generatorLogger);
         }
 
-        private static DefinitionDictionary<TSqlFragment> CompileSql(
+        private static DefinitionDictionary<SqlExpression> CompileSql(
             DirectedGraph packageGraph, 
             TypeManager typeManager, 
             ILoggerFactory logFactory)
@@ -39,7 +39,7 @@ namespace Hl7.Cql.Compiler
                 .ToArray();
 
             var builderLogger = logFactory.CreateLogger<SqlExpressionBuilder>();
-            var allFragments = new DefinitionDictionary<TSqlFragment>();
+            var allFragments = new DefinitionDictionary<SqlExpression>();
             foreach (var library in elmLibraries)
             {
                 // TODO: cheat and bypass FHIRHelpers 'cause it's not going to work yet anyway
@@ -56,7 +56,7 @@ namespace Hl7.Cql.Compiler
             return allFragments;
         }
 
-        private string BuildSqlString(DefinitionDictionary<TSqlFragment> all, ILogger<SqlGenerator> generatorLogger)
+        private string BuildSqlString(DefinitionDictionary<SqlExpression> all, ILogger<SqlGenerator> generatorLogger)
         {
             var generator = new SqlServerlessScriptGenerator();
 
@@ -75,12 +75,19 @@ namespace Hl7.Cql.Compiler
                     {
                         string normalizedName = ExpressionBuilderContext.NormalizeIdentifier(define.Key) ?? throw new InvalidOperationException();
 
+                        writer.WriteLine($"-- start {normalizedName}");
                         generator.GenerateScript(BuildDropFunction(normalizedName), writer);
                         writer.WriteLine();
                         writer.WriteLine("GO");
-                        generator.GenerateScript(WrapWithFunction(normalizedName, fragment.Item2), writer);
-                        writer.WriteLine();
-                        writer.WriteLine("GO");
+
+                        // should only get here with Select statements
+                        if (fragment.Item2.IsSelectStatement)
+                        {
+                            generator.GenerateScript(WrapWithFunction(normalizedName, fragment.Item2.SqlFragment), writer);
+                            writer.WriteLine("GO");
+                        }
+                        else
+                            throw new InvalidOperationException();
                     }
                 }
             }

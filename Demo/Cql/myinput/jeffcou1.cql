@@ -4,8 +4,16 @@ using FHIR version '4.0.1'
 
 include FHIRHelpers version '4.0.001' called FHIRHelpers
 
-codesystem "SnoMed" : 'http://snomed.info/sct'
+//parameter "Measurement Period" Interval<DateTime>
 
+
+// dev days example below
+codesystem "ICD10": 'http://hl7.org/fhir/sid/icd-10'
+code "Sucked into jet engine": 'V97.33' from "ICD10"
+code "Sucked into jet engine, subsequent encounter": 'V97.33XD' from "ICD10"
+//
+
+codesystem "SnoMed" : 'http://snomed.info/sct'
 code "Ouchie" : '59621000' from "SnoMed"
 
 define "First":
@@ -52,13 +60,56 @@ define "DateTest4":
 		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z and (c.onset) before @2022-02-01T00:00:00.000Z
 
-define "SimpleReferenceTest":
+define "IntervalTest":
+	[Condition] c
+		where 
+			(c.onset) in Interval[@2020-01-01T00:00:00.000Z, @2022-02-01T00:00:00.000Z)
+
+define "SimpleRetrieveReferenceTest":
 	SimpleTest s
 
-define "DefinitionReferenceTest":
-	SimpleTest s where (s.onset) after @2020-01-01T00:00:00.000Z 
+define "RetrieveReferenceWithFilterTest":
+	CodeTest c where (c.onset) after @2020-01-01T00:00:00.000Z 
 
-//define "DateIntervalTest":
-//	[Condition] c
-//		where 
-//			(c.onset as FHIR.dateTime) after Interval[@2020-01-01T00:00:00.000Z, @2020-02-01T00:00:00.000Z]
+define "MultipleNestedTest1":
+	RetrieveReferenceWithFilterTest
+
+define "MultipleNestedTest2":
+	MultipleNestedTest1 m where m.onset before @2021-01-01T00:00:00.000Z
+
+
+
+
+
+// test from DevDays
+/*
+context Patient
+
+
+define "Jet engine conditions":
+	[Condition] c
+		where 
+			exists(c.code.coding coding where coding ~ "Sucked into jet engine")
+			and (c.onset as FHIR.dateTime) in "Measurement Period"
+
+define "Subsequent encounters":
+	[Condition] c
+		where 
+			exists(c.code.coding coding where coding ~ "Sucked into jet engine, subsequent encounter")
+			and (c.onset as FHIR.dateTime) in "Measurement Period"
+
+
+define "Initial population":
+	exists("Jet engine conditions")
+
+define "Numerator":
+	exists("Subsequent encounters")
+
+context Population
+
+define "Initial population2":
+	exists("Jet engine conditions")	
+define "Numerator2":
+	exists("Subsequent encounters")
+	
+*/

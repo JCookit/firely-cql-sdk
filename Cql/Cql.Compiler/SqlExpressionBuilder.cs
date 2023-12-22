@@ -23,16 +23,52 @@ using Expression = System.Linq.Expressions.Expression;
 
 namespace Hl7.Cql.Compiler
 {
-    internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder, TSqlFragment>
+    internal class SqlExpression
+    {
+        public enum FragmentTypes
+        {
+            // a select statement that returns a list
+            SelectStatement,
+            // a select statement that returns a single row
+            SelectStatementScalar,
+            // a boolean expression (no select; like a Where clause)
+            BooleanExpression,
+        }
+
+        /// <summary>
+        /// true IFF this fragment is a SELECT statement
+        /// </summary>
+        public bool IsSelectStatement => FragmentType == FragmentTypes.SelectStatement || FragmentType == FragmentTypes.SelectStatementScalar;
+
+        public TSqlFragment SqlFragment { get;init; }
+
+        public FragmentTypes FragmentType { get;init; }
+
+        // TODO: hijacking .net type system to describe the types here, in a limited way.  Only use the ones that there is a clear 1:1 correspondence
+        // bool, int, DateTime --- primitives
+        // Patient, Condition, etc. --- FHIR types
+        // CqlCode
+        // TODO:  should IEnumerable be used here or is it implicit with SelectStatement vs SelectStatementScalar
+        public Type DataType { get; init; }  
+
+        public SqlExpression(TSqlFragment sqlFragment, FragmentTypes fragmentType, Type dataType)
+        {
+            SqlFragment = sqlFragment;
+            FragmentType = fragmentType;
+            DataType = dataType;
+        }
+    }
+
+    internal class SqlExpressionBuilder : ExpressionBuilderBase<SqlExpressionBuilder, SqlExpression>
     {
         public SqlExpressionBuilder(Library library, TypeManager typeManager, ILogger<SqlExpressionBuilder> builderLogger)
             : base(library, typeManager, builderLogger)
         {
         }
 
-        public override DefinitionDictionary<TSqlFragment> Build()
+        public override DefinitionDictionary<SqlExpression> Build()
         {
-            var definitions = new DefinitionDictionary<TSqlFragment>();
+            var definitions = new DefinitionDictionary<SqlExpression>();
             var localLibraryIdentifiers = new Dictionary<string, string>();
 
             var version = this.Library.identifier!.version;
@@ -102,7 +138,7 @@ namespace Hl7.Cql.Compiler
                         }
                         codings.Add(systemCode);
 
-                        TSqlFragment codeSqlExpression = BuildSelectForCode(systemCode);
+                        SqlExpression codeSqlExpression = BuildSelectForCode(systemCode);
                         definitions.Add(ThisLibraryKey, code.name!, codeSqlExpression);
 
                         //var newCodingExpression = Expression.New(codeCtor,
@@ -123,7 +159,7 @@ namespace Hl7.Cql.Compiler
                     {
                         if (codesByCodeSystemName.TryGetValue(codeSystem.name, out var codes))
                         {
-                            TSqlFragment codesystemSqlExpression = BuildSelectForCodeSystem(codes);
+                            var codesystemSqlExpression = BuildSelectForCodeSystem(codes);
 
                             definitions.Add(ThisLibraryKey, codeSystem.name, codesystemSqlExpression);
 
@@ -298,9 +334,11 @@ namespace Hl7.Cql.Compiler
 
                         try
                         {
+                            buildContext.LogInfo($"Building SQL expression for {def.name}");
+
                             buildContext = buildContext.Deeper(def);
 
-                            TSqlFragment bodyExpression = TranslateExpression(def.expression, buildContext);
+                            var bodyExpression = TranslateExpression(def.expression, buildContext);
 
                             //var bodyExpression = WrapWithSelect(queryExpression, buildContext);
 
@@ -308,7 +346,7 @@ namespace Hl7.Cql.Compiler
                         }
                         catch
                         {
-                            buildContext.LogError("Failed to create SQL expression", def);
+                            buildContext.LogError($"Failed to create SQL expression for {def.name}", def);
                         }
 
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
@@ -351,19 +389,23 @@ namespace Hl7.Cql.Compiler
             }
         }
 
-        private TSqlFragment BuildSelectForCodeSystem(List<CqlCode> codes)
+        private static List<Identifier> cqlCodeColumns = new List<Identifier>()
+            {
+                new Identifier { Value = "code" },
+                new Identifier { Value = "codesystem" },
+                new Identifier { Value = "display" },
+                new Identifier { Value = "ver" },
+            };
+
+        private SqlExpression BuildSelectForCodeSystem(List<CqlCode> codes)
         {
             InlineDerivedTable inlineTable = new InlineDerivedTable
             {
-                Columns =
-                {
-                    new Identifier { Value = "code" },
-                    new Identifier { Value = "codesystem" },
-                    new Identifier { Value = "display" },
-                    new Identifier { Value = "ver" },
-                },
                 Alias = new Identifier { Value = "codes" }
             };
+
+            // sigh.  readonly property
+            cqlCodeColumns.ForEach(e => inlineTable.Columns.Add(e));
 
             foreach (var code in codes)
             {
@@ -398,79 +440,21 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            return select;
+            return new SqlExpression(select, SqlExpression.FragmentTypes.SelectStatement, typeof(IEnumerable<CqlCode>));
         }
 
-        private TSqlFragment BuildSelectForCode(CqlCode systemCode)
+        private SqlExpression BuildSelectForCode(CqlCode systemCode)
         {
-            return BuildSelectForCodeSystem(new List<CqlCode> { systemCode });
+            var codes = BuildSelectForCodeSystem(new List<CqlCode> { systemCode });
+
+            // since this represents a scalar code, rewrap with type of CqlCode
+            return new SqlExpression(codes.SqlFragment, SqlExpression.FragmentTypes.SelectStatement, typeof(CqlCode));
         }
 
-        //private TSqlFragment WrapWithSelect(TSqlFragment queryExpression, SqlExpressionBuilderContext context)
-        //{
-        //    TSqlFragment? select = null;
-
-        //    switch (queryExpression)
-        //    {
-        //        case SelectStatement selectStatement:
-        //            select = selectStatement;
-        //            break;
-        //        case SelectScalarExpression selectScalarExpression:
-        //            select = Wrap(
-        //                selectScalarExpression.Expression,
-        //                context);
-        //            break;
-
-        //        case ScalarExpression scalarExpression:
-        //            select = Wrap(
-        //                scalarExpression,
-        //                context);
-        //            break;
-        //    }
-
-        //    if (select == null)
-        //    {
-        //        throw new NotImplementedException();
-        //    }
-
-        //    return select;
-
-        //    static TSqlFragment Wrap(ScalarExpression scalarExpression, SqlExpressionBuilderContext context)
-        //    {
-        //        TSqlFragment? select;
-        //        var selectQuerySpecification = new QueryParenthesisExpression
-        //        {
-        //            QueryExpression = new QuerySpecification
-        //            {
-        //                SelectElements =
-        //                {
-        //                    new SelectScalarExpression
-        //                    {
-        //                        Expression = scalarExpression,
-        //                        ColumnName = new IdentifierOrValueExpression
-        //                        {
-        //                            Identifier = new Identifier { Value = "Result" }
-        //                        }
-        //                    }
-        //                },
-        //                FromClause = context.OutputContext.FromClause
-        //            },
-        //        };
-
-        //        select = new SelectStatement
-        //        {
-        //            QueryExpression = selectQuerySpecification
-
-        //        };
-
-        //        return select;
-        //    }
-        //}
-
-        private TSqlFragment TranslateExpression(Element op, SqlExpressionBuilderContext ctx)
+        private SqlExpression TranslateExpression(Element op, SqlExpressionBuilderContext ctx)
         {
             ctx = ctx.Deeper(op);
-            TSqlFragment? result = null;
+            SqlExpression? result = null;
             switch (op)
             {
                 case Abs abs:
@@ -687,13 +671,13 @@ namespace Hl7.Cql.Compiler
                     // result = Intersect(ise, ctx);
                     break;
                 case Interval ie:
-                    // result = Intervalresult(ie, ctx);
+                    result = Intervalresult(ie, ctx);
                     break;
                 case InValueSet inv:
                     // result = InValueSet(inv, ctx);
                     break;
                 case In @in:
-                    // result = In(@in, ctx);
+                    result = In(@in, ctx);
                     break;
                 case Is @is:
                     // result = Is(@is, ctx);
@@ -1000,24 +984,32 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        private SqlExpression? Intervalresult(Interval ie, SqlExpressionBuilderContext ctx)
+        {
+            // YOU ARE HERE ALSO
+
+            // stategy - build a scalar select which returns tuple of the interval type.  similar to cqlcode
+            // (can this be genericized?)
+
+            throw new NotImplementedException();
+        }
+
         // returns BooleanExpression; expects Select operands
-        private TSqlFragment? BooleanComparisonOperator(Elm.BinaryExpression booleanExpression, BooleanComparisonType bct, SqlExpressionBuilderContext ctx)
+        private SqlExpression? BooleanComparisonOperator(Elm.BinaryExpression booleanExpression, BooleanComparisonType bct, SqlExpressionBuilderContext ctx)
         {
             // unwrap both sides from their Selects, then re-wrap any scalar expression on either side
 
             var originalLhs = TranslateExpression(booleanExpression.operand[0], ctx);
-            var lhsIsScalar = IsScalarQuery(originalLhs);
             var (unwrappedLhs, lhsFrom) = UnwrapScalarSelectElement(originalLhs);
 
             var originalRhs = TranslateExpression(booleanExpression.operand[1], ctx);
-            var rhsIsScalar = IsScalarQuery(originalRhs);
             var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElement(originalRhs);
 
-            ScalarExpression newLhs = lhsIsScalar
-                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, true) as ScalarSubquery ?? throw new InvalidOperationException()
+            ScalarExpression newLhs = originalLhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
+                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
                     : unwrappedLhs;
-            ScalarExpression newRhs = rhsIsScalar
-                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, true) as ScalarSubquery ?? throw new InvalidOperationException()
+            ScalarExpression newRhs = originalRhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
+                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
                     : unwrappedRhs;
 
             var binaryExpression = new BooleanComparisonExpression
@@ -1027,38 +1019,87 @@ namespace Hl7.Cql.Compiler
                 SecondExpression = newRhs,
             };
 
-            return binaryExpression;
+            return new SqlExpression(binaryExpression, SqlExpression.FragmentTypes.BooleanExpression, typeof(bool));
         }
 
-        private TSqlFragment? After(After after, SqlExpressionBuilderContext ctx) =>
+        private SqlExpression? After(After after, SqlExpressionBuilderContext ctx) =>
             BooleanComparisonOperator(after, BooleanComparisonType.GreaterThan, ctx);
 
-        private TSqlFragment? Before(Before before, SqlExpressionBuilderContext ctx) =>
+        private SqlExpression? Before(Before before, SqlExpressionBuilderContext ctx) =>
             BooleanComparisonOperator(before, BooleanComparisonType.LessThan, ctx);
 
-        private TSqlFragment? BooleanOperator(Elm.BinaryExpression binaryExpression, BooleanBinaryExpressionType bbet, SqlExpressionBuilderContext ctx)
+        // returns BooleanExpression; expects Select operands
+        private SqlExpression? In(Elm.In inExpression, SqlExpressionBuilderContext ctx)
         {
-            var lhs = TranslateExpression(binaryExpression.operand[0], ctx) as BooleanExpression ?? throw new InvalidOperationException();
-            var rhs = TranslateExpression(binaryExpression.operand[1], ctx) as BooleanExpression ?? throw new InvalidOperationException();
+            // unwrap both sides from their Selects, then re-wrap any scalar expression on either side
 
-            return new BooleanBinaryExpression
+            var originalLhs = TranslateExpression(inExpression.operand[0], ctx);
+            var (unwrappedLhs, lhsFrom) = UnwrapScalarSelectElement(originalLhs);
+
+            var originalRhs = TranslateExpression(inExpression.operand[1], ctx);
+            var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElement(originalRhs);
+
+            // "lhs in rhs" is equivalent to
+            // "(lhs > rhs.start AND lhs < rhs.end)" (or >= <= depending on open/closed)
+            // (and assuming multiple evaluations of lhs/rhs are ok.  No side effects, right?)
+            // assuming rhs is an interval
+
+            // YOU ARE HERE - replace this
+
+
+            ScalarExpression newLhs = originalLhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
+                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
+                    : unwrappedLhs;
+            ScalarExpression newRhs = originalRhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
+                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
+                    : unwrappedRhs;
+
+            var binaryExpression = new BooleanComparisonExpression
             {
-                FirstExpression = lhs,
-                BinaryExpressionType = bbet,
-                SecondExpression = rhs,
+                FirstExpression = newLhs,
+                ComparisonType  = BooleanComparisonType.NotEqualToBrackets,   // TODO: just a temp placeholder
+                SecondExpression = newRhs,
             };
+
+            return new SqlExpression(binaryExpression, SqlExpression.FragmentTypes.BooleanExpression, typeof(bool)); 
+        }
+
+        private SqlExpression? BooleanOperator(Elm.BinaryExpression binaryExpression, BooleanBinaryExpressionType bbet, SqlExpressionBuilderContext ctx)
+        {
+            var lhs = SqlExpressionAsBooleanExpression(TranslateExpression(binaryExpression.operand[0], ctx));
+            var rhs = SqlExpressionAsBooleanExpression(TranslateExpression(binaryExpression.operand[1], ctx));
+
+            return new SqlExpression(
+                new BooleanBinaryExpression
+                {
+                    FirstExpression = lhs,
+                    BinaryExpressionType = bbet,
+                    SecondExpression = rhs,
+                },
+                SqlExpression.FragmentTypes.BooleanExpression,
+                typeof(bool));
+        }
+
+        private BooleanExpression SqlExpressionAsBooleanExpression(SqlExpression sqlExpression)
+        {
+            if (sqlExpression.FragmentType == SqlExpression.FragmentTypes.BooleanExpression
+                && sqlExpression.DataType == typeof(bool)
+                && sqlExpression.SqlFragment is BooleanExpression booleanExpression)
+                return booleanExpression;
+            else
+                throw new InvalidOperationException();
         }
 
         // returns a boolean expression; expects BooleanExpression operands
-        private TSqlFragment? And(And and, SqlExpressionBuilderContext ctx) =>
+        private SqlExpression? And(And and, SqlExpressionBuilderContext ctx) =>
             BooleanOperator(and, BooleanBinaryExpressionType.And, ctx);
 
-        private TSqlFragment? Or(Or or, SqlExpressionBuilderContext ctx) =>
+        private SqlExpression? Or(Or or, SqlExpressionBuilderContext ctx) =>
             BooleanOperator(or, BooleanBinaryExpressionType.Or, ctx);
 
 
         // create a subselect expression that builds a datetime2
-        private TSqlFragment? DateTime(Elm.DateTime dt, SqlExpressionBuilderContext ctx)
+        private SqlExpression? DateTime(Elm.DateTime dt, SqlExpressionBuilderContext ctx)
         {
             var (year, fromYear) = UnwrapScalarSelectElement(TranslateExpression(dt.year, ctx));
             var (month, fromMonth) = UnwrapScalarSelectElement(TranslateExpression(dt.month, ctx));
@@ -1092,14 +1133,9 @@ namespace Hl7.Cql.Compiler
 
         // returns SelectStatement
         // TODO: returns a fully formed select with table name, which might not be relevant to all contexts?
-        private TSqlFragment? Property(Property pe, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
             ColumnReferenceExpression? columnReferenceExpression = null;
-
-            // TODO:  something different needs to be added to Scope if it's a Retrieve vs ExpressionRef
-            // in the first case, the From clause is a simple table, in the latter it's a reference to a function
-            // YOU ARE HERE
-
 
             var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
             var sourceTableType = sourceTable.Type;
@@ -1133,20 +1169,21 @@ namespace Hl7.Cql.Compiler
             if (columnReferenceExpression == null)
                 throw new NotImplementedException();
 
-            return new SelectStatement
-            {
-                QueryExpression = new QuerySpecification
+            return new SqlExpression(
+                new SelectStatement
                 {
-                    SelectElements =
+                    QueryExpression = new QuerySpecification
+                    {
+                        SelectElements =
                     {
                         new SelectScalarExpression
                         {
                             Expression = columnReferenceExpression
                         }
                     },
-                    FromClause = new FromClause
-                    {
-                        TableReferences =
+                        FromClause = new FromClause
+                        {
+                            TableReferences =
                         {
                             new NamedTableReference
                             {
@@ -1159,19 +1196,21 @@ namespace Hl7.Cql.Compiler
                                 }
                             }
                         }
+                        }
                     }
-                }
-            };
+                },
+                SqlExpression.FragmentTypes.SelectStatement,
+                typeof(object));  // TODO: infer type?
         }
 
-        private TSqlFragment? As(As @as, SqlExpressionBuilderContext ctx)
+        private SqlExpression? As(As @as, SqlExpressionBuilderContext ctx)
         {
             // TODO: make this no-op for now
 
             return TranslateExpression(@as.operand, ctx);
         }
 
-        private TSqlFragment? FunctionRef(FunctionRef fre, SqlExpressionBuilderContext ctx)
+        private SqlExpression? FunctionRef(FunctionRef fre, SqlExpressionBuilderContext ctx)
         {
             if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.libraryName, "FHIRHelpers") == 0)
             {
@@ -1185,9 +1224,9 @@ namespace Hl7.Cql.Compiler
             throw new NotImplementedException();
         }
 
-        private TSqlFragment? ToList(ToList tle, SqlExpressionBuilderContext ctx)
+        private SqlExpression? ToList(ToList tle, SqlExpressionBuilderContext ctx)
         {
-            // big hack -- everything is a list already
+            // big hack -- everything is a list already?
             return TranslateExpression(tle.operand, ctx);
         }
 
@@ -1197,14 +1236,10 @@ namespace Hl7.Cql.Compiler
         /// <param name="cre"></param>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        private TSqlFragment? CodeRef(CodeRef cre, SqlExpressionBuilderContext ctx)
+        private SqlExpression? CodeRef(CodeRef cre, SqlExpressionBuilderContext ctx)
         {
-            var select = new QuerySpecification
+            var querySpecification = new QuerySpecification
             {
-                SelectElements =
-                {
-                    new SelectStarExpression()
-                },
                 FromClause = new FromClause
                 {
                     TableReferences =
@@ -1227,10 +1262,33 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            return select;
+            // readonly list property.  Add the cqlcode columns
+            cqlCodeColumns.ForEach(
+                e => 
+                querySpecification.SelectElements.Add(new SelectScalarExpression
+                {
+                    Expression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        {
+                            Identifiers =
+                            {
+                                e
+                            }
+                        }
+                    }
+                }));
+
+            return new SqlExpression(
+                new SelectStatement
+                {
+                    QueryExpression = querySpecification,
+                }, 
+                SqlExpression.FragmentTypes.SelectStatementScalar,
+                typeof(CqlCode));
         }
 
-        private TSqlFragment? Query(Query query, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Query(Query query, SqlExpressionBuilderContext ctx)
         {
             if (query?.source?.Length == 0)
                 throw new NotSupportedException("Queries must define at least 1 source");
@@ -1241,7 +1299,7 @@ namespace Hl7.Cql.Compiler
         }
 
         // returns a SelectStatement
-        private TSqlFragment? SingleSourceQuery(Query query, SqlExpressionBuilderContext ctx)
+        private SqlExpression? SingleSourceQuery(Query query, SqlExpressionBuilderContext ctx)
         {
             var querySource = query.source![0];
 
@@ -1254,8 +1312,30 @@ namespace Hl7.Cql.Compiler
                 throw new ArgumentException("Query sources must have an expression", nameof(query));
 
             // fully formed SELECT * with table (and _for now_ no where clause)
-            var source = TranslateExpression(querySource.expression!, ctx);
+            var sourceExpression = TranslateExpression(querySource.expression!, ctx);
+            var sourceSelect = sourceExpression.FragmentType == SqlExpression.FragmentTypes.SelectStatement
+                ? sourceExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException()
+                : throw new InvalidOperationException();
 
+            // TODO:  assume this is a SelectStatement
+
+            // this seems hacky but for now it works.   get the table alias in the from clause (which should be there for both table and TVFunction) and make it available to the where below
+            var firstTableReference = FindTableReference(sourceSelect)?.TableReferences?[0] ?? throw new InvalidOperationException();
+
+            TableReferenceWithAlias fromClauseTableReference;
+            // more hack -- if the from clause is a join here, it means (only?) that it was a joined with a code table.  in that case, take the FirstTableReference of the join
+            switch (firstTableReference)
+            {
+                case TableReferenceWithAlias tableReferenceWithAlias:
+                    fromClauseTableReference = tableReferenceWithAlias;
+                    break;
+                case QualifiedJoin qualifiedJoin:
+                    fromClauseTableReference = qualifiedJoin.FirstTableReference as TableReferenceWithAlias ?? throw new InvalidOperationException();
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+            Identifier fromClauseTableAlias = fromClauseTableReference.Alias ?? throw new InvalidOperationException();
 
             // further modification necessary?
 
@@ -1323,7 +1403,7 @@ namespace Hl7.Cql.Compiler
                 }
 
                 // create a new scope with the given alias, a table reference, and the FHIR type of the table
-                Identifier tableIdentifier = new Identifier { Value = "sourceTable" };  // TODO: this should be the same as what was used in the retrieve
+                Identifier tableIdentifier = fromClauseTableAlias;  // see above
                 var scopes = new[]
                 {
                     new KeyValuePair<string, ScopedSqlExpression>(
@@ -1344,12 +1424,18 @@ namespace Hl7.Cql.Compiler
                 //        subContext = subContext.WithScopes(letScopes);
                 //    }
 
-                var whereBody = TranslateExpression(query.where, subContext);
+                var whereExpression = TranslateExpression(query.where, subContext);
+                var whereBody = whereExpression.FragmentType == SqlExpression.FragmentTypes.BooleanExpression 
+                    ? (whereExpression.SqlFragment as BooleanExpression) ?? throw new InvalidOperationException()
+                    : throw new InvalidOperationException();
 
-                var sourceSelect = source as SelectStatement ?? throw new InvalidOperationException();
-                var queryExpression = sourceSelect.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
+                var queryExpression = sourceSelect.QueryExpression;
 
-                queryExpression.WhereClause = new WhereClause
+                while (queryExpression is QueryParenthesisExpression queryParenthesisExpression)
+                    queryExpression = queryParenthesisExpression.QueryExpression;
+                var querySpecification = queryExpression as QuerySpecification ?? throw new InvalidOperationException();
+
+                querySpecification.WhereClause = new WhereClause
                 {
                     SearchCondition = whereBody as BooleanExpression ?? throw new InvalidOperationException()
                 };
@@ -1487,7 +1573,7 @@ namespace Hl7.Cql.Compiler
             //    @return = callSingle;
             //}
 
-            return source;
+            return sourceExpression;
 
             //return @return;
         }
@@ -1522,15 +1608,15 @@ namespace Hl7.Cql.Compiler
 
 
 
-        private TSqlFragment? MultiSourceQuery(Query query, SqlExpressionBuilderContext ctx)
+        private SqlExpression? MultiSourceQuery(Query query, SqlExpressionBuilderContext ctx)
         {
             throw new NotImplementedException();
         }
 
         // returns a SelectStatement
-        private TSqlFragment? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Retrieve(Retrieve retrieve, SqlExpressionBuilderContext ctx)
         {
-            Type? sourceElementType;
+            Type sourceElementType;
             string? cqlRetrieveResultType;
 
             // SingletonFrom does not have this specified; in this case use DataType instead
@@ -1540,7 +1626,7 @@ namespace Hl7.Cql.Compiler
                     throw new ArgumentException("If a Retrieve lacks a ResultTypeSpecifier it must have a DataType", nameof(retrieve));
                 cqlRetrieveResultType = retrieve.dataType.Name;
 
-                sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType);
+                sourceElementType = TypeResolver.ResolveType(cqlRetrieveResultType) ?? throw new InvalidOperationException();
             }
             else
             {
@@ -1617,14 +1703,19 @@ namespace Hl7.Cql.Compiler
                     // against a list of codes, e.g., as defined by the code from or codesystem construct
 
                     // this should return a subselect that can be used in a where or join clause
-                    QuerySpecification codeSelect = TranslateExpression(retrieve.codes, ctx) as QuerySpecification ?? throw new InvalidOperationException();
-
+                    SqlExpression codeExpression = TranslateExpression(retrieve.codes, ctx);
+                    SelectStatement codeSelect = 
+                        codeExpression.IsSelectStatement
+                        ? codeExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException()
+                        : throw new InvalidOperationException();
+                    QuerySpecification codeQuery = codeSelect.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
+                        
                     tableReferences.Add(new QualifiedJoin
                     {
                         FirstTableReference = sourceTableReference,
                         SecondTableReference = new QueryDerivedTable
                         {
-                            QueryExpression = codeSelect,
+                            QueryExpression = codeQuery,
                             Alias = new Identifier { Value = "codeTable" }
                         },
                         SearchCondition = new BooleanBinaryExpression
@@ -1692,7 +1783,6 @@ namespace Hl7.Cql.Compiler
                 QueryExpression = new QuerySpecification
                 {
                     FromClause = new FromClause(),
-                    //WhereClause = whereClause
                 }
             };
 
@@ -1703,7 +1793,11 @@ namespace Hl7.Cql.Compiler
             IList<TableReference> tr = ((QuerySpecification)(select.QueryExpression)).FromClause.TableReferences;
             tableReferences.ForEach(t => tr.Add(t));
 
-            return select;
+            return new SqlExpression(
+                select,
+                SqlExpression.FragmentTypes.SelectStatement,
+                sourceElementType!);
+
         }
 
         public class FhirSqlTableMapEntry
@@ -1769,8 +1863,7 @@ namespace Hl7.Cql.Compiler
 
 
         // returns a selectstatement, which could be a selectscalarexpression or selectstarexpression
-        // also adds a table reference to the context (which later becomes a join)
-        private TSqlFragment? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
+        private SqlExpression? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {
             string functionName = ere.name;
 
@@ -1814,13 +1907,14 @@ namespace Hl7.Cql.Compiler
             }
             else
             {
-                return new SelectStatement
-                {
-                    QueryExpression = new QueryParenthesisExpression
+                return new SqlExpression(
+                    new SelectStatement
                     {
-                        QueryExpression = new QuerySpecification
+                        QueryExpression = new QueryParenthesisExpression
                         {
-                            SelectElements =
+                            QueryExpression = new QuerySpecification
+                            {
+                                SelectElements =
                             {
                                 new SelectStarExpression
                                 {
@@ -1834,16 +1928,17 @@ namespace Hl7.Cql.Compiler
                                 }
                             },
 
-                            FromClause = fromClause
+                                FromClause = fromClause
+                            },
                         },
                     },
-                };
-
+                    SqlExpression.FragmentTypes.SelectStatement,
+                    typeof(object)); // TODO: infer type
             }
         }
 
         // returns SelectStatement
-        private TSqlFragment? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Literal(Elm.Literal lit, SqlExpressionBuilderContext ctx)
         {
             Microsoft.SqlServer.TransactSql.ScriptDom.Literal? result = null;
 
@@ -1913,18 +2008,18 @@ namespace Hl7.Cql.Compiler
             };
         }
 
-        private TSqlFragment? Add(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Add(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Add, binaryExpression, ctx);
-        private TSqlFragment? Subtract(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Subtract(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Subtract, binaryExpression, ctx);
-        private TSqlFragment? Multiply(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Multiply(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Multiply, binaryExpression, ctx);
-        private TSqlFragment? Divide(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
+        private SqlExpression? Divide(Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
             => BinaryScalarExpression(BinaryExpressionType.Divide, binaryExpression, ctx);
 
 
         // returns a SelectStatement
-        private TSqlFragment BinaryScalarExpression(BinaryExpressionType binType, Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
+        private SqlExpression BinaryScalarExpression(BinaryExpressionType binType, Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
         {
             var (lhs, lhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[0], ctx));
             var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[1], ctx));
@@ -2050,9 +2145,10 @@ namespace Hl7.Cql.Compiler
 
         // expressions are (always?) wrapped as a SelectElement (a SelectScalarExpression)
         // but if used in a larger expression, need to be unwrapped
-        private (ScalarExpression, FromClause) UnwrapScalarSelectElement(TSqlFragment sqlFragment)
+        private (ScalarExpression, FromClause) UnwrapScalarSelectElement(SqlExpression sqlFragment)
         {
-            if (sqlFragment is SelectStatement selectStatment)
+            if (sqlFragment.IsSelectStatement
+                && sqlFragment.SqlFragment is SelectStatement selectStatment)
             {
                 QueryExpression inner = selectStatment.QueryExpression;
 
@@ -2069,13 +2165,31 @@ namespace Hl7.Cql.Compiler
                 throw new InvalidOperationException();
         }
 
+        private FromClause FindTableReference(TSqlFragment sqlFragment)
+        {
+            if (sqlFragment is SelectStatement selectStatment)
+            {
+                QueryExpression inner = selectStatment.QueryExpression;
+
+                // unwrap brackets
+                while (inner is QueryParenthesisExpression queryParenthesisExpression)
+                    inner = queryParenthesisExpression.QueryExpression;
+
+                QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
+
+                return querySpecification.FromClause;
+            }
+            else
+                throw new InvalidOperationException();
+        }
+
         // scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
         // when unwrapping, the return would be the inner expression as well as the tables
         // and then when wrapping, tables are added
         //
         //
         // NOTE:  an explicit TOP 1 is added to indicate a scalar.  This pattern is recognized elsewhere
-        private TSqlFragment WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery = false)
+        private SqlExpression WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery = false)
         {
             var queryExpression = new QueryParenthesisExpression
             {
@@ -2102,17 +2216,21 @@ namespace Hl7.Cql.Compiler
 
             if (createScalarSubquery)
             {
-                return new ScalarSubquery
-                {
-                    QueryExpression = queryExpression
-                };
+                return new SqlExpression(
+                    new ScalarSubquery
+                    {
+                        QueryExpression = queryExpression
+                    },
+                    SqlExpression.FragmentTypes.SelectStatementScalar, typeof(object)); // TODO: type needs to be passed in
             }
             else
             {
-                return new SelectStatement
-                {
-                    QueryExpression = queryExpression
-                };
+                return new SqlExpression(
+                    new SelectStatement
+                    {
+                        QueryExpression = queryExpression
+                    },
+                    SqlExpression.FragmentTypes.SelectStatementScalar, typeof(object)); // TODO: type needs to be passed in
             }
         }
 
@@ -2150,7 +2268,7 @@ namespace Hl7.Cql.Compiler
         }
 
         // returns a SelectStatement
-        private TSqlFragment? ToDecimal(ToDecimal tde, SqlExpressionBuilderContext ctx)
+        private SqlExpression? ToDecimal(ToDecimal tde, SqlExpressionBuilderContext ctx)
         {
             var (expression, fromClause) = UnwrapScalarSelectElement(TranslateExpression(tde.operand, ctx));
 

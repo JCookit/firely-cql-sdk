@@ -202,6 +202,10 @@ namespace Hl7.Cql.Compiler
         {
             Builder.Logger.LogWarning(FormatMessage(message, expression));
         }
+        internal void LogInfo(string message, elm.Element? element = null)
+        {
+            Builder.Logger.LogInformation(FormatMessage(message, element));
+        }
 
         /// <summary>
         /// Clones this ExpressionBuilderContext, adding the current context as a predecessor.

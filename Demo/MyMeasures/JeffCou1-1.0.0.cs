@@ -19,7 +19,10 @@ public class JeffCou1_1_0_0
 
     #region Cached values
 
+    internal Lazy<CqlCode> __Sucked_into_jet_engine;
+    internal Lazy<CqlCode> __Sucked_into_jet_engine__subsequent_encounter;
     internal Lazy<CqlCode> __Ouchie;
+    internal Lazy<CqlCode[]> __ICD10;
     internal Lazy<CqlCode[]> __SnoMed;
     internal Lazy<int?> __First;
     internal Lazy<int?> __Second;
@@ -32,8 +35,11 @@ public class JeffCou1_1_0_0
     internal Lazy<IEnumerable<Condition>> __DateTest2;
     internal Lazy<IEnumerable<Condition>> __DateTest3;
     internal Lazy<IEnumerable<Condition>> __DateTest4;
-    internal Lazy<IEnumerable<Condition>> __SimpleReferenceTest;
-    internal Lazy<IEnumerable<Condition>> __DefinitionReferenceTest;
+    internal Lazy<IEnumerable<Condition>> __IntervalTest;
+    internal Lazy<IEnumerable<Condition>> __SimpleRetrieveReferenceTest;
+    internal Lazy<IEnumerable<Condition>> __RetrieveReferenceWithFilterTest;
+    internal Lazy<IEnumerable<Condition>> __MultipleNestedTest1;
+    internal Lazy<IEnumerable<Condition>> __MultipleNestedTest2;
 
     #endregion
     public JeffCou1_1_0_0(CqlContext context)
@@ -42,7 +48,10 @@ public class JeffCou1_1_0_0
 
         FHIRHelpers_4_0_001 = new FHIRHelpers_4_0_001(context);
 
+        __Sucked_into_jet_engine = new Lazy<CqlCode>(this.Sucked_into_jet_engine_Value);
+        __Sucked_into_jet_engine__subsequent_encounter = new Lazy<CqlCode>(this.Sucked_into_jet_engine__subsequent_encounter_Value);
         __Ouchie = new Lazy<CqlCode>(this.Ouchie_Value);
+        __ICD10 = new Lazy<CqlCode[]>(this.ICD10_Value);
         __SnoMed = new Lazy<CqlCode[]>(this.SnoMed_Value);
         __First = new Lazy<int?>(this.First_Value);
         __Second = new Lazy<int?>(this.Second_Value);
@@ -55,8 +64,11 @@ public class JeffCou1_1_0_0
         __DateTest2 = new Lazy<IEnumerable<Condition>>(this.DateTest2_Value);
         __DateTest3 = new Lazy<IEnumerable<Condition>>(this.DateTest3_Value);
         __DateTest4 = new Lazy<IEnumerable<Condition>>(this.DateTest4_Value);
-        __SimpleReferenceTest = new Lazy<IEnumerable<Condition>>(this.SimpleReferenceTest_Value);
-        __DefinitionReferenceTest = new Lazy<IEnumerable<Condition>>(this.DefinitionReferenceTest_Value);
+        __IntervalTest = new Lazy<IEnumerable<Condition>>(this.IntervalTest_Value);
+        __SimpleRetrieveReferenceTest = new Lazy<IEnumerable<Condition>>(this.SimpleRetrieveReferenceTest_Value);
+        __RetrieveReferenceWithFilterTest = new Lazy<IEnumerable<Condition>>(this.RetrieveReferenceWithFilterTest_Value);
+        __MultipleNestedTest1 = new Lazy<IEnumerable<Condition>>(this.MultipleNestedTest1_Value);
+        __MultipleNestedTest2 = new Lazy<IEnumerable<Condition>>(this.MultipleNestedTest2_Value);
     }
     #region Dependencies
 
@@ -64,12 +76,41 @@ public class JeffCou1_1_0_0
 
     #endregion
 
+	private CqlCode Sucked_into_jet_engine_Value() => 
+		new CqlCode("V97.33", "http://hl7.org/fhir/sid/icd-10", null, null);
+
+    [CqlDeclaration("Sucked into jet engine")]
+	public CqlCode Sucked_into_jet_engine() => 
+		__Sucked_into_jet_engine.Value;
+
+	private CqlCode Sucked_into_jet_engine__subsequent_encounter_Value() => 
+		new CqlCode("V97.33XD", "http://hl7.org/fhir/sid/icd-10", null, null);
+
+    [CqlDeclaration("Sucked into jet engine, subsequent encounter")]
+	public CqlCode Sucked_into_jet_engine__subsequent_encounter() => 
+		__Sucked_into_jet_engine__subsequent_encounter.Value;
+
 	private CqlCode Ouchie_Value() => 
 		new CqlCode("59621000", "http://snomed.info/sct", null, null);
 
     [CqlDeclaration("Ouchie")]
 	public CqlCode Ouchie() => 
 		__Ouchie.Value;
+
+	private CqlCode[] ICD10_Value()
+	{
+		var a_ = new CqlCode[]
+		{
+			new CqlCode("V97.33", "http://hl7.org/fhir/sid/icd-10", null, null),
+			new CqlCode("V97.33XD", "http://hl7.org/fhir/sid/icd-10", null, null),
+		};
+
+		return a_;
+	}
+
+    [CqlDeclaration("ICD10")]
+	public CqlCode[] ICD10() => 
+		__ICD10.Value;
 
 	private CqlCode[] SnoMed_Value()
 	{
@@ -249,23 +290,45 @@ public class JeffCou1_1_0_0
 	public IEnumerable<Condition> DateTest4() => 
 		__DateTest4.Value;
 
-	private IEnumerable<Condition> SimpleReferenceTest_Value()
+	private IEnumerable<Condition> IntervalTest_Value()
+	{
+		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
+		bool? b_(Condition c)
+		{
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((c?.Onset as FhirDateTime));
+			var e_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var f_ = context.Operators.DateTime((int?)2022, (int?)2, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var g_ = context.Operators.Interval(e_, f_, true, false);
+			var h_ = context.Operators.ElementInInterval<CqlDateTime>(d_, g_, null);
+
+			return h_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("IntervalTest")]
+	public IEnumerable<Condition> IntervalTest() => 
+		__IntervalTest.Value;
+
+	private IEnumerable<Condition> SimpleRetrieveReferenceTest_Value()
 	{
 		var a_ = this.SimpleTest();
 
 		return a_;
 	}
 
-    [CqlDeclaration("SimpleReferenceTest")]
-	public IEnumerable<Condition> SimpleReferenceTest() => 
-		__SimpleReferenceTest.Value;
+    [CqlDeclaration("SimpleRetrieveReferenceTest")]
+	public IEnumerable<Condition> SimpleRetrieveReferenceTest() => 
+		__SimpleRetrieveReferenceTest.Value;
 
-	private IEnumerable<Condition> DefinitionReferenceTest_Value()
+	private IEnumerable<Condition> RetrieveReferenceWithFilterTest_Value()
 	{
-		var a_ = this.SimpleTest();
-		bool? b_(Condition s)
+		var a_ = this.CodeTest();
+		bool? b_(Condition c)
 		{
-			var d_ = FHIRHelpers_4_0_001.ToDateTime((s?.Onset as FhirDateTime));
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((c?.Onset as FhirDateTime));
 			var e_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
 			var f_ = context.Operators.After(d_, e_, null);
 
@@ -276,8 +339,39 @@ public class JeffCou1_1_0_0
 		return c_;
 	}
 
-    [CqlDeclaration("DefinitionReferenceTest")]
-	public IEnumerable<Condition> DefinitionReferenceTest() => 
-		__DefinitionReferenceTest.Value;
+    [CqlDeclaration("RetrieveReferenceWithFilterTest")]
+	public IEnumerable<Condition> RetrieveReferenceWithFilterTest() => 
+		__RetrieveReferenceWithFilterTest.Value;
+
+	private IEnumerable<Condition> MultipleNestedTest1_Value()
+	{
+		var a_ = this.RetrieveReferenceWithFilterTest();
+
+		return a_;
+	}
+
+    [CqlDeclaration("MultipleNestedTest1")]
+	public IEnumerable<Condition> MultipleNestedTest1() => 
+		__MultipleNestedTest1.Value;
+
+	private IEnumerable<Condition> MultipleNestedTest2_Value()
+	{
+		var a_ = this.MultipleNestedTest1();
+		bool? b_(Condition m)
+		{
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((m?.Onset as FhirDateTime));
+			var e_ = context.Operators.DateTime((int?)2021, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var f_ = context.Operators.Before(d_, e_, null);
+
+			return f_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("MultipleNestedTest2")]
+	public IEnumerable<Condition> MultipleNestedTest2() => 
+		__MultipleNestedTest2.Value;
 
 }

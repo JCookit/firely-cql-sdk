@@ -103,9 +103,9 @@ namespace Hl7.Cql.Compiler
     /// 
     /// in sql, it also contains state information for the currently-building sql construct
     /// </summary>
-    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, TSqlFragment>
+    internal class SqlExpressionBuilderContext : ExpressionBuilderContextBase<SqlExpressionBuilderContext, SqlExpressionBuilder, SqlExpression>
     {
-        internal DefinitionDictionary<TSqlFragment> Definitions { get; }
+        internal DefinitionDictionary<SqlExpression> Definitions { get; }
 
         public SqlOutputContext OutputContext { get; } = new SqlOutputContext();
 
@@ -114,12 +114,12 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         //internal IDictionary<string, ParameterExpression> Operands { get; } = new Dictionary<string, ParameterExpression>();
 
-        internal IDictionary<string, DefinitionDictionary<TSqlFragment>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<TSqlFragment>>();
+        internal IDictionary<string, DefinitionDictionary<SqlExpression>> Libraries { get; } = new Dictionary<string, DefinitionDictionary<SqlExpression>>();
 
         internal SqlExpressionBuilderContext(
             SqlExpressionBuilder builder,
             IDictionary<string, string> localLibraryIdentifiers,
-            DefinitionDictionary<TSqlFragment> definitions)
+            DefinitionDictionary<SqlExpression> definitions)
             : base(builder, localLibraryIdentifiers)
         {
             this.Definitions = definitions;
