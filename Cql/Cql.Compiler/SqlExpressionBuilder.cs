@@ -340,7 +340,12 @@ namespace Hl7.Cql.Compiler
 
                             var bodyExpression = TranslateExpression(def.expression, buildContext);
 
-                            //var bodyExpression = WrapWithSelect(queryExpression, buildContext);
+                            // if we get here with a BinaryExpression, this needs to be wrapped as a SELECT
+                            // sigh.  the best equivalent is SELECT IIF(<expression>, 1, 0)
+                            if (bodyExpression.FragmentType == SqlExpression.FragmentTypes.BooleanExpression)
+                            {
+                                bodyExpression = WrapBooleanExpressionInSelectStatement(bodyExpression);
+                            }
 
                             definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
                         }
@@ -387,6 +392,40 @@ namespace Hl7.Cql.Compiler
             {
                 throw new InvalidOperationException("This package does not have a name and version.");
             }
+        }
+
+        private SqlExpression WrapBooleanExpressionInSelectStatement(SqlExpression bodyExpression)
+        {
+            var booleanSelectStatement = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = new IIfCall
+                            {
+                                Predicate = bodyExpression.SqlFragment as BooleanComparisonExpression ?? throw new InvalidOperationException(),
+                                ThenExpression = new IntegerLiteral { Value = "1" },
+                                ElseExpression = new IntegerLiteral { Value = "0" }
+                            },
+                            ColumnName = new IdentifierOrValueExpression
+                            {
+                                Identifier = new Identifier { Value  = ResultColumnName }
+                            }
+                        }
+                    },
+                    FromClause = NullFromClause()
+                }
+            };
+
+            bodyExpression = new SqlExpression(
+                booleanSelectStatement,
+                SqlExpression.FragmentTypes.SelectStatementScalar,
+                typeof(bool));
+
+            return bodyExpression;
         }
 
         private static List<Identifier> cqlCodeColumns = new List<Identifier>()
@@ -635,10 +674,10 @@ namespace Hl7.Cql.Compiler
                     // result = GeometricMean(gme, ctx);
                     break;
                 case Greater gtr:
-                    // result = Greater(gtr, ctx);
+                    result = Greater(gtr, ctx);
                     break;
                 case GreaterOrEqual gtre:
-                    // result = GreaterOrEqual(gtre, ctx);
+                    result = GreaterOrEqual(gtre, ctx);
                     break;
                 case HighBoundary hb:
                     // result = HighBoundary(hb, ctx);
@@ -701,10 +740,10 @@ namespace Hl7.Cql.Compiler
                     // result = Length(len, ctx);
                     break;
                 case Less less:
-                    // result = Less(less, ctx);
+                    result = Less(less, ctx);
                     break;
                 case LessOrEqual lesse:
-                    // result = LessOrEqual(lesse, ctx);
+                    result = LessOrEqual(lesse, ctx);
                     break;
                 case List list:
                     // result = List(list, ctx);
@@ -984,14 +1023,46 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        /// <summary>
+        /// builds a select statement returning a scalar interval tuple
+        /// </summary>
+        /// <param name="ie"></param>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         private SqlExpression? Intervalresult(Interval ie, SqlExpressionBuilderContext ctx)
         {
-            // YOU ARE HERE ALSO
+            var lowExpression = TranslateExpression(ie.low, ctx);
+            var hiExpression = TranslateExpression(ie.high, ctx);
+            var lowClosed = ie.lowClosed;
+            var hiClosed = ie.highClosed;
+
+            if (lowExpression.DataType != hiExpression.DataType)
+                throw new InvalidOperationException("low and hi of Interval must be same type");
+
+            var (lowTuple, lowFrom) = UnwrapScalarSelectElements(lowExpression);
+            var (hiTuple, hiFrom) = UnwrapScalarSelectElements(hiExpression);   
+
+            if (lowTuple.Count > 1 || hiTuple.Count > 1)
+                throw new InvalidOperationException();
+
+            var intervalTuple = new ScalarTuple
+            {
+                DataType = typeof(CqlInterval<>).MakeGenericType(lowExpression.DataType)
+            };
+
+            // TODO: consider populating .net type and reflecting in order to build tuple
+            intervalTuple.Values.Add("low", lowTuple.SingleValue);
+            intervalTuple.Values.Add("hi", hiTuple.SingleValue);
+            intervalTuple.Values.Add("lowClosed", new IntegerLiteral { Value = lowClosed ? "1" : "0" });
+            intervalTuple.Values.Add("hiClosed", new IntegerLiteral { Value = hiClosed ? "1" : "0" });
 
             // stategy - build a scalar select which returns tuple of the interval type.  similar to cqlcode
             // (can this be genericized?)
 
-            throw new NotImplementedException();
+            var fromClause = ReconcileScalarFromClauses(lowFrom, hiFrom);
+
+            return WrapInSelectScalarExpression(intervalTuple, fromClause);
         }
 
         // returns BooleanExpression; expects Select operands
@@ -1028,40 +1099,76 @@ namespace Hl7.Cql.Compiler
         private SqlExpression? Before(Before before, SqlExpressionBuilderContext ctx) =>
             BooleanComparisonOperator(before, BooleanComparisonType.LessThan, ctx);
 
+        private SqlExpression? Greater(Greater greater, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(greater, BooleanComparisonType.GreaterThan, ctx);
+
+        private SqlExpression? GreaterOrEqual(GreaterOrEqual greaterOrEqual, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(greaterOrEqual, BooleanComparisonType.GreaterThanOrEqualTo, ctx);
+
+        private SqlExpression? Less(Less less, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(less, BooleanComparisonType.LessThan, ctx);
+
+        private SqlExpression? LessOrEqual(LessOrEqual lessOrEqual, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(lessOrEqual, BooleanComparisonType.LessThanOrEqualTo, ctx);
+
         // returns BooleanExpression; expects Select operands
         private SqlExpression? In(Elm.In inExpression, SqlExpressionBuilderContext ctx)
         {
             // unwrap both sides from their Selects, then re-wrap any scalar expression on either side
 
             var originalLhs = TranslateExpression(inExpression.operand[0], ctx);
-            var (unwrappedLhs, lhsFrom) = UnwrapScalarSelectElement(originalLhs);
+            var (unwrappedLhs, lhsFrom) = UnwrapScalarSelectElements(originalLhs);
 
             var originalRhs = TranslateExpression(inExpression.operand[1], ctx);
-            var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElement(originalRhs);
+            var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElements(originalRhs);
 
             // "lhs in rhs" is equivalent to
             // "(lhs > rhs.start AND lhs < rhs.end)" (or >= <= depending on open/closed)
             // (and assuming multiple evaluations of lhs/rhs are ok.  No side effects, right?)
+            
             // assuming rhs is an interval
+            if (unwrappedRhs.DataType.GetGenericTypeDefinition() != typeof(CqlInterval<>))
+                throw new InvalidOperationException();
 
-            // YOU ARE HERE - replace this
+            // assuming lhs is a single value
+            var lhsSingleValue = unwrappedLhs.SingleValue;
 
+            // rewrap rhs parts as a scalarsubquery
+            var rhsLow = WrapInSelectScalarExpression(unwrappedRhs.Values["low"], rhsFrom, true);
+            var rhsHi = WrapInSelectScalarExpression(unwrappedRhs.Values["hi"], rhsFrom, true);
 
-            ScalarExpression newLhs = originalLhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
-                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
-                    : unwrappedLhs;
-            ScalarExpression newRhs = originalRhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
-                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
-                    : unwrappedRhs;
-
-            var binaryExpression = new BooleanComparisonExpression
+            var lowClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["lowClosed"]);
+            var hiClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["hiClosed"]);
+            
+            var andExpression = new BooleanParenthesisExpression
             {
-                FirstExpression = newLhs,
-                ComparisonType  = BooleanComparisonType.NotEqualToBrackets,   // TODO: just a temp placeholder
-                SecondExpression = newRhs,
+                Expression = new BooleanBinaryExpression
+                {
+                    FirstExpression = new BooleanComparisonExpression
+                    {
+                        FirstExpression = lhsSingleValue,
+                        ComparisonType = lowClosed ? BooleanComparisonType.GreaterThanOrEqualTo : BooleanComparisonType.GreaterThan,
+                        SecondExpression = rhsLow.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                    },
+                    BinaryExpressionType = BooleanBinaryExpressionType.And,
+                    SecondExpression = new BooleanComparisonExpression
+                    {
+                        FirstExpression = lhsSingleValue,
+                        ComparisonType = hiClosed ? BooleanComparisonType.LessThanOrEqualTo : BooleanComparisonType.LessThan,
+                        SecondExpression = rhsHi.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                    }
+                }
             };
 
-            return new SqlExpression(binaryExpression, SqlExpression.FragmentTypes.BooleanExpression, typeof(bool)); 
+            return new SqlExpression(andExpression, SqlExpression.FragmentTypes.BooleanExpression, typeof(bool)); 
+        }
+
+        private bool SqlIntegerScalarExpressionToBoolean(ScalarExpression scalarExpression)
+        {
+            if (scalarExpression is IntegerLiteral integerLiteral)
+                return Int32.Parse(integerLiteral.Value, System.Globalization.CultureInfo.InvariantCulture) != 0;
+            else
+                throw new InvalidOperationException();
         }
 
         private SqlExpression? BooleanOperator(Elm.BinaryExpression binaryExpression, BooleanBinaryExpressionType bbet, SqlExpressionBuilderContext ctx)
@@ -1085,9 +1192,22 @@ namespace Hl7.Cql.Compiler
             if (sqlExpression.FragmentType == SqlExpression.FragmentTypes.BooleanExpression
                 && sqlExpression.DataType == typeof(bool)
                 && sqlExpression.SqlFragment is BooleanExpression booleanExpression)
+            {
                 return booleanExpression;
-            else
+            }
+            else if (sqlExpression.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar)
+            {
+                // YOU ARE HERE -- 
+                // since a boolean can come from another cql symbol, i think this means that even a BooleanExpression needs
+                // to be a full SELECT
+                // (ie wrapped in the SELECT IIF(<expression>, 1, 0) pattern) FROM symbol/unused
+                //
+                // and then unwrapped, and possible re-wrapped
+
+                // wrap the scalar expression in "CAST(<scalar> AS BIT)=1"
                 throw new InvalidOperationException();
+            }
+            throw new InvalidOperationException();
         }
 
         // returns a boolean expression; expects BooleanExpression operands
@@ -1135,13 +1255,13 @@ namespace Hl7.Cql.Compiler
         // TODO: returns a fully formed select with table name, which might not be relevant to all contexts?
         private SqlExpression? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
-            ColumnReferenceExpression? columnReferenceExpression = null;
+            SelectScalarExpression? selectScalarExpression = null;
 
             var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
             var sourceTableType = sourceTable.Type;
             var sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
 
-            // map the property name to a column name -- TODO: should be a lookup
+            // map the property name to a column name -- TODO: should be a fancier lookup
             switch (sourceTableType.Name.ToLowerInvariant())
             {
                 case "condition":
@@ -1149,15 +1269,23 @@ namespace Hl7.Cql.Compiler
                         switch (pe.path)
                         {
                             case "onset":
-                                columnReferenceExpression = new ColumnReferenceExpression
+                                string destinationcolumnName = "onsetDateTime";
+                                selectScalarExpression = new SelectScalarExpression
                                 {
-                                    MultiPartIdentifier = new MultiPartIdentifier
+                                    Expression = new ColumnReferenceExpression
                                     {
-                                        Identifiers =
+                                        MultiPartIdentifier = new MultiPartIdentifier
                                         {
-                                            sourceTableIdentifier,
-                                            new Identifier { Value = "onsetDateTime" }
+                                            Identifiers =
+                                            {
+                                                sourceTableIdentifier,
+                                                new Identifier { Value = destinationcolumnName }
+                                            }
                                         }
+                                    },
+                                    ColumnName = new IdentifierOrValueExpression
+                                    {
+                                        Identifier = new Identifier { Value = destinationcolumnName }
                                     }
                                 };
                                 break;
@@ -1166,7 +1294,7 @@ namespace Hl7.Cql.Compiler
                     }
             }
 
-            if (columnReferenceExpression == null)
+            if (selectScalarExpression == null)
                 throw new NotImplementedException();
 
             return new SqlExpression(
@@ -1175,27 +1303,24 @@ namespace Hl7.Cql.Compiler
                     QueryExpression = new QuerySpecification
                     {
                         SelectElements =
-                    {
-                        new SelectScalarExpression
                         {
-                            Expression = columnReferenceExpression
-                        }
-                    },
+                            selectScalarExpression,
+                        },
                         FromClause = new FromClause
                         {
                             TableReferences =
-                        {
-                            new NamedTableReference
                             {
-                                SchemaObject = new SchemaObjectName
+                                new NamedTableReference
                                 {
-                                    Identifiers =
+                                    SchemaObject = new SchemaObjectName
                                     {
-                                        sourceTableIdentifier
+                                        Identifiers =
+                                        {
+                                            sourceTableIdentifier
+                                        }
                                     }
                                 }
                             }
-                        }
                         }
                     }
                 },
@@ -2143,6 +2268,116 @@ namespace Hl7.Cql.Compiler
             return result;
         }
 
+        private FromClause FindTableReference(TSqlFragment sqlFragment)
+        {
+            if (sqlFragment is SelectStatement selectStatment)
+            {
+                QueryExpression inner = selectStatment.QueryExpression;
+
+                // unwrap brackets
+                while (inner is QueryParenthesisExpression queryParenthesisExpression)
+                    inner = queryParenthesisExpression.QueryExpression;
+
+                QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
+
+                return querySpecification.FromClause;
+            }
+            else
+                throw new InvalidOperationException();
+        }
+
+        internal class ScalarTuple
+        {
+            public Dictionary<string, ScalarExpression> Values { get; init; } = new Dictionary<string, ScalarExpression>();
+            public Type DataType { get; init; } = typeof(object);
+
+            public int Count => Values.Count;
+
+            /// <summary>
+            /// A handy shortcut for returning a single value if the tuple only has one
+            /// </summary>
+            public ScalarExpression SingleValue
+            {
+                get
+                {
+                    if (Count != 1)
+                        throw new InvalidOperationException();
+                    return Values.Values.First();
+                }
+            }
+        }
+
+        // scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
+        // when unwrapping, the return would be the inner expression(s) as well as the tables
+        // and then when wrapping, tables are added
+        //
+        //
+        // NOTE:  an explicit TOP 1 is added to indicate a scalar. 
+        private SqlExpression WrapInSelectScalarExpression(ScalarTuple scalarTuple, FromClause fromClause, bool createScalarSubquery = false)
+        {
+            // build the basic query specification
+            QuerySpecification querySpecification = new QuerySpecification
+            {
+                FromClause = fromClause,
+                TopRowFilter = new TopRowFilter
+                {
+                    Expression = new IntegerLiteral { Value = "1" }
+                }
+            };
+
+            // add the select elements
+            foreach (var field in scalarTuple.Values)
+            {
+                querySpecification.SelectElements.Add(new SelectScalarExpression
+                {
+                    Expression = field.Value,
+                    ColumnName = new IdentifierOrValueExpression
+                    {
+                        Identifier = new Identifier { Value = field.Key }
+                    }
+                });
+            }
+
+            // wrap in queryexpression
+            var queryExpression = new QueryParenthesisExpression
+            {
+                QueryExpression = querySpecification
+            };
+
+            // wrap in select statement
+            if (createScalarSubquery)
+            {
+                return new SqlExpression(
+                    new ScalarSubquery
+                    {
+                        QueryExpression = queryExpression
+                    },
+                    SqlExpression.FragmentTypes.SelectStatementScalar, scalarTuple.DataType);
+            }
+            else
+            {
+                return new SqlExpression(
+                    new SelectStatement
+                    {
+                        QueryExpression = queryExpression
+                    },
+                    SqlExpression.FragmentTypes.SelectStatementScalar, scalarTuple.DataType); // TODO: type needs to be passed in
+            }
+        }
+
+        // helper method when the scalar is just one field (TODO: is this still useful?)
+        private SqlExpression WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery = false)
+        {
+            return WrapInSelectScalarExpression(
+                new ScalarTuple
+                {
+                    Values = { { ResultColumnName, scalar } },
+                    DataType = typeof(object) // TODO: type needs to be inferred?
+                },
+                fromClause,
+                createScalarSubquery);
+        }
+
         // expressions are (always?) wrapped as a SelectElement (a SelectScalarExpression)
         // but if used in a larger expression, need to be unwrapped
         private (ScalarExpression, FromClause) UnwrapScalarSelectElement(SqlExpression sqlFragment)
@@ -2165,9 +2400,10 @@ namespace Hl7.Cql.Compiler
                 throw new InvalidOperationException();
         }
 
-        private FromClause FindTableReference(TSqlFragment sqlFragment)
+        private (ScalarTuple, FromClause) UnwrapScalarSelectElements(SqlExpression sqlFragment)
         {
-            if (sqlFragment is SelectStatement selectStatment)
+            if (sqlFragment.IsSelectStatement
+                && sqlFragment.SqlFragment is SelectStatement selectStatment)
             {
                 QueryExpression inner = selectStatment.QueryExpression;
 
@@ -2177,95 +2413,57 @@ namespace Hl7.Cql.Compiler
 
                 QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
 
-                return querySpecification.FromClause;
-            }
-            else
-                throw new InvalidOperationException();
-        }
-
-        // scalars need to be wrapped in full select statements (and correspondingly unwrapped for complex expressions)
-        // when unwrapping, the return would be the inner expression as well as the tables
-        // and then when wrapping, tables are added
-        //
-        //
-        // NOTE:  an explicit TOP 1 is added to indicate a scalar.  This pattern is recognized elsewhere
-        private SqlExpression WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery = false)
-        {
-            var queryExpression = new QueryParenthesisExpression
-            {
-                QueryExpression = new QuerySpecification
+                ScalarTuple result = new()
                 {
-                    SelectElements =
-                            {
-                                new SelectScalarExpression
-                                {
-                                    Expression = scalar,
-                                    ColumnName = new IdentifierOrValueExpression
-                                    {
-                                        Identifier = new Identifier { Value = ResultColumnName }
-                                    }
-                                }
-                            },
-                    FromClause = fromClause,
-                    TopRowFilter = new TopRowFilter
-                    {
-                        Expression = new IntegerLiteral { Value = "1" }
-                    }
-                },
-            };
-
-            if (createScalarSubquery)
-            {
-                return new SqlExpression(
-                    new ScalarSubquery
-                    {
-                        QueryExpression = queryExpression
-                    },
-                    SqlExpression.FragmentTypes.SelectStatementScalar, typeof(object)); // TODO: type needs to be passed in
-            }
-            else
-            {
-                return new SqlExpression(
-                    new SelectStatement
-                    {
-                        QueryExpression = queryExpression
-                    },
-                    SqlExpression.FragmentTypes.SelectStatementScalar, typeof(object)); // TODO: type needs to be passed in
-            }
-        }
-
-        private bool IsScalarQuery(TSqlFragment fragment)
-        {
-            // when wrapping a scalar, we explicitly add TOP 1.  So, diagnose if this is present
-
-            QueryExpression queryExpression;
-            if (fragment is SelectStatement selectStatement)
-            {
-                queryExpression = selectStatement.QueryExpression;
-            }
-            else if (fragment is ScalarSubquery scalarSubquery)
-            {
-                queryExpression = scalarSubquery.QueryExpression;
-            }
-            else
-                throw new InvalidOperationException();
-
-            while (queryExpression is QueryParenthesisExpression queryParenthesisExpression)
-                queryExpression = queryParenthesisExpression.QueryExpression;
-
-            QuerySpecification querySpecification = queryExpression as QuerySpecification ?? throw new InvalidOperationException();
-
-            if (querySpecification.TopRowFilter != null)
-            {
-                if (querySpecification.TopRowFilter.Expression is IntegerLiteral integerLiteral)
+                    DataType = sqlFragment.DataType
+                };
+                foreach (var selectElement in querySpecification.SelectElements)
                 {
-                    if (integerLiteral.Value == "1")
-                        return true;
+                    SelectScalarExpression selectScalarExpression = selectElement as SelectScalarExpression ?? throw new InvalidOperationException();
+
+                    result.Values.Add(
+                        selectScalarExpression.ColumnName?.Value ?? throw new InvalidOperationException(),
+                        selectScalarExpression.Expression);
                 }
-            }
 
-            return false;
+                return (result, querySpecification.FromClause);
+            }
+            else
+                throw new InvalidOperationException();
         }
+
+        //private bool IsScalarQuery(TSqlFragment fragment)
+        //{
+        //    // when wrapping a scalar, we explicitly add TOP 1.  So, diagnose if this is present
+
+        //    QueryExpression queryExpression;
+        //    if (fragment is SelectStatement selectStatement)
+        //    {
+        //        queryExpression = selectStatement.QueryExpression;
+        //    }
+        //    else if (fragment is ScalarSubquery scalarSubquery)
+        //    {
+        //        queryExpression = scalarSubquery.QueryExpression;
+        //    }
+        //    else
+        //        throw new InvalidOperationException();
+
+        //    while (queryExpression is QueryParenthesisExpression queryParenthesisExpression)
+        //        queryExpression = queryParenthesisExpression.QueryExpression;
+
+        //    QuerySpecification querySpecification = queryExpression as QuerySpecification ?? throw new InvalidOperationException();
+
+        //    if (querySpecification.TopRowFilter != null)
+        //    {
+        //        if (querySpecification.TopRowFilter.Expression is IntegerLiteral integerLiteral)
+        //        {
+        //            if (integerLiteral.Value == "1")
+        //                return true;
+        //        }
+        //    }
+
+        //    return false;
+        //}
 
         // returns a SelectStatement
         private SqlExpression? ToDecimal(ToDecimal tde, SqlExpressionBuilderContext ctx)

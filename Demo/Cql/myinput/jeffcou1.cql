@@ -16,6 +16,18 @@ code "Sucked into jet engine, subsequent encounter": 'V97.33XD' from "ICD10"
 codesystem "SnoMed" : 'http://snomed.info/sct'
 code "Ouchie" : '59621000' from "SnoMed"
 
+define "FirstCompare":
+  1 < 2
+
+define "SecondCompare":
+  FirstCompare and 2 < 3
+
+define "ThirdCompare":
+  SecondCompare or 5 in Interval[1,10]
+
+define "FourthCompare":
+  FirstCompare and SecondCompare and ThirdCompare
+
 define "First":
   1
 
@@ -60,8 +72,14 @@ define "DateTest4":
 		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z and (c.onset) before @2022-02-01T00:00:00.000Z
 
+define "IntervalDateDefinition":
+	Interval[@2020-01-01T00:00:00.000Z, @2022-02-01T00:00:00.000Z)
+
+define "IntervalIntegerDefinition":
+	Interval(1, 10*3]
+
 define "IntervalTest":
-	[Condition] c
+	CodeTest c
 		where 
 			(c.onset) in Interval[@2020-01-01T00:00:00.000Z, @2022-02-01T00:00:00.000Z)
 

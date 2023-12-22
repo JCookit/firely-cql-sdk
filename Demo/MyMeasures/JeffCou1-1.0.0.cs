@@ -24,6 +24,7 @@ public class JeffCou1_1_0_0
     internal Lazy<CqlCode> __Ouchie;
     internal Lazy<CqlCode[]> __ICD10;
     internal Lazy<CqlCode[]> __SnoMed;
+    internal Lazy<bool?> __FirstCompare;
     internal Lazy<int?> __First;
     internal Lazy<int?> __Second;
     internal Lazy<decimal?> __PEDMASTest;
@@ -35,6 +36,8 @@ public class JeffCou1_1_0_0
     internal Lazy<IEnumerable<Condition>> __DateTest2;
     internal Lazy<IEnumerable<Condition>> __DateTest3;
     internal Lazy<IEnumerable<Condition>> __DateTest4;
+    internal Lazy<CqlInterval<CqlDateTime>> __IntervalDateDefinition;
+    internal Lazy<CqlInterval<int?>> __IntervalIntegerDefinition;
     internal Lazy<IEnumerable<Condition>> __IntervalTest;
     internal Lazy<IEnumerable<Condition>> __SimpleRetrieveReferenceTest;
     internal Lazy<IEnumerable<Condition>> __RetrieveReferenceWithFilterTest;
@@ -53,6 +56,7 @@ public class JeffCou1_1_0_0
         __Ouchie = new Lazy<CqlCode>(this.Ouchie_Value);
         __ICD10 = new Lazy<CqlCode[]>(this.ICD10_Value);
         __SnoMed = new Lazy<CqlCode[]>(this.SnoMed_Value);
+        __FirstCompare = new Lazy<bool?>(this.FirstCompare_Value);
         __First = new Lazy<int?>(this.First_Value);
         __Second = new Lazy<int?>(this.Second_Value);
         __PEDMASTest = new Lazy<decimal?>(this.PEDMASTest_Value);
@@ -64,6 +68,8 @@ public class JeffCou1_1_0_0
         __DateTest2 = new Lazy<IEnumerable<Condition>>(this.DateTest2_Value);
         __DateTest3 = new Lazy<IEnumerable<Condition>>(this.DateTest3_Value);
         __DateTest4 = new Lazy<IEnumerable<Condition>>(this.DateTest4_Value);
+        __IntervalDateDefinition = new Lazy<CqlInterval<CqlDateTime>>(this.IntervalDateDefinition_Value);
+        __IntervalIntegerDefinition = new Lazy<CqlInterval<int?>>(this.IntervalIntegerDefinition_Value);
         __IntervalTest = new Lazy<IEnumerable<Condition>>(this.IntervalTest_Value);
         __SimpleRetrieveReferenceTest = new Lazy<IEnumerable<Condition>>(this.SimpleRetrieveReferenceTest_Value);
         __RetrieveReferenceWithFilterTest = new Lazy<IEnumerable<Condition>>(this.RetrieveReferenceWithFilterTest_Value);
@@ -125,6 +131,17 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("SnoMed")]
 	public CqlCode[] SnoMed() => 
 		__SnoMed.Value;
+
+	private bool? FirstCompare_Value()
+	{
+		var a_ = context.Operators.Greater((int?)1, (int?)2);
+
+		return a_;
+	}
+
+    [CqlDeclaration("FirstCompare")]
+	public bool? FirstCompare() => 
+		__FirstCompare.Value;
 
 	private int? First_Value() => 
 		(int?)1;
@@ -290,9 +307,34 @@ public class JeffCou1_1_0_0
 	public IEnumerable<Condition> DateTest4() => 
 		__DateTest4.Value;
 
+	private CqlInterval<CqlDateTime> IntervalDateDefinition_Value()
+	{
+		var a_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+		var b_ = context.Operators.DateTime((int?)2022, (int?)2, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+		var c_ = context.Operators.Interval(a_, b_, true, false);
+
+		return c_;
+	}
+
+    [CqlDeclaration("IntervalDateDefinition")]
+	public CqlInterval<CqlDateTime> IntervalDateDefinition() => 
+		__IntervalDateDefinition.Value;
+
+	private CqlInterval<int?> IntervalIntegerDefinition_Value()
+	{
+		var a_ = context.Operators.Multiply((int?)10, (int?)3);
+		var b_ = context.Operators.Interval((int?)1, a_, false, true);
+
+		return b_;
+	}
+
+    [CqlDeclaration("IntervalIntegerDefinition")]
+	public CqlInterval<int?> IntervalIntegerDefinition() => 
+		__IntervalIntegerDefinition.Value;
+
 	private IEnumerable<Condition> IntervalTest_Value()
 	{
-		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
+		var a_ = this.CodeTest();
 		bool? b_(Condition c)
 		{
 			var d_ = FHIRHelpers_4_0_001.ToDateTime((c?.Onset as FhirDateTime));

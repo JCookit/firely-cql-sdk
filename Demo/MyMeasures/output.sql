@@ -53,6 +53,19 @@ RETURN
     SELECT *
     FROM   (VALUES ('59621000', 'http://snomed.info/sct', NULL, NULL)) AS codes(code, codesystem, display, ver)
 GO
+-- start FirstCompare
+DROP FUNCTION FirstCompare
+GO
+CREATE FUNCTION FirstCompare
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF (((SELECT TOP 1 1 AS Result
+                  FROM   (SELECT NULL AS unused_column) AS UNUSED)) > ((SELECT TOP 1 2 AS Result
+                                                                        FROM   (SELECT NULL AS unused_column) AS UNUSED)), 1, 0) AS Result
+    FROM   (SELECT NULL AS unused_column) AS UNUSED
+GO
 -- start First
 DROP FUNCTION First
 GO
@@ -199,6 +212,49 @@ RETURN
                                          FROM   (SELECT NULL AS unused_column) AS UNUSED))
            AND sourceTable.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
                                              FROM   (SELECT NULL AS unused_column) AS UNUSED))
+GO
+-- start IntervalDateDefinition
+DROP FUNCTION IntervalDateDefinition
+GO
+CREATE FUNCTION IntervalDateDefinition
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS low,
+                  DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS hi,
+                  1 AS lowClosed,
+                  0 AS hiClosed
+     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+GO
+-- start IntervalIntegerDefinition
+DROP FUNCTION IntervalIntegerDefinition
+GO
+CREATE FUNCTION IntervalIntegerDefinition
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 1 AS low,
+                  10 * 3 AS hi,
+                  0 AS lowClosed,
+                  1 AS hiClosed
+     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+GO
+-- start IntervalTest
+DROP FUNCTION IntervalTest
+GO
+CREATE FUNCTION IntervalTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT CodeTest.*
+     FROM   CodeTest() AS CodeTest
+     WHERE  (CodeTest.onsetDateTime >= ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
+                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
+             AND CodeTest.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
+                                            FROM   (SELECT NULL AS unused_column) AS UNUSED))))
 GO
 -- start SimpleRetrieveReferenceTest
 DROP FUNCTION SimpleRetrieveReferenceTest
