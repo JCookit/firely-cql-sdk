@@ -28,6 +28,15 @@ define "ThirdCompare":
 define "FourthCompare":
   FirstCompare and SecondCompare and ThirdCompare
 
+define "SimpleTrue":
+  true
+
+define "SimpleFalse":
+  false
+
+define "SimpleAnd":
+  true and true
+
 define "First":
   1
 
@@ -77,6 +86,9 @@ define "IntervalDateDefinition":
 
 define "IntervalIntegerDefinition":
 	Interval(1, 10*3]
+
+define "IntervalIntegerReferenceTest":
+    5 in IntervalIntegerDefinition
 
 define "IntervalTest":
 	CodeTest c

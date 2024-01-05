@@ -25,6 +25,12 @@ public class JeffCou1_1_0_0
     internal Lazy<CqlCode[]> __ICD10;
     internal Lazy<CqlCode[]> __SnoMed;
     internal Lazy<bool?> __FirstCompare;
+    internal Lazy<bool?> __SecondCompare;
+    internal Lazy<bool?> __ThirdCompare;
+    internal Lazy<bool?> __FourthCompare;
+    internal Lazy<bool?> __SimpleTrue;
+    internal Lazy<bool?> __SimpleFalse;
+    internal Lazy<bool?> __SimpleAnd;
     internal Lazy<int?> __First;
     internal Lazy<int?> __Second;
     internal Lazy<decimal?> __PEDMASTest;
@@ -57,6 +63,12 @@ public class JeffCou1_1_0_0
         __ICD10 = new Lazy<CqlCode[]>(this.ICD10_Value);
         __SnoMed = new Lazy<CqlCode[]>(this.SnoMed_Value);
         __FirstCompare = new Lazy<bool?>(this.FirstCompare_Value);
+        __SecondCompare = new Lazy<bool?>(this.SecondCompare_Value);
+        __ThirdCompare = new Lazy<bool?>(this.ThirdCompare_Value);
+        __FourthCompare = new Lazy<bool?>(this.FourthCompare_Value);
+        __SimpleTrue = new Lazy<bool?>(this.SimpleTrue_Value);
+        __SimpleFalse = new Lazy<bool?>(this.SimpleFalse_Value);
+        __SimpleAnd = new Lazy<bool?>(this.SimpleAnd_Value);
         __First = new Lazy<int?>(this.First_Value);
         __Second = new Lazy<int?>(this.Second_Value);
         __PEDMASTest = new Lazy<decimal?>(this.PEDMASTest_Value);
@@ -134,7 +146,7 @@ public class JeffCou1_1_0_0
 
 	private bool? FirstCompare_Value()
 	{
-		var a_ = context.Operators.Greater((int?)1, (int?)2);
+		var a_ = context.Operators.Less((int?)1, (int?)2);
 
 		return a_;
 	}
@@ -142,6 +154,73 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("FirstCompare")]
 	public bool? FirstCompare() => 
 		__FirstCompare.Value;
+
+	private bool? SecondCompare_Value()
+	{
+		var a_ = this.FirstCompare();
+		var b_ = context.Operators.Less((int?)2, (int?)3);
+		var c_ = context.Operators.And(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("SecondCompare")]
+	public bool? SecondCompare() => 
+		__SecondCompare.Value;
+
+	private bool? ThirdCompare_Value()
+	{
+		var a_ = this.SecondCompare();
+		var b_ = context.Operators.Interval((int?)1, (int?)10, true, true);
+		var c_ = context.Operators.ElementInInterval<int?>((int?)5, b_, null);
+		var d_ = context.Operators.Or(a_, c_);
+
+		return d_;
+	}
+
+    [CqlDeclaration("ThirdCompare")]
+	public bool? ThirdCompare() => 
+		__ThirdCompare.Value;
+
+	private bool? FourthCompare_Value()
+	{
+		var a_ = this.FirstCompare();
+		var b_ = this.SecondCompare();
+		var c_ = context.Operators.And(a_, b_);
+		var d_ = this.ThirdCompare();
+		var e_ = context.Operators.And(c_, d_);
+
+		return e_;
+	}
+
+    [CqlDeclaration("FourthCompare")]
+	public bool? FourthCompare() => 
+		__FourthCompare.Value;
+
+	private bool? SimpleTrue_Value() => 
+		(bool?)true;
+
+    [CqlDeclaration("SimpleTrue")]
+	public bool? SimpleTrue() => 
+		__SimpleTrue.Value;
+
+	private bool? SimpleFalse_Value() => 
+		(bool?)false;
+
+    [CqlDeclaration("SimpleFalse")]
+	public bool? SimpleFalse() => 
+		__SimpleFalse.Value;
+
+	private bool? SimpleAnd_Value()
+	{
+		var a_ = context.Operators.And((bool?)true, (bool?)true);
+
+		return a_;
+	}
+
+    [CqlDeclaration("SimpleAnd")]
+	public bool? SimpleAnd() => 
+		__SimpleAnd.Value;
 
 	private int? First_Value() => 
 		(int?)1;

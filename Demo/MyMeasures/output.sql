@@ -62,8 +62,84 @@ RETURNS TABLE
 AS
 RETURN 
     SELECT IIF (((SELECT TOP 1 1 AS Result
-                  FROM   (SELECT NULL AS unused_column) AS UNUSED)) > ((SELECT TOP 1 2 AS Result
+                  FROM   (SELECT NULL AS unused_column) AS UNUSED)) < ((SELECT TOP 1 2 AS Result
                                                                         FROM   (SELECT NULL AS unused_column) AS UNUSED)), 1, 0) AS Result
+    FROM   (SELECT NULL AS unused_column) AS UNUSED
+GO
+-- start SecondCompare
+DROP FUNCTION SecondCompare
+GO
+CREATE FUNCTION SecondCompare
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF (FirstCompare.Result = 1
+                AND ((SELECT TOP 1 2 AS Result
+                      FROM   (SELECT NULL AS unused_column) AS UNUSED)) < ((SELECT TOP 1 3 AS Result
+                                                                            FROM   (SELECT NULL AS unused_column) AS UNUSED)), 1, 0) AS Result
+    FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY FirstCompare() AS FirstCompare
+GO
+-- start ThirdCompare
+DROP FUNCTION ThirdCompare
+GO
+CREATE FUNCTION ThirdCompare
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF (SecondCompare.Result = 1
+                OR (5 >= ((SELECT TOP 1 1 AS Result
+                           FROM   (SELECT NULL AS unused_column) AS UNUSED))
+                    AND 5 <= ((SELECT TOP 1 10 AS Result
+                               FROM   (SELECT NULL AS unused_column) AS UNUSED))), 1, 0) AS Result
+    FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY SecondCompare() AS SecondCompare
+GO
+-- start FourthCompare
+DROP FUNCTION FourthCompare
+GO
+CREATE FUNCTION FourthCompare
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF (FirstCompare.Result = 1
+                AND SecondCompare.Result = 1
+                AND ThirdCompare.Result = 1, 1, 0) AS Result
+    FROM   FirstCompare() AS FirstCompare CROSS APPLY SecondCompare() AS SecondCompare CROSS APPLY ThirdCompare() AS ThirdCompare
+GO
+-- start SimpleTrue
+DROP FUNCTION SimpleTrue
+GO
+CREATE FUNCTION SimpleTrue
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 1 AS Result
+     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+GO
+-- start SimpleFalse
+DROP FUNCTION SimpleFalse
+GO
+CREATE FUNCTION SimpleFalse
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 0 AS Result
+     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+GO
+-- start SimpleAnd
+DROP FUNCTION SimpleAnd
+GO
+CREATE FUNCTION SimpleAnd
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF (1 = 1
+                AND 1 = 1, 1, 0) AS Result
     FROM   (SELECT NULL AS unused_column) AS UNUSED
 GO
 -- start First
