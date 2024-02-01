@@ -317,6 +317,20 @@ RETURN
                   1 AS hiClosed
      FROM   (SELECT NULL AS unused_column) AS UNUSED)
 GO
+-- start IntervalIntegerReferenceTestDoesntWork
+DROP FUNCTION IntervalIntegerReferenceTestDoesntWork
+GO
+CREATE FUNCTION IntervalIntegerReferenceTestDoesntWork
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF ((5 >= ((SELECT TOP 1 IntervalIntegerDefinition.low AS Result
+                        FROM   IntervalIntegerDefinition() AS IntervalIntegerDefinition))
+                 AND 5 <= ((SELECT TOP 1 IntervalIntegerDefinition.hi AS Result
+                            FROM   IntervalIntegerDefinition() AS IntervalIntegerDefinition))), 1, 0) AS Result
+    FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY IntervalIntegerDefinition() AS IntervalIntegerDefinition
+GO
 -- start IntervalTest
 DROP FUNCTION IntervalTest
 GO
@@ -331,6 +345,19 @@ RETURN
                                          FROM   (SELECT NULL AS unused_column) AS UNUSED))
              AND CodeTest.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
                                             FROM   (SELECT NULL AS unused_column) AS UNUSED))))
+GO
+-- start FirstExists
+DROP FUNCTION FirstExists
+GO
+CREATE FUNCTION FirstExists
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF ((SELECT COUNT(1)
+                 FROM   ((SELECT IntervalTest.*
+                          FROM   IntervalTest() AS IntervalTest)) AS UNUSED) > 0, 1, 0)
+    FROM   (SELECT NULL AS unused_column) AS UNUSED
 GO
 -- start SimpleRetrieveReferenceTest
 DROP FUNCTION SimpleRetrieveReferenceTest

@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -603,7 +604,7 @@ namespace Hl7.Cql.Compiler
                     // result = Except(ex, ctx);
                     break;
                 case Exists ex:
-                    // result = Exists(ex, ctx);
+                    result = Exists(ex, ctx);
                     break;
                 case Exp exe:
                     // result = Exp(exe, ctx);
@@ -982,6 +983,69 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        private SqlExpression? Exists(Exists ex, SqlExpressionBuilderContext ctx)
+        {
+            var existsExpression = TranslateExpression(ex.operand, ctx);
+            var existsSelect = existsExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
+
+            // wrap the given select in a pattern
+            // SELECT IIF( (SELECT COUNT(1) FROM (<existsexpression>) AS UNUSED)> 0,1,0) FROM (SELECT NULL AS unused_column) AS UNUSED
+
+            var newSelect = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = new IIfCall
+                            {
+                                Predicate = new BooleanComparisonExpression
+                                {
+                                    FirstExpression = new ScalarSubquery
+                                    {
+                                        QueryExpression = new QuerySpecification
+                                        {
+                                            SelectElements =
+                                            {
+                                                new SelectScalarExpression
+                                                {
+                                                    Expression = new FunctionCall
+                                                    {
+                                                        FunctionName = new Identifier { Value = "COUNT" },
+                                                        Parameters = { new IntegerLiteral { Value = "1" } }
+                                                    }
+                                                }
+                                            },
+                                            FromClause = new FromClause
+                                            {
+                                                TableReferences =
+                                                {
+                                                    new QueryDerivedTable
+                                                    {
+                                                        QueryExpression = existsSelect.QueryExpression,
+                                                        Alias = new Identifier { Value = UnusedTableName }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    ComparisonType = BooleanComparisonType.GreaterThan,
+                                    SecondExpression = new IntegerLiteral { Value = "0" }
+                                },
+                                ThenExpression = new IntegerLiteral { Value = "1" },
+                                ElseExpression = new IntegerLiteral { Value = "0" }
+                            }
+                        }
+                    },
+                    FromClause = NullFromClause()
+                }
+            };
+
+            return new SqlExpression(newSelect, SqlExpression.FragmentTypes.SelectStatementScalar, typeof(bool));
+        }
+
         /// <summary>
         /// builds a select statement returning a scalar interval tuple
         /// </summary>
@@ -1087,7 +1151,7 @@ namespace Hl7.Cql.Compiler
             // "(lhs > rhs.start AND lhs < rhs.end)" (or >= <= depending on open/closed)
             // (and assuming multiple evaluations of lhs/rhs are ok.  No side effects, right?)
 
-            // assuming rhs is an interval
+            // assuming rhs is an interval --- what if it is a columnref that is an interval?
             if (unwrappedRhs.DataType.GetGenericTypeDefinition() != typeof(CqlInterval<>))
                 throw new InvalidOperationException();
 
@@ -1098,8 +1162,16 @@ namespace Hl7.Cql.Compiler
             var rhsLow = WrapInSelectScalarExpression(unwrappedRhs.Values["low"], rhsFrom, true);
             var rhsHi = WrapInSelectScalarExpression(unwrappedRhs.Values["hi"], rhsFrom, true);
 
-            var lowClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["lowClosed"]);
-            var hiClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["hiClosed"]);
+            // TODO:  this works if the interval is a literal
+            // if it's a columnref, we'll just hardcode to true for now.   But to fix it right, it needs to generate conditional
+            // expression to do < or <= depending on whether the interval is open or closed
+            bool lowClosed = true;
+            bool hiClosed = true;
+            if (unwrappedRhs.Values["lowClosed"] is Microsoft.SqlServer.TransactSql.ScriptDom.Literal)
+            {
+                lowClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["lowClosed"]);
+                hiClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["hiClosed"]);
+            }
 
             var andExpression = new BooleanParenthesisExpression
             {
@@ -1955,18 +2027,29 @@ namespace Hl7.Cql.Compiler
 
             if (isScalar)
             {
-                return WrapInSelectScalarExpression(new ColumnReferenceExpression
+                // if it's a tuple type, then add all the columns; else just add Result
+                // TODO: for now, hardcode Interval but eventually this has to be generic
+
+                if (ere.resultTypeSpecifier is Elm.IntervalTypeSpecifier intervalTypeSpecifier)
                 {
-                    MultiPartIdentifier = new MultiPartIdentifier
+                    var intervalTuple = new ScalarTuple
                     {
-                        Identifiers =
-                        {
-                            new Identifier { Value = functionName},
-                            new Identifier { Value = ResultColumnName }
-                        }
-                    }
-                },
-                fromClause);
+                        DataType = typeof(CqlInterval<>) // TODO: extract base type
+                    };
+
+                    intervalTuple.Values.Add("low", BuildColumnReferenceExpression(functionName, "low"));
+                    intervalTuple.Values.Add("hi", BuildColumnReferenceExpression(functionName, "hi"));
+                    intervalTuple.Values.Add("lowClosed", BuildColumnReferenceExpression(functionName, "lowClosed"));
+                    intervalTuple.Values.Add("hiClosed", BuildColumnReferenceExpression(functionName, "hiClosed"));
+
+                    return WrapInSelectScalarExpression(intervalTuple, fromClause);
+                }
+                else
+                {
+                    return WrapInSelectScalarExpression(
+                        BuildColumnReferenceExpression(functionName, ResultColumnName),
+                        fromClause);
+                }
             }
             else
             {
@@ -1997,6 +2080,22 @@ namespace Hl7.Cql.Compiler
                     },
                     SqlExpression.FragmentTypes.SelectStatement,
                     typeof(object)); // TODO: infer type
+            }
+
+
+            ColumnReferenceExpression BuildColumnReferenceExpression(string functionName, string columnName)
+            {
+                return new ColumnReferenceExpression
+                {
+                    MultiPartIdentifier = new MultiPartIdentifier
+                    {
+                        Identifiers =
+                            {
+                                new Identifier { Value = functionName},
+                                new Identifier { Value = columnName }
+                            }
+                    }
+                };
             }
         }
 
