@@ -19,6 +19,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
+using static Hl7.Cql.Compiler.SqlExpressionBuilder;
+
 using BinaryExpression = Microsoft.SqlServer.TransactSql.ScriptDom.BinaryExpression;
 using Expression = System.Linq.Expressions.Expression;
 
@@ -343,9 +345,9 @@ namespace Hl7.Cql.Compiler
 
                             definitions.Add(ThisLibraryKey, def.name, new Type[0], bodyExpression);
                         }
-                        catch
+                        catch (Exception e)
                         {
-                            buildContext.LogError($"Failed to create SQL expression for {def.name}", def);
+                            buildContext.LogError($"Failed to create SQL expression for {def.name} --- {e.Message}", def);
                         }
 
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
@@ -556,7 +558,7 @@ namespace Hl7.Cql.Compiler
                     // result = ConvertsToTime(ce, ctx);
                     break;
                 case Count ce:
-                    // result = Count(ce, ctx);
+                    result = Count(ce, ctx);
                     break;
                 case DateFrom dfe:
                     // result = DateFrom(dfe, ctx);
@@ -565,7 +567,7 @@ namespace Hl7.Cql.Compiler
                     result = DateTime(dt, ctx);
                     break;
                 case Date d:
-                    // result = Date(d, ctx);
+                    result = Date(d, ctx);
                     break;
                 case DateTimeComponentFrom dtcf:
                     // result = DateTimeComponentFrom(dtcf, ctx);
@@ -865,7 +867,7 @@ namespace Hl7.Cql.Compiler
                     // result = SameOrBefore(sob, ctx);
                     break;
                 case SingletonFrom sf:
-                    // result = SingletonFrom(sf, ctx);
+                    result = SingletonFrom(sf, ctx);
                     break;
                 case Slice slice:
                     // result = Slice(slice, ctx);
@@ -981,6 +983,88 @@ namespace Hl7.Cql.Compiler
             //}
 
             return result!;
+        }
+
+        private SqlExpression? Count(Count ce, SqlExpressionBuilderContext ctx)
+        {
+            // TODO YOU ARE HERE --- currently this works when in an unfiltered context, and counting something in an unfiltere context
+            // the real trick is what happens when the thing being counted is, for example, Patient context
+            // then, we have to make sure that a) the subquery has a property which allows it to be grouped, and b) this aggregate query does grouping
+            //
+
+            var sourceExpression = TranslateExpression(ce.source, ctx);
+            var sourceSelect = sourceExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
+
+            // wrap in SELECT COUNT(1) AS Result FROM <sourceSelect>
+            var select = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "COUNT" },
+                                Parameters = {new IntegerLiteral { Value = "1" } },
+                            },
+                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName } }
+                        }
+                    },
+                    FromClause = new FromClause
+                    {
+                        TableReferences =
+                        {
+                            new QueryDerivedTable
+                            {
+                                QueryExpression = sourceSelect.QueryExpression,
+                                Alias = new Identifier { Value = UnusedTableName }
+                            }
+                        }
+                    }
+                }
+            };
+
+            return new SqlExpression(
+                select, 
+                SqlExpression.FragmentTypes.SelectStatementScalar, 
+                typeof(long));
+        }
+
+        private SqlExpression? SingletonFrom(SingletonFrom sf, SqlExpressionBuilderContext ctx)
+        {
+            var listExpression = TranslateExpression(sf.operand, ctx);
+            var listSelect = listExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
+
+            // wrap in SELECT TOP(1) * FROM <listexpression>
+            var select = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectStarExpression()
+                    },
+                    FromClause = new FromClause
+                    {
+                        TableReferences =
+                        {
+                            new QueryDerivedTable
+                            {
+                                QueryExpression = listSelect.QueryExpression,
+                                Alias = new Identifier { Value = UnusedTableName }
+                            }
+                        }
+                    },
+                    TopRowFilter = new TopRowFilter
+                    {
+                        Expression = new IntegerLiteral { Value = "1" }
+                    }
+                }
+            };
+
+            return new SqlExpression(select, SqlExpression.FragmentTypes.SelectStatement, listExpression.DataType);
         }
 
         private SqlExpression? Exists(Exists ex, SqlExpressionBuilderContext ctx)
@@ -1262,15 +1346,74 @@ namespace Hl7.Cql.Compiler
             return WrapInSelectScalarExpression(functionExpression, combinedFrom);
         }
 
+        private SqlExpression? Date(Date d, SqlExpressionBuilderContext ctx)
+        {
+            var (year, fromYear) = UnwrapScalarSelectElement(TranslateExpression(d.year, ctx));
+            var (month, fromMonth) = UnwrapScalarSelectElement(TranslateExpression(d.month, ctx));
+            var (day, fromDay) = UnwrapScalarSelectElement(TranslateExpression(d.day, ctx));
+
+            var functionExpression = new FunctionCall
+            {
+                FunctionName = new Identifier { Value = "DATEFROMPARTS" },
+                Parameters =
+                {
+                    year,
+                    month,
+                    day,
+                }
+            };
+
+            FromClause combinedFrom = ReconcileScalarFromClauses(fromYear, fromMonth, fromDay);
+
+            return WrapInSelectScalarExpression(functionExpression, combinedFrom);
+        }
+
+
         // returns SelectStatement
         // TODO: returns a fully formed select with table name, which might not be relevant to all contexts?
         private SqlExpression? Property(Property pe, SqlExpressionBuilderContext ctx)
         {
             SelectScalarExpression? selectScalarExpression = null;
 
-            var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
-            var sourceTableType = sourceTable.Type;
-            var sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
+            Type sourceTableType;
+            Identifier sourceTableIdentifier;
+            FromClause fromClause;
+
+            if (!String.IsNullOrEmpty(pe.scope))
+            {
+                // I think? this is the case where the property source is a table.   Don't know if this is always true
+                var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
+                sourceTableType = sourceTable.Type;
+                sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
+
+                fromClause = new FromClause
+                {
+                    TableReferences =
+                            {
+                                new NamedTableReference
+                                {
+                                    SchemaObject = new SchemaObjectName
+                                    {
+                                        Identifiers =
+                                        {
+                                            sourceTableIdentifier
+                                        }
+                                    }
+                                }
+                            }
+                };
+            }
+            else
+            {
+                // TODO this seems to be a pattern
+                // this means the source is the result of another expression
+                var sourceExpression = TranslateExpression(pe.source, ctx);
+                sourceTableType = sourceExpression.DataType;
+                sourceTableIdentifier = new Identifier { Value = sourceTableType.Name };
+
+                // the from clause is the same as the one from the source expression
+                fromClause = FindTableReference(sourceExpression.SqlFragment);
+            }
 
             // map the property name to a column name -- TODO: should be a fancier lookup
             switch (sourceTableType.Name.ToLowerInvariant())
@@ -1281,6 +1424,34 @@ namespace Hl7.Cql.Compiler
                         {
                             case "onset":
                                 string destinationcolumnName = "onsetDateTime";
+                                selectScalarExpression = new SelectScalarExpression
+                                {
+                                    Expression = new ColumnReferenceExpression
+                                    {
+                                        MultiPartIdentifier = new MultiPartIdentifier
+                                        {
+                                            Identifiers =
+                                            {
+                                                sourceTableIdentifier,
+                                                new Identifier { Value = destinationcolumnName }
+                                            }
+                                        }
+                                    },
+                                    ColumnName = new IdentifierOrValueExpression
+                                    {
+                                        Identifier = new Identifier { Value = destinationcolumnName }
+                                    }
+                                };
+                                break;
+                        }
+                        break;
+                    }
+                case "patient":
+                    {
+                        switch (pe.path)
+                        {
+                            case "birthDate":
+                                string destinationcolumnName = "birthDate";
                                 selectScalarExpression = new SelectScalarExpression
                                 {
                                     Expression = new ColumnReferenceExpression
@@ -1317,22 +1488,7 @@ namespace Hl7.Cql.Compiler
                         {
                             selectScalarExpression,
                         },
-                        FromClause = new FromClause
-                        {
-                            TableReferences =
-                            {
-                                new NamedTableReference
-                                {
-                                    SchemaObject = new SchemaObjectName
-                                    {
-                                        Identifiers =
-                                        {
-                                            sourceTableIdentifier
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        FromClause = fromClause
                     }
                 },
                 SqlExpression.FragmentTypes.SelectStatement,
@@ -1350,7 +1506,8 @@ namespace Hl7.Cql.Compiler
         {
             if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.libraryName, "FHIRHelpers") == 0)
             {
-                if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.name, "ToDateTime") == 0)
+                if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.name, "ToDateTime") == 0
+                ||  StringComparer.InvariantCultureIgnoreCase.Compare(fre.name, "ToDate") == 0)
                 {
                     // TODO: no-op the ToDateTime function since we'll assume it already is a datetime
                     return TranslateExpression(fre.operand[0], ctx);
@@ -2043,6 +2200,50 @@ namespace Hl7.Cql.Compiler
                     intervalTuple.Values.Add("hiClosed", BuildColumnReferenceExpression(functionName, "hiClosed"));
 
                     return WrapInSelectScalarExpression(intervalTuple, fromClause);
+                }
+                else if (ere.resultTypeSpecifier == null
+                    && ere.resultTypeName != null
+                    && ere.resultTypeName.Name.StartsWith("{http://hl7.org/fhir}"))
+                {
+                    // TODO:  hack --- if here, it means the result is a single value of a FHIR resource type
+                    var fhirType = TypeResolver.ResolveType(ere.resultTypeName.Name) ?? throw new InvalidOperationException();
+
+                    //
+                    // create a SELECT TOP(1) * from function
+
+                    QuerySpecification querySpecification = new QuerySpecification
+                    {
+                        FromClause = fromClause,
+                        TopRowFilter = new TopRowFilter
+                        {
+                            Expression = new IntegerLiteral { Value = "1" }
+                        }
+                    };
+
+                    querySpecification.SelectElements.Add(new SelectStarExpression
+                    {
+                        Qualifier = new MultiPartIdentifier
+                        {
+                            Identifiers =
+                            {
+                                new Identifier { Value = functionName }
+                            }
+                        }
+                    });
+
+                    // wrap in queryexpression
+                    var queryExpression = new QueryParenthesisExpression
+                    {
+                        QueryExpression = querySpecification
+                    };
+
+                    // wrap in select statement
+                    return new SqlExpression(
+                        new SelectStatement
+                        {
+                            QueryExpression = queryExpression
+                        },
+                        SqlExpression.FragmentTypes.SelectStatementScalar, fhirType); // TODO: type needs to be passed in
                 }
                 else
                 {

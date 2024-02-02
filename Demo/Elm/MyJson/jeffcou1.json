@@ -1,2374 +1,2218 @@
 {
-  "library": {
-    "annotation": [
-      {
-        "translatorVersion": "2.11.0",
-        "translatorOptions": "EnableLocators,EnableResultTypes",
-        "type": "CqlToElmInfo"
+   "library" : {
+      "annotation" : [ {
+         "translatorVersion" : "2.11.0",
+         "translatorOptions" : "EnableLocators,EnableResultTypes",
+         "type" : "CqlToElmInfo"
+      } ],
+      "identifier" : {
+         "id" : "JeffCou1",
+         "version" : "1.0.0"
+      },
+      "schemaIdentifier" : {
+         "id" : "urn:hl7-org:elm",
+         "version" : "r1"
+      },
+      "usings" : {
+         "def" : [ {
+            "localIdentifier" : "System",
+            "uri" : "urn:hl7-org:elm-types:r1"
+         }, {
+            "locator" : "3:1-3:26",
+            "localIdentifier" : "FHIR",
+            "uri" : "http://hl7.org/fhir",
+            "version" : "4.0.1"
+         } ]
+      },
+      "includes" : {
+         "def" : [ {
+            "locator" : "5:1-5:56",
+            "localIdentifier" : "FHIRHelpers",
+            "path" : "FHIRHelpers",
+            "version" : "4.0.001"
+         } ]
+      },
+      "parameters" : {
+         "def" : [ {
+            "locator" : "23:1-24:66",
+            "name" : "Measurement Period",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "IntervalTypeSpecifier",
+               "pointType" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "default" : {
+               "locator" : "24:11-24:66",
+               "lowClosed" : true,
+               "highClosed" : false,
+               "type" : "Interval",
+               "resultTypeSpecifier" : {
+                  "type" : "IntervalTypeSpecifier",
+                  "pointType" : {
+                     "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "low" : {
+                  "locator" : "24:20-24:41",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "DateTime",
+                  "year" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2019",
+                     "type" : "Literal"
+                  },
+                  "month" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "day" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "hour" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "minute" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "second" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "millisecond" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  }
+               },
+               "high" : {
+                  "locator" : "24:44-24:65",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "DateTime",
+                  "year" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2020",
+                     "type" : "Literal"
+                  },
+                  "month" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "day" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "hour" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "minute" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "second" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "millisecond" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  }
+               }
+            },
+            "parameterTypeSpecifier" : {
+               "locator" : "23:32-23:49",
+               "type" : "IntervalTypeSpecifier",
+               "resultTypeSpecifier" : {
+                  "type" : "IntervalTypeSpecifier",
+                  "pointType" : {
+                     "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "pointType" : {
+                  "locator" : "23:41-23:48",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "NamedTypeSpecifier"
+               }
+            }
+         } ]
+      },
+      "codeSystems" : {
+         "def" : [ {
+            "locator" : "15:1-15:52",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+            "name" : "ICD10",
+            "id" : "http://hl7.org/fhir/sid/icd-10",
+            "accessLevel" : "Public"
+         }, {
+            "locator" : "20:1-20:46",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+            "name" : "SnoMed",
+            "id" : "http://snomed.info/sct",
+            "accessLevel" : "Public"
+         } ]
+      },
+      "valueSets" : {
+         "def" : [ {
+            "locator" : "9:1-9:100",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}ValueSet",
+            "name" : "Encounter Inpatient",
+            "id" : "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.666.5.307",
+            "accessLevel" : "Public"
+         }, {
+            "locator" : "10:1-10:115",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}ValueSet",
+            "name" : "Hypoglycemics Severe Hypoglycemia",
+            "id" : "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1196.393",
+            "accessLevel" : "Public"
+         }, {
+            "locator" : "11:1-11:102",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}ValueSet",
+            "name" : "Observation Services",
+            "id" : "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1111.143",
+            "accessLevel" : "Public"
+         }, {
+            "locator" : "12:1-12:111",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}ValueSet",
+            "name" : "Emergency Department Visit",
+            "id" : "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.117.1.7.1.292",
+            "accessLevel" : "Public"
+         } ]
+      },
+      "codes" : {
+         "def" : [ {
+            "locator" : "16:1-16:52",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+            "name" : "Sucked into jet engine",
+            "id" : "V97.33",
+            "accessLevel" : "Public",
+            "codeSystem" : {
+               "locator" : "16:46-16:52",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+               "name" : "ICD10"
+            }
+         }, {
+            "locator" : "17:1-17:76",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+            "name" : "Sucked into jet engine, subsequent encounter",
+            "id" : "V97.33XD",
+            "accessLevel" : "Public",
+            "codeSystem" : {
+               "locator" : "17:70-17:76",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+               "name" : "ICD10"
+            }
+         }, {
+            "locator" : "21:1-21:40",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+            "name" : "Ouchie",
+            "id" : "59621000",
+            "accessLevel" : "Public",
+            "codeSystem" : {
+               "locator" : "21:33-21:40",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}CodeSystem",
+               "name" : "SnoMed"
+            }
+         } ]
+      },
+      "contexts" : {
+         "def" : [ {
+            "locator" : "26:1-26:18",
+            "name" : "Unfiltered"
+         }, {
+            "locator" : "43:1-43:15",
+            "name" : "Patient"
+         }, {
+            "locator" : "50:1-50:18",
+            "name" : "Unfiltered"
+         } ]
+      },
+      "statements" : {
+         "def" : [ {
+            "locator" : "28:1-29:11",
+            "name" : "AllPatients",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Patient",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "29:3-29:11",
+               "dataType" : "{http://hl7.org/fhir}Patient",
+               "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
+               "type" : "Retrieve",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Patient",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            }
+         }, {
+            "locator" : "31:1-32:30",
+            "resultTypeName" : "{http://hl7.org/fhir}Patient",
+            "name" : "ExplicitSingletonFrom",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "32:3-32:30",
+               "resultTypeName" : "{http://hl7.org/fhir}Patient",
+               "type" : "SingletonFrom",
+               "operand" : {
+                  "locator" : "32:18-32:30",
+                  "name" : "AllPatients",
+                  "type" : "ExpressionRef",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Patient",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  }
+               }
+            }
+         }, {
+            "locator" : "34:1-37:34",
+            "name" : "PatientDateTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Patient",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "35:2-37:34",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Patient",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "35:2-35:12",
+                  "alias" : "p",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Patient",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "35:2-35:10",
+                     "dataType" : "{http://hl7.org/fhir}Patient",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Patient",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "36:3-37:34",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "After",
+                  "operand" : [ {
+                     "name" : "ToDate",
+                     "libraryName" : "FHIRHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "locator" : "37:4-37:16",
+                        "resultTypeName" : "{http://hl7.org/fhir}date",
+                        "path" : "birthDate",
+                        "scope" : "p",
+                        "type" : "Property"
+                     } ]
+                  }, {
+                     "locator" : "37:24-37:34",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Date",
+                     "type" : "Date",
+                     "year" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1970",
+                        "type" : "Literal"
+                     },
+                     "month" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "day" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     }
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "39:1-40:25",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "name" : "PatientCountTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "40:2-40:25",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+               "type" : "Count",
+               "source" : {
+                  "locator" : "40:8-40:24",
+                  "name" : "PatientDateTest",
+                  "type" : "ExpressionRef",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Patient",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  }
+               }
+            }
+         }, {
+            "locator" : "43:1-43:15",
+            "name" : "Patient",
+            "context" : "Patient",
+            "expression" : {
+               "type" : "SingletonFrom",
+               "operand" : {
+                  "locator" : "43:1-43:15",
+                  "dataType" : "{http://hl7.org/fhir}Patient",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
+                  "type" : "Retrieve"
+               }
+            }
+         }, {
+            "locator" : "45:1-46:19",
+            "resultTypeName" : "{http://hl7.org/fhir}date",
+            "name" : "AgeInYearsTest",
+            "context" : "Patient",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "46:3-46:19",
+               "resultTypeName" : "{http://hl7.org/fhir}date",
+               "path" : "birthDate",
+               "type" : "Property",
+               "source" : {
+                  "locator" : "46:3-46:9",
+                  "resultTypeName" : "{http://hl7.org/fhir}Patient",
+                  "name" : "Patient",
+                  "type" : "ExpressionRef"
+               }
+            }
+         }, {
+            "locator" : "54:1-55:7",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "FirstCompare",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "55:3-55:7",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "Less",
+               "operand" : [ {
+                  "locator" : "55:3",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "1",
+                  "type" : "Literal"
+               }, {
+                  "locator" : "55:7",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "2",
+                  "type" : "Literal"
+               } ]
+            }
+         }, {
+            "locator" : "57:1-58:24",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "SecondCompare",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "58:3-58:24",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "And",
+               "operand" : [ {
+                  "locator" : "58:3-58:14",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "name" : "FirstCompare",
+                  "type" : "ExpressionRef"
+               }, {
+                  "locator" : "58:20-58:24",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "Less",
+                  "operand" : [ {
+                     "locator" : "58:20",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2",
+                     "type" : "Literal"
+                  }, {
+                     "locator" : "58:24",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "3",
+                     "type" : "Literal"
+                  } ]
+               } ]
+            }
+         }, {
+            "locator" : "60:1-61:38",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "ThirdCompare",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "61:3-61:38",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "Or",
+               "operand" : [ {
+                  "locator" : "61:3-61:15",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "name" : "SecondCompare",
+                  "type" : "ExpressionRef"
+               }, {
+                  "locator" : "61:20-61:38",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "In",
+                  "operand" : [ {
+                     "locator" : "61:20",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "5",
+                     "type" : "Literal"
+                  }, {
+                     "locator" : "61:25-61:38",
+                     "lowClosed" : true,
+                     "highClosed" : true,
+                     "type" : "Interval",
+                     "resultTypeSpecifier" : {
+                        "type" : "IntervalTypeSpecifier",
+                        "pointType" : {
+                           "name" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     },
+                     "low" : {
+                        "locator" : "61:34",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "high" : {
+                        "locator" : "61:36-61:37",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "10",
+                        "type" : "Literal"
+                     }
+                  } ]
+               } ]
+            }
+         }, {
+            "locator" : "63:1-64:49",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "FourthCompare",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "64:3-64:49",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "And",
+               "operand" : [ {
+                  "locator" : "64:3-64:32",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "And",
+                  "operand" : [ {
+                     "locator" : "64:3-64:14",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                     "name" : "FirstCompare",
+                     "type" : "ExpressionRef"
+                  }, {
+                     "locator" : "64:20-64:32",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                     "name" : "SecondCompare",
+                     "type" : "ExpressionRef"
+                  } ]
+               }, {
+                  "locator" : "64:38-64:49",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "name" : "ThirdCompare",
+                  "type" : "ExpressionRef"
+               } ]
+            }
+         }, {
+            "locator" : "66:1-67:6",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "SimpleTrue",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "67:3-67:6",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "value" : "true",
+               "type" : "Literal"
+            }
+         }, {
+            "locator" : "69:1-70:7",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "SimpleFalse",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "70:3-70:7",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "value" : "false",
+               "type" : "Literal"
+            }
+         }, {
+            "locator" : "72:1-73:15",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "SimpleAnd",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "73:3-73:15",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "And",
+               "operand" : [ {
+                  "locator" : "73:3-73:6",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "value" : "true",
+                  "type" : "Literal"
+               }, {
+                  "locator" : "73:12-73:15",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "value" : "true",
+                  "type" : "Literal"
+               } ]
+            }
+         }, {
+            "locator" : "75:1-76:3",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "name" : "First",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "76:3",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+               "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+               "value" : "1",
+               "type" : "Literal"
+            }
+         }, {
+            "locator" : "78:1-79:5",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "name" : "Second",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "79:3-79:5",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+               "type" : "Add",
+               "operand" : [ {
+                  "locator" : "79:3",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "1",
+                  "type" : "Literal"
+               }, {
+                  "locator" : "79:5",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "1",
+                  "type" : "Literal"
+               } ]
+            }
+         }, {
+            "locator" : "81:1-82:15",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+            "name" : "PEDMASTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "82:3-82:15",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+               "type" : "Divide",
+               "operand" : [ {
+                  "locator" : "82:3-82:9",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "type" : "Add",
+                  "operand" : [ {
+                     "type" : "ToDecimal",
+                     "operand" : {
+                        "locator" : "82:4",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "3",
+                        "type" : "Literal"
+                     }
+                  }, {
+                     "locator" : "82:6-82:8",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "value" : "4.0",
+                     "type" : "Literal"
+                  } ]
+               }, {
+                  "type" : "ToDecimal",
+                  "operand" : {
+                     "locator" : "82:11-82:15",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "type" : "Add",
+                     "operand" : [ {
+                        "locator" : "82:12",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     }, {
+                        "locator" : "82:14",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2",
+                        "type" : "Literal"
+                     } ]
+                  }
+               } ]
+            }
+         }, {
+            "locator" : "84:1-85:16",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+            "name" : "CompoundMathTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "85:3-85:16",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+               "type" : "Add",
+               "operand" : [ {
+                  "type" : "ToDecimal",
+                  "operand" : {
+                     "locator" : "85:3",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  }
+               }, {
+                  "locator" : "85:7-85:16",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "name" : "PEDMASTest",
+                  "type" : "ExpressionRef"
+               } ]
+            }
+         }, {
+            "locator" : "87:1-88:35",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+            "name" : "MultipleCompoundMathTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "88:3-88:35",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+               "type" : "Add",
+               "operand" : [ {
+                  "locator" : "88:3-88:18",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "name" : "CompoundMathTest",
+                  "type" : "ExpressionRef"
+               }, {
+                  "locator" : "88:22-88:35",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                  "type" : "Multiply",
+                  "operand" : [ {
+                     "locator" : "88:22-88:31",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "name" : "PEDMASTest",
+                     "type" : "ExpressionRef"
+                  }, {
+                     "type" : "ToDecimal",
+                     "operand" : {
+                        "locator" : "88:35",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2",
+                        "type" : "Literal"
+                     }
+                  } ]
+               } ]
+            }
+         }, {
+            "locator" : "90:1-91:26",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+            "name" : "SimpleRefTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "91:3-91:26",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
+               "name" : "MultipleCompoundMathTest",
+               "type" : "ExpressionRef"
+            }
+         }, {
+            "locator" : "93:1-94:14",
+            "name" : "SimpleTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "94:2-94:14",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "94:2-94:14",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "94:2-94:12",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ]
+            }
+         }, {
+            "locator" : "96:1-97:24",
+            "name" : "CodeTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "97:2-97:24",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "97:2-97:24",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "97:2-97:22",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "codeProperty" : "code",
+                     "codeComparator" : "~",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     },
+                     "codes" : {
+                        "type" : "ToList",
+                        "operand" : {
+                           "locator" : "97:14-97:21",
+                           "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+                           "name" : "Ouchie",
+                           "type" : "CodeRef"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ]
+            }
+         }, {
+            "locator" : "104:1-107:44",
+            "name" : "DateTest2",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "105:2-107:44",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "105:2-105:14",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "105:2-105:12",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "106:3-107:44",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "After",
+                  "operand" : [ {
+                     "name" : "ToDateTime",
+                     "libraryName" : "FHIRHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "asType" : "{http://hl7.org/fhir}dateTime",
+                        "type" : "As",
+                        "operand" : {
+                           "locator" : "107:4-107:12",
+                           "path" : "onset",
+                           "scope" : "c",
+                           "type" : "Property",
+                           "resultTypeSpecifier" : {
+                              "type" : "ChoiceTypeSpecifier",
+                              "choice" : [ {
+                                 "name" : "{http://hl7.org/fhir}dateTime",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Age",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Period",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Range",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}string",
+                                 "type" : "NamedTypeSpecifier"
+                              } ]
+                           }
+                        }
+                     } ]
+                  }, {
+                     "locator" : "107:20-107:44",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                     "type" : "DateTime",
+                     "year" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2020",
+                        "type" : "Literal"
+                     },
+                     "month" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "day" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "hour" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "minute" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "second" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "millisecond" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "timezoneOffset" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                        "value" : "0.0",
+                        "type" : "Literal"
+                     }
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "109:1-112:91",
+            "name" : "DateTest3",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "110:2-112:91",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "110:2-110:14",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "110:2-110:12",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "111:3-112:91",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "And",
+                  "operand" : [ {
+                     "locator" : "112:4-112:44",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                     "type" : "After",
+                     "operand" : [ {
+                        "name" : "ToDateTime",
+                        "libraryName" : "FHIRHelpers",
+                        "type" : "FunctionRef",
+                        "operand" : [ {
+                           "asType" : "{http://hl7.org/fhir}dateTime",
+                           "type" : "As",
+                           "operand" : {
+                              "locator" : "112:4-112:12",
+                              "path" : "onset",
+                              "scope" : "c",
+                              "type" : "Property",
+                              "resultTypeSpecifier" : {
+                                 "type" : "ChoiceTypeSpecifier",
+                                 "choice" : [ {
+                                    "name" : "{http://hl7.org/fhir}dateTime",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Age",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Period",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Range",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}string",
+                                    "type" : "NamedTypeSpecifier"
+                                 } ]
+                              }
+                           }
+                        } ]
+                     }, {
+                        "locator" : "112:20-112:44",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "DateTime",
+                        "year" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2020",
+                           "type" : "Literal"
+                        },
+                        "month" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "day" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "hour" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "minute" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "second" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "millisecond" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "timezoneOffset" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                           "value" : "0.0",
+                           "type" : "Literal"
+                        }
+                     } ]
+                  }, {
+                     "locator" : "112:50-112:91",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                     "type" : "Before",
+                     "operand" : [ {
+                        "name" : "ToDateTime",
+                        "libraryName" : "FHIRHelpers",
+                        "type" : "FunctionRef",
+                        "operand" : [ {
+                           "asType" : "{http://hl7.org/fhir}dateTime",
+                           "type" : "As",
+                           "operand" : {
+                              "locator" : "112:50-112:58",
+                              "path" : "onset",
+                              "scope" : "c",
+                              "type" : "Property",
+                              "resultTypeSpecifier" : {
+                                 "type" : "ChoiceTypeSpecifier",
+                                 "choice" : [ {
+                                    "name" : "{http://hl7.org/fhir}dateTime",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Age",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Period",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Range",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}string",
+                                    "type" : "NamedTypeSpecifier"
+                                 } ]
+                              }
+                           }
+                        } ]
+                     }, {
+                        "locator" : "112:67-112:91",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "DateTime",
+                        "year" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2022",
+                           "type" : "Literal"
+                        },
+                        "month" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2",
+                           "type" : "Literal"
+                        },
+                        "day" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "hour" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "minute" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "second" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "millisecond" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "timezoneOffset" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                           "value" : "0.0",
+                           "type" : "Literal"
+                        }
+                     } ]
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "114:1-117:91",
+            "name" : "DateTest4",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "115:2-117:91",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "115:2-115:24",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "115:2-115:22",
+                     "dataType" : "{http://hl7.org/fhir}Condition",
+                     "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
+                     "codeProperty" : "code",
+                     "codeComparator" : "~",
+                     "type" : "Retrieve",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     },
+                     "codes" : {
+                        "type" : "ToList",
+                        "operand" : {
+                           "locator" : "115:14-115:21",
+                           "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
+                           "name" : "Ouchie",
+                           "type" : "CodeRef"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "116:3-117:91",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "And",
+                  "operand" : [ {
+                     "locator" : "117:4-117:44",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                     "type" : "After",
+                     "operand" : [ {
+                        "name" : "ToDateTime",
+                        "libraryName" : "FHIRHelpers",
+                        "type" : "FunctionRef",
+                        "operand" : [ {
+                           "asType" : "{http://hl7.org/fhir}dateTime",
+                           "type" : "As",
+                           "operand" : {
+                              "locator" : "117:4-117:12",
+                              "path" : "onset",
+                              "scope" : "c",
+                              "type" : "Property",
+                              "resultTypeSpecifier" : {
+                                 "type" : "ChoiceTypeSpecifier",
+                                 "choice" : [ {
+                                    "name" : "{http://hl7.org/fhir}dateTime",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Age",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Period",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Range",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}string",
+                                    "type" : "NamedTypeSpecifier"
+                                 } ]
+                              }
+                           }
+                        } ]
+                     }, {
+                        "locator" : "117:20-117:44",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "DateTime",
+                        "year" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2020",
+                           "type" : "Literal"
+                        },
+                        "month" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "day" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "hour" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "minute" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "second" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "millisecond" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "timezoneOffset" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                           "value" : "0.0",
+                           "type" : "Literal"
+                        }
+                     } ]
+                  }, {
+                     "locator" : "117:50-117:91",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                     "type" : "Before",
+                     "operand" : [ {
+                        "name" : "ToDateTime",
+                        "libraryName" : "FHIRHelpers",
+                        "type" : "FunctionRef",
+                        "operand" : [ {
+                           "asType" : "{http://hl7.org/fhir}dateTime",
+                           "type" : "As",
+                           "operand" : {
+                              "locator" : "117:50-117:58",
+                              "path" : "onset",
+                              "scope" : "c",
+                              "type" : "Property",
+                              "resultTypeSpecifier" : {
+                                 "type" : "ChoiceTypeSpecifier",
+                                 "choice" : [ {
+                                    "name" : "{http://hl7.org/fhir}dateTime",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Age",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Period",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}Range",
+                                    "type" : "NamedTypeSpecifier"
+                                 }, {
+                                    "name" : "{http://hl7.org/fhir}string",
+                                    "type" : "NamedTypeSpecifier"
+                                 } ]
+                              }
+                           }
+                        } ]
+                     }, {
+                        "locator" : "117:67-117:91",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "DateTime",
+                        "year" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2022",
+                           "type" : "Literal"
+                        },
+                        "month" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2",
+                           "type" : "Literal"
+                        },
+                        "day" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "hour" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "minute" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "second" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "millisecond" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "timezoneOffset" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                           "value" : "0.0",
+                           "type" : "Literal"
+                        }
+                     } ]
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "119:1-120:63",
+            "name" : "IntervalDateDefinition",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "IntervalTypeSpecifier",
+               "pointType" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "120:2-120:63",
+               "lowClosed" : true,
+               "highClosed" : false,
+               "type" : "Interval",
+               "resultTypeSpecifier" : {
+                  "type" : "IntervalTypeSpecifier",
+                  "pointType" : {
+                     "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "low" : {
+                  "locator" : "120:11-120:35",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "DateTime",
+                  "year" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2020",
+                     "type" : "Literal"
+                  },
+                  "month" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "day" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "hour" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "minute" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "second" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "millisecond" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "timezoneOffset" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "value" : "0.0",
+                     "type" : "Literal"
+                  }
+               },
+               "high" : {
+                  "locator" : "120:38-120:62",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "type" : "DateTime",
+                  "year" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2022",
+                     "type" : "Literal"
+                  },
+                  "month" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2",
+                     "type" : "Literal"
+                  },
+                  "day" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "hour" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "minute" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "second" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "millisecond" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "0",
+                     "type" : "Literal"
+                  },
+                  "timezoneOffset" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                     "value" : "0.0",
+                     "type" : "Literal"
+                  }
+               }
+            }
+         }, {
+            "locator" : "122:1-123:18",
+            "name" : "IntervalIntegerDefinition",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "IntervalTypeSpecifier",
+               "pointType" : {
+                  "name" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "123:2-123:18",
+               "lowClosed" : false,
+               "highClosed" : true,
+               "type" : "Interval",
+               "resultTypeSpecifier" : {
+                  "type" : "IntervalTypeSpecifier",
+                  "pointType" : {
+                     "name" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "low" : {
+                  "locator" : "123:11",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "1",
+                  "type" : "Literal"
+               },
+               "high" : {
+                  "locator" : "123:14-123:17",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "type" : "Multiply",
+                  "operand" : [ {
+                     "locator" : "123:14-123:15",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "10",
+                     "type" : "Literal"
+                  }, {
+                     "locator" : "123:17",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "3",
+                     "type" : "Literal"
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "125:1-126:34",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "IntervalIntegerReferenceTestDoesntWork",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "126:5-126:34",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "In",
+               "operand" : [ {
+                  "locator" : "126:5",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                  "value" : "5",
+                  "type" : "Literal"
+               }, {
+                  "locator" : "126:10-126:34",
+                  "name" : "IntervalIntegerDefinition",
+                  "type" : "ExpressionRef",
+                  "resultTypeSpecifier" : {
+                     "type" : "IntervalTypeSpecifier",
+                     "pointType" : {
+                        "name" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  }
+               } ]
+            }
+         }, {
+            "locator" : "128:1-131:78",
+            "name" : "IntervalTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "129:2-131:78",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "129:2-129:11",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "129:2-129:9",
+                     "name" : "CodeTest",
+                     "type" : "ExpressionRef",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "130:3-131:78",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "In",
+                  "operand" : [ {
+                     "name" : "ToDateTime",
+                     "libraryName" : "FHIRHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "asType" : "{http://hl7.org/fhir}dateTime",
+                        "type" : "As",
+                        "operand" : {
+                           "locator" : "131:4-131:12",
+                           "path" : "onset",
+                           "scope" : "c",
+                           "type" : "Property",
+                           "resultTypeSpecifier" : {
+                              "type" : "ChoiceTypeSpecifier",
+                              "choice" : [ {
+                                 "name" : "{http://hl7.org/fhir}dateTime",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Age",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Period",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Range",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}string",
+                                 "type" : "NamedTypeSpecifier"
+                              } ]
+                           }
+                        }
+                     } ]
+                  }, {
+                     "locator" : "131:17-131:78",
+                     "lowClosed" : true,
+                     "highClosed" : false,
+                     "type" : "Interval",
+                     "resultTypeSpecifier" : {
+                        "type" : "IntervalTypeSpecifier",
+                        "pointType" : {
+                           "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     },
+                     "low" : {
+                        "locator" : "131:26-131:50",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "DateTime",
+                        "year" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2020",
+                           "type" : "Literal"
+                        },
+                        "month" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "day" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "hour" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "minute" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "second" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "millisecond" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "timezoneOffset" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                           "value" : "0.0",
+                           "type" : "Literal"
+                        }
+                     },
+                     "high" : {
+                        "locator" : "131:53-131:77",
+                        "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "DateTime",
+                        "year" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2022",
+                           "type" : "Literal"
+                        },
+                        "month" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "2",
+                           "type" : "Literal"
+                        },
+                        "day" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "1",
+                           "type" : "Literal"
+                        },
+                        "hour" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "minute" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "second" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "millisecond" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                           "value" : "0",
+                           "type" : "Literal"
+                        },
+                        "timezoneOffset" : {
+                           "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                           "value" : "0.0",
+                           "type" : "Literal"
+                        }
+                     }
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "133:1-134:23",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+            "name" : "FirstExists",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "134:2-134:23",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+               "type" : "Exists",
+               "operand" : {
+                  "locator" : "134:8-134:23",
+                  "name" : "IntervalTest",
+                  "type" : "ExpressionRef",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  }
+               }
+            }
+         }, {
+            "locator" : "136:1-137:13",
+            "name" : "SimpleRetrieveReferenceTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "137:2-137:13",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "137:2-137:13",
+                  "alias" : "s",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "137:2-137:11",
+                     "name" : "SimpleTest",
+                     "type" : "ExpressionRef",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ]
+            }
+         }, {
+            "locator" : "139:1-140:59",
+            "name" : "RetrieveReferenceWithFilterTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "140:2-140:59",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "140:2-140:11",
+                  "alias" : "c",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "140:2-140:9",
+                     "name" : "CodeTest",
+                     "type" : "ExpressionRef",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "140:13-140:59",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "After",
+                  "operand" : [ {
+                     "name" : "ToDateTime",
+                     "libraryName" : "FHIRHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "asType" : "{http://hl7.org/fhir}dateTime",
+                        "type" : "As",
+                        "operand" : {
+                           "locator" : "140:19-140:27",
+                           "path" : "onset",
+                           "scope" : "c",
+                           "type" : "Property",
+                           "resultTypeSpecifier" : {
+                              "type" : "ChoiceTypeSpecifier",
+                              "choice" : [ {
+                                 "name" : "{http://hl7.org/fhir}dateTime",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Age",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Period",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Range",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}string",
+                                 "type" : "NamedTypeSpecifier"
+                              } ]
+                           }
+                        }
+                     } ]
+                  }, {
+                     "locator" : "140:35-140:59",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                     "type" : "DateTime",
+                     "year" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2020",
+                        "type" : "Literal"
+                     },
+                     "month" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "day" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "hour" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "minute" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "second" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "millisecond" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "timezoneOffset" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                        "value" : "0.0",
+                        "type" : "Literal"
+                     }
+                  } ]
+               }
+            }
+         }, {
+            "locator" : "142:1-143:32",
+            "name" : "MultipleNestedTest1",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "143:2-143:32",
+               "name" : "RetrieveReferenceWithFilterTest",
+               "type" : "ExpressionRef",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               }
+            }
+         }, {
+            "locator" : "145:1-146:69",
+            "name" : "MultipleNestedTest2",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "resultTypeSpecifier" : {
+               "type" : "ListTypeSpecifier",
+               "elementType" : {
+                  "name" : "{http://hl7.org/fhir}Condition",
+                  "type" : "NamedTypeSpecifier"
+               }
+            },
+            "expression" : {
+               "locator" : "146:2-146:69",
+               "type" : "Query",
+               "resultTypeSpecifier" : {
+                  "type" : "ListTypeSpecifier",
+                  "elementType" : {
+                     "name" : "{http://hl7.org/fhir}Condition",
+                     "type" : "NamedTypeSpecifier"
+                  }
+               },
+               "source" : [ {
+                  "locator" : "146:2-146:22",
+                  "alias" : "m",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Condition",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  },
+                  "expression" : {
+                     "locator" : "146:2-146:20",
+                     "name" : "MultipleNestedTest1",
+                     "type" : "ExpressionRef",
+                     "resultTypeSpecifier" : {
+                        "type" : "ListTypeSpecifier",
+                        "elementType" : {
+                           "name" : "{http://hl7.org/fhir}Condition",
+                           "type" : "NamedTypeSpecifier"
+                        }
+                     }
+                  }
+               } ],
+               "relationship" : [ ],
+               "where" : {
+                  "locator" : "146:24-146:69",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
+                  "type" : "Before",
+                  "operand" : [ {
+                     "name" : "ToDateTime",
+                     "libraryName" : "FHIRHelpers",
+                     "type" : "FunctionRef",
+                     "operand" : [ {
+                        "asType" : "{http://hl7.org/fhir}dateTime",
+                        "type" : "As",
+                        "operand" : {
+                           "locator" : "146:30-146:36",
+                           "path" : "onset",
+                           "scope" : "m",
+                           "type" : "Property",
+                           "resultTypeSpecifier" : {
+                              "type" : "ChoiceTypeSpecifier",
+                              "choice" : [ {
+                                 "name" : "{http://hl7.org/fhir}dateTime",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Age",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Period",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}Range",
+                                 "type" : "NamedTypeSpecifier"
+                              }, {
+                                 "name" : "{http://hl7.org/fhir}string",
+                                 "type" : "NamedTypeSpecifier"
+                              } ]
+                           }
+                        }
+                     } ]
+                  }, {
+                     "locator" : "146:45-146:69",
+                     "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                     "type" : "DateTime",
+                     "year" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "2021",
+                        "type" : "Literal"
+                     },
+                     "month" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "day" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "1",
+                        "type" : "Literal"
+                     },
+                     "hour" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "minute" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "second" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "millisecond" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                        "value" : "0",
+                        "type" : "Literal"
+                     },
+                     "timezoneOffset" : {
+                        "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
+                        "value" : "0.0",
+                        "type" : "Literal"
+                     }
+                  } ]
+               }
+            }
+         } ]
       }
-    ],
-    "identifier": {
-      "id": "JeffCou1",
-      "version": "1.0.0"
-    },
-    "schemaIdentifier": {
-      "id": "urn:hl7-org:elm",
-      "version": "r1"
-    },
-    "usings": {
-      "def": [
-        {
-          "localIdentifier": "System",
-          "uri": "urn:hl7-org:elm-types:r1"
-        },
-        {
-          "locator": "3:1-3:26",
-          "localIdentifier": "FHIR",
-          "uri": "http://hl7.org/fhir",
-          "version": "4.0.1"
-        }
-      ]
-    },
-    "includes": {
-      "def": [
-        {
-          "locator": "5:1-5:56",
-          "localIdentifier": "FHIRHelpers",
-          "path": "FHIRHelpers",
-          "version": "4.0.001"
-        }
-      ]
-    },
-    "parameters": {
-      "def": [
-        {
-          "locator": "23:1-24:66",
-          "name": "Measurement Period",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "IntervalTypeSpecifier",
-            "pointType": {
-              "name": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "default": {
-            "locator": "24:11-24:66",
-            "lowClosed": true,
-            "highClosed": false,
-            "type": "Interval",
-            "resultTypeSpecifier": {
-              "type": "IntervalTypeSpecifier",
-              "pointType": {
-                "name": "{urn:hl7-org:elm-types:r1}DateTime",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "low": {
-              "locator": "24:20-24:41",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "DateTime",
-              "year": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "2019",
-                "type": "Literal"
-              },
-              "month": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "day": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "hour": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "minute": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "second": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "millisecond": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              }
-            },
-            "high": {
-              "locator": "24:44-24:65",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "DateTime",
-              "year": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "2020",
-                "type": "Literal"
-              },
-              "month": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "day": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "hour": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "minute": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "second": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "millisecond": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              }
-            }
-          },
-          "parameterTypeSpecifier": {
-            "locator": "23:32-23:49",
-            "type": "IntervalTypeSpecifier",
-            "resultTypeSpecifier": {
-              "type": "IntervalTypeSpecifier",
-              "pointType": {
-                "name": "{urn:hl7-org:elm-types:r1}DateTime",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "pointType": {
-              "locator": "23:41-23:48",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-              "name": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "NamedTypeSpecifier"
-            }
-          }
-        }
-      ]
-    },
-    "codeSystems": {
-      "def": [
-        {
-          "locator": "15:1-15:52",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}CodeSystem",
-          "name": "ICD10",
-          "id": "http://hl7.org/fhir/sid/icd-10",
-          "accessLevel": "Public"
-        },
-        {
-          "locator": "20:1-20:46",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}CodeSystem",
-          "name": "SnoMed",
-          "id": "http://snomed.info/sct",
-          "accessLevel": "Public"
-        }
-      ]
-    },
-    "valueSets": {
-      "def": [
-        {
-          "locator": "9:1-9:100",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}ValueSet",
-          "name": "Encounter Inpatient",
-          "id": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.666.5.307",
-          "accessLevel": "Public"
-        },
-        {
-          "locator": "10:1-10:115",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}ValueSet",
-          "name": "Hypoglycemics Severe Hypoglycemia",
-          "id": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1196.393",
-          "accessLevel": "Public"
-        },
-        {
-          "locator": "11:1-11:102",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}ValueSet",
-          "name": "Observation Services",
-          "id": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113762.1.4.1111.143",
-          "accessLevel": "Public"
-        },
-        {
-          "locator": "12:1-12:111",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}ValueSet",
-          "name": "Emergency Department Visit",
-          "id": "http://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.3.117.1.7.1.292",
-          "accessLevel": "Public"
-        }
-      ]
-    },
-    "codes": {
-      "def": [
-        {
-          "locator": "16:1-16:52",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Code",
-          "name": "Sucked into jet engine",
-          "id": "V97.33",
-          "accessLevel": "Public",
-          "codeSystem": {
-            "locator": "16:46-16:52",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}CodeSystem",
-            "name": "ICD10"
-          }
-        },
-        {
-          "locator": "17:1-17:76",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Code",
-          "name": "Sucked into jet engine, subsequent encounter",
-          "id": "V97.33XD",
-          "accessLevel": "Public",
-          "codeSystem": {
-            "locator": "17:70-17:76",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}CodeSystem",
-            "name": "ICD10"
-          }
-        },
-        {
-          "locator": "21:1-21:40",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Code",
-          "name": "Ouchie",
-          "id": "59621000",
-          "accessLevel": "Public",
-          "codeSystem": {
-            "locator": "21:33-21:40",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}CodeSystem",
-            "name": "SnoMed"
-          }
-        }
-      ]
-    },
-    "contexts": {
-      "def": [
-        {
-          "locator": "123:1-123:15",
-          "name": "Patient"
-        },
-        {
-          "locator": "128:1-128:18",
-          "name": "Unfiltered"
-        }
-      ]
-    },
-    "statements": {
-      "def": [
-        {
-          "locator": "26:1-27:7",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "FirstCompare",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "27:3-27:7",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "Less",
-            "operand": [
-              {
-                "locator": "27:3",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              {
-                "locator": "27:7",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "2",
-                "type": "Literal"
-              }
-            ]
-          }
-        },
-        {
-          "locator": "29:1-30:24",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "SecondCompare",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "30:3-30:24",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "And",
-            "operand": [
-              {
-                "locator": "30:3-30:14",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "name": "FirstCompare",
-                "type": "ExpressionRef"
-              },
-              {
-                "locator": "30:20-30:24",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "type": "Less",
-                "operand": [
-                  {
-                    "locator": "30:20",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "2",
-                    "type": "Literal"
-                  },
-                  {
-                    "locator": "30:24",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "3",
-                    "type": "Literal"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "locator": "32:1-33:38",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "ThirdCompare",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "33:3-33:38",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "Or",
-            "operand": [
-              {
-                "locator": "33:3-33:15",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "name": "SecondCompare",
-                "type": "ExpressionRef"
-              },
-              {
-                "locator": "33:20-33:38",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "type": "In",
-                "operand": [
-                  {
-                    "locator": "33:20",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "5",
-                    "type": "Literal"
-                  },
-                  {
-                    "locator": "33:25-33:38",
-                    "lowClosed": true,
-                    "highClosed": true,
-                    "type": "Interval",
-                    "resultTypeSpecifier": {
-                      "type": "IntervalTypeSpecifier",
-                      "pointType": {
-                        "name": "{urn:hl7-org:elm-types:r1}Integer",
-                        "type": "NamedTypeSpecifier"
-                      }
-                    },
-                    "low": {
-                      "locator": "33:34",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    },
-                    "high": {
-                      "locator": "33:36-33:37",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "10",
-                      "type": "Literal"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "locator": "35:1-36:49",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "FourthCompare",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "36:3-36:49",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "And",
-            "operand": [
-              {
-                "locator": "36:3-36:32",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "type": "And",
-                "operand": [
-                  {
-                    "locator": "36:3-36:14",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                    "name": "FirstCompare",
-                    "type": "ExpressionRef"
-                  },
-                  {
-                    "locator": "36:20-36:32",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                    "name": "SecondCompare",
-                    "type": "ExpressionRef"
-                  }
-                ]
-              },
-              {
-                "locator": "36:38-36:49",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "name": "ThirdCompare",
-                "type": "ExpressionRef"
-              }
-            ]
-          }
-        },
-        {
-          "locator": "38:1-39:6",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "SimpleTrue",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "39:3-39:6",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "valueType": "{urn:hl7-org:elm-types:r1}Boolean",
-            "value": "true",
-            "type": "Literal"
-          }
-        },
-        {
-          "locator": "41:1-42:7",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "SimpleFalse",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "42:3-42:7",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "valueType": "{urn:hl7-org:elm-types:r1}Boolean",
-            "value": "false",
-            "type": "Literal"
-          }
-        },
-        {
-          "locator": "44:1-45:15",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "SimpleAnd",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "45:3-45:15",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "And",
-            "operand": [
-              {
-                "locator": "45:3-45:6",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "valueType": "{urn:hl7-org:elm-types:r1}Boolean",
-                "value": "true",
-                "type": "Literal"
-              },
-              {
-                "locator": "45:12-45:15",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "valueType": "{urn:hl7-org:elm-types:r1}Boolean",
-                "value": "true",
-                "type": "Literal"
-              }
-            ]
-          }
-        },
-        {
-          "locator": "47:1-48:3",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-          "name": "First",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "48:3",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-            "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-            "value": "1",
-            "type": "Literal"
-          }
-        },
-        {
-          "locator": "50:1-51:5",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-          "name": "Second",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "51:3-51:5",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-            "type": "Add",
-            "operand": [
-              {
-                "locator": "51:3",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              {
-                "locator": "51:5",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              }
-            ]
-          }
-        },
-        {
-          "locator": "53:1-54:15",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-          "name": "PEDMASTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "54:3-54:15",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-            "type": "Divide",
-            "operand": [
-              {
-                "locator": "54:3-54:9",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-                "type": "Add",
-                "operand": [
-                  {
-                    "type": "ToDecimal",
-                    "operand": {
-                      "locator": "54:4",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "3",
-                      "type": "Literal"
-                    }
-                  },
-                  {
-                    "locator": "54:6-54:8",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-                    "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                    "value": "4.0",
-                    "type": "Literal"
-                  }
-                ]
-              },
-              {
-                "type": "ToDecimal",
-                "operand": {
-                  "locator": "54:11-54:15",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                  "type": "Add",
-                  "operand": [
-                    {
-                      "locator": "54:12",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    },
-                    {
-                      "locator": "54:14",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "2",
-                      "type": "Literal"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "locator": "56:1-57:16",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-          "name": "CompoundMathTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "57:3-57:16",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-            "type": "Add",
-            "operand": [
-              {
-                "type": "ToDecimal",
-                "operand": {
-                  "locator": "57:3",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                  "value": "1",
-                  "type": "Literal"
-                }
-              },
-              {
-                "locator": "57:7-57:16",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-                "name": "PEDMASTest",
-                "type": "ExpressionRef"
-              }
-            ]
-          }
-        },
-        {
-          "locator": "59:1-60:35",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-          "name": "MultipleCompoundMathTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "60:3-60:35",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-            "type": "Add",
-            "operand": [
-              {
-                "locator": "60:3-60:18",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-                "name": "CompoundMathTest",
-                "type": "ExpressionRef"
-              },
-              {
-                "locator": "60:22-60:35",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-                "type": "Multiply",
-                "operand": [
-                  {
-                    "locator": "60:22-60:31",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-                    "name": "PEDMASTest",
-                    "type": "ExpressionRef"
-                  },
-                  {
-                    "type": "ToDecimal",
-                    "operand": {
-                      "locator": "60:35",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "2",
-                      "type": "Literal"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "locator": "62:1-63:26",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-          "name": "SimpleRefTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "63:3-63:26",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Decimal",
-            "name": "MultipleCompoundMathTest",
-            "type": "ExpressionRef"
-          }
-        },
-        {
-          "locator": "65:1-66:14",
-          "name": "SimpleTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "66:2-66:14",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "66:2-66:14",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "66:2-66:12",
-                  "dataType": "{http://hl7.org/fhir}Condition",
-                  "templateId": "http://hl7.org/fhir/StructureDefinition/Condition",
-                  "type": "Retrieve",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": []
-          }
-        },
-        {
-          "locator": "68:1-69:24",
-          "name": "CodeTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "69:2-69:24",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "69:2-69:24",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "69:2-69:22",
-                  "dataType": "{http://hl7.org/fhir}Condition",
-                  "templateId": "http://hl7.org/fhir/StructureDefinition/Condition",
-                  "codeProperty": "code",
-                  "codeComparator": "~",
-                  "type": "Retrieve",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  },
-                  "codes": {
-                    "type": "ToList",
-                    "operand": {
-                      "locator": "69:14-69:21",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Code",
-                      "name": "Ouchie",
-                      "type": "CodeRef"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": []
-          }
-        },
-        {
-          "locator": "76:1-79:44",
-          "name": "DateTest2",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "77:2-79:44",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "77:2-77:14",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "77:2-77:12",
-                  "dataType": "{http://hl7.org/fhir}Condition",
-                  "templateId": "http://hl7.org/fhir/StructureDefinition/Condition",
-                  "type": "Retrieve",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": [],
-            "where": {
-              "locator": "78:3-79:44",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-              "type": "After",
-              "operand": [
-                {
-                  "name": "ToDateTime",
-                  "libraryName": "FHIRHelpers",
-                  "type": "FunctionRef",
-                  "operand": [
-                    {
-                      "asType": "{http://hl7.org/fhir}dateTime",
-                      "type": "As",
-                      "operand": {
-                        "locator": "79:4-79:12",
-                        "path": "onset",
-                        "scope": "c",
-                        "type": "Property",
-                        "resultTypeSpecifier": {
-                          "type": "ChoiceTypeSpecifier",
-                          "choice": [
-                            {
-                              "name": "{http://hl7.org/fhir}dateTime",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Age",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Period",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Range",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}string",
-                              "type": "NamedTypeSpecifier"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "locator": "79:20-79:44",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                  "type": "DateTime",
-                  "year": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "2020",
-                    "type": "Literal"
-                  },
-                  "month": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "1",
-                    "type": "Literal"
-                  },
-                  "day": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "1",
-                    "type": "Literal"
-                  },
-                  "hour": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "minute": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "second": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "millisecond": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "timezoneOffset": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                    "value": "0.0",
-                    "type": "Literal"
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "81:1-84:91",
-          "name": "DateTest3",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "82:2-84:91",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "82:2-82:14",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "82:2-82:12",
-                  "dataType": "{http://hl7.org/fhir}Condition",
-                  "templateId": "http://hl7.org/fhir/StructureDefinition/Condition",
-                  "type": "Retrieve",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": [],
-            "where": {
-              "locator": "83:3-84:91",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-              "type": "And",
-              "operand": [
-                {
-                  "locator": "84:4-84:44",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                  "type": "After",
-                  "operand": [
-                    {
-                      "name": "ToDateTime",
-                      "libraryName": "FHIRHelpers",
-                      "type": "FunctionRef",
-                      "operand": [
-                        {
-                          "asType": "{http://hl7.org/fhir}dateTime",
-                          "type": "As",
-                          "operand": {
-                            "locator": "84:4-84:12",
-                            "path": "onset",
-                            "scope": "c",
-                            "type": "Property",
-                            "resultTypeSpecifier": {
-                              "type": "ChoiceTypeSpecifier",
-                              "choice": [
-                                {
-                                  "name": "{http://hl7.org/fhir}dateTime",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Age",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Period",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Range",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}string",
-                                  "type": "NamedTypeSpecifier"
-                                }
-                              ]
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "locator": "84:20-84:44",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                      "type": "DateTime",
-                      "year": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "2020",
-                        "type": "Literal"
-                      },
-                      "month": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "1",
-                        "type": "Literal"
-                      },
-                      "day": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "1",
-                        "type": "Literal"
-                      },
-                      "hour": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "minute": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "second": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "millisecond": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "timezoneOffset": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                        "value": "0.0",
-                        "type": "Literal"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "locator": "84:50-84:91",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                  "type": "Before",
-                  "operand": [
-                    {
-                      "name": "ToDateTime",
-                      "libraryName": "FHIRHelpers",
-                      "type": "FunctionRef",
-                      "operand": [
-                        {
-                          "asType": "{http://hl7.org/fhir}dateTime",
-                          "type": "As",
-                          "operand": {
-                            "locator": "84:50-84:58",
-                            "path": "onset",
-                            "scope": "c",
-                            "type": "Property",
-                            "resultTypeSpecifier": {
-                              "type": "ChoiceTypeSpecifier",
-                              "choice": [
-                                {
-                                  "name": "{http://hl7.org/fhir}dateTime",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Age",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Period",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Range",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}string",
-                                  "type": "NamedTypeSpecifier"
-                                }
-                              ]
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "locator": "84:67-84:91",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                      "type": "DateTime",
-                      "year": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "2022",
-                        "type": "Literal"
-                      },
-                      "month": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "2",
-                        "type": "Literal"
-                      },
-                      "day": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "1",
-                        "type": "Literal"
-                      },
-                      "hour": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "minute": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "second": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "millisecond": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "timezoneOffset": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                        "value": "0.0",
-                        "type": "Literal"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "86:1-89:91",
-          "name": "DateTest4",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "87:2-89:91",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "87:2-87:24",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "87:2-87:22",
-                  "dataType": "{http://hl7.org/fhir}Condition",
-                  "templateId": "http://hl7.org/fhir/StructureDefinition/Condition",
-                  "codeProperty": "code",
-                  "codeComparator": "~",
-                  "type": "Retrieve",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  },
-                  "codes": {
-                    "type": "ToList",
-                    "operand": {
-                      "locator": "87:14-87:21",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}Code",
-                      "name": "Ouchie",
-                      "type": "CodeRef"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": [],
-            "where": {
-              "locator": "88:3-89:91",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-              "type": "And",
-              "operand": [
-                {
-                  "locator": "89:4-89:44",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                  "type": "After",
-                  "operand": [
-                    {
-                      "name": "ToDateTime",
-                      "libraryName": "FHIRHelpers",
-                      "type": "FunctionRef",
-                      "operand": [
-                        {
-                          "asType": "{http://hl7.org/fhir}dateTime",
-                          "type": "As",
-                          "operand": {
-                            "locator": "89:4-89:12",
-                            "path": "onset",
-                            "scope": "c",
-                            "type": "Property",
-                            "resultTypeSpecifier": {
-                              "type": "ChoiceTypeSpecifier",
-                              "choice": [
-                                {
-                                  "name": "{http://hl7.org/fhir}dateTime",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Age",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Period",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Range",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}string",
-                                  "type": "NamedTypeSpecifier"
-                                }
-                              ]
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "locator": "89:20-89:44",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                      "type": "DateTime",
-                      "year": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "2020",
-                        "type": "Literal"
-                      },
-                      "month": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "1",
-                        "type": "Literal"
-                      },
-                      "day": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "1",
-                        "type": "Literal"
-                      },
-                      "hour": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "minute": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "second": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "millisecond": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "timezoneOffset": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                        "value": "0.0",
-                        "type": "Literal"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "locator": "89:50-89:91",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                  "type": "Before",
-                  "operand": [
-                    {
-                      "name": "ToDateTime",
-                      "libraryName": "FHIRHelpers",
-                      "type": "FunctionRef",
-                      "operand": [
-                        {
-                          "asType": "{http://hl7.org/fhir}dateTime",
-                          "type": "As",
-                          "operand": {
-                            "locator": "89:50-89:58",
-                            "path": "onset",
-                            "scope": "c",
-                            "type": "Property",
-                            "resultTypeSpecifier": {
-                              "type": "ChoiceTypeSpecifier",
-                              "choice": [
-                                {
-                                  "name": "{http://hl7.org/fhir}dateTime",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Age",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Period",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}Range",
-                                  "type": "NamedTypeSpecifier"
-                                },
-                                {
-                                  "name": "{http://hl7.org/fhir}string",
-                                  "type": "NamedTypeSpecifier"
-                                }
-                              ]
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "locator": "89:67-89:91",
-                      "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                      "type": "DateTime",
-                      "year": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "2022",
-                        "type": "Literal"
-                      },
-                      "month": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "2",
-                        "type": "Literal"
-                      },
-                      "day": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "1",
-                        "type": "Literal"
-                      },
-                      "hour": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "minute": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "second": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "millisecond": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                        "value": "0",
-                        "type": "Literal"
-                      },
-                      "timezoneOffset": {
-                        "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                        "value": "0.0",
-                        "type": "Literal"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "91:1-92:63",
-          "name": "IntervalDateDefinition",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "IntervalTypeSpecifier",
-            "pointType": {
-              "name": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "92:2-92:63",
-            "lowClosed": true,
-            "highClosed": false,
-            "type": "Interval",
-            "resultTypeSpecifier": {
-              "type": "IntervalTypeSpecifier",
-              "pointType": {
-                "name": "{urn:hl7-org:elm-types:r1}DateTime",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "low": {
-              "locator": "92:11-92:35",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "DateTime",
-              "year": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "2020",
-                "type": "Literal"
-              },
-              "month": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "day": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "hour": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "minute": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "second": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "millisecond": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "timezoneOffset": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                "value": "0.0",
-                "type": "Literal"
-              }
-            },
-            "high": {
-              "locator": "92:38-92:62",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-              "type": "DateTime",
-              "year": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "2022",
-                "type": "Literal"
-              },
-              "month": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "2",
-                "type": "Literal"
-              },
-              "day": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "1",
-                "type": "Literal"
-              },
-              "hour": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "minute": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "second": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "millisecond": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "0",
-                "type": "Literal"
-              },
-              "timezoneOffset": {
-                "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                "value": "0.0",
-                "type": "Literal"
-              }
-            }
-          }
-        },
-        {
-          "locator": "94:1-95:18",
-          "name": "IntervalIntegerDefinition",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "IntervalTypeSpecifier",
-            "pointType": {
-              "name": "{urn:hl7-org:elm-types:r1}Integer",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "95:2-95:18",
-            "lowClosed": false,
-            "highClosed": true,
-            "type": "Interval",
-            "resultTypeSpecifier": {
-              "type": "IntervalTypeSpecifier",
-              "pointType": {
-                "name": "{urn:hl7-org:elm-types:r1}Integer",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "low": {
-              "locator": "95:11",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-              "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-              "value": "1",
-              "type": "Literal"
-            },
-            "high": {
-              "locator": "95:14-95:17",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-              "type": "Multiply",
-              "operand": [
-                {
-                  "locator": "95:14-95:15",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                  "value": "10",
-                  "type": "Literal"
-                },
-                {
-                  "locator": "95:17",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                  "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                  "value": "3",
-                  "type": "Literal"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "97:1-98:34",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "IntervalIntegerReferenceTestDoesntWork",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "98:5-98:34",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "In",
-            "operand": [
-              {
-                "locator": "98:5",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "5",
-                "type": "Literal"
-              },
-              {
-                "locator": "98:10-98:34",
-                "name": "IntervalIntegerDefinition",
-                "type": "ExpressionRef",
-                "resultTypeSpecifier": {
-                  "type": "IntervalTypeSpecifier",
-                  "pointType": {
-                    "name": "{urn:hl7-org:elm-types:r1}Integer",
-                    "type": "NamedTypeSpecifier"
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "locator": "100:1-103:78",
-          "name": "IntervalTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "101:2-103:78",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "101:2-101:11",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "101:2-101:9",
-                  "name": "CodeTest",
-                  "type": "ExpressionRef",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": [],
-            "where": {
-              "locator": "102:3-103:78",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-              "type": "In",
-              "operand": [
-                {
-                  "name": "ToDateTime",
-                  "libraryName": "FHIRHelpers",
-                  "type": "FunctionRef",
-                  "operand": [
-                    {
-                      "asType": "{http://hl7.org/fhir}dateTime",
-                      "type": "As",
-                      "operand": {
-                        "locator": "103:4-103:12",
-                        "path": "onset",
-                        "scope": "c",
-                        "type": "Property",
-                        "resultTypeSpecifier": {
-                          "type": "ChoiceTypeSpecifier",
-                          "choice": [
-                            {
-                              "name": "{http://hl7.org/fhir}dateTime",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Age",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Period",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Range",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}string",
-                              "type": "NamedTypeSpecifier"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "locator": "103:17-103:78",
-                  "lowClosed": true,
-                  "highClosed": false,
-                  "type": "Interval",
-                  "resultTypeSpecifier": {
-                    "type": "IntervalTypeSpecifier",
-                    "pointType": {
-                      "name": "{urn:hl7-org:elm-types:r1}DateTime",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  },
-                  "low": {
-                    "locator": "103:26-103:50",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                    "type": "DateTime",
-                    "year": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "2020",
-                      "type": "Literal"
-                    },
-                    "month": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    },
-                    "day": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    },
-                    "hour": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "minute": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "second": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "millisecond": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "timezoneOffset": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                      "value": "0.0",
-                      "type": "Literal"
-                    }
-                  },
-                  "high": {
-                    "locator": "103:53-103:77",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                    "type": "DateTime",
-                    "year": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "2022",
-                      "type": "Literal"
-                    },
-                    "month": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "2",
-                      "type": "Literal"
-                    },
-                    "day": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    },
-                    "hour": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "minute": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "second": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "millisecond": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "0",
-                      "type": "Literal"
-                    },
-                    "timezoneOffset": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                      "value": "0.0",
-                      "type": "Literal"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "105:1-106:23",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "FirstExists",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "106:2-106:23",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "Exists",
-            "operand": {
-              "locator": "106:8-106:23",
-              "name": "IntervalTest",
-              "type": "ExpressionRef",
-              "resultTypeSpecifier": {
-                "type": "ListTypeSpecifier",
-                "elementType": {
-                  "name": "{http://hl7.org/fhir}Condition",
-                  "type": "NamedTypeSpecifier"
-                }
-              }
-            }
-          }
-        },
-        {
-          "locator": "108:1-109:13",
-          "name": "SimpleRetrieveReferenceTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "109:2-109:13",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "109:2-109:13",
-                "alias": "s",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "109:2-109:11",
-                  "name": "SimpleTest",
-                  "type": "ExpressionRef",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": []
-          }
-        },
-        {
-          "locator": "111:1-112:59",
-          "name": "RetrieveReferenceWithFilterTest",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "112:2-112:59",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "112:2-112:11",
-                "alias": "c",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "112:2-112:9",
-                  "name": "CodeTest",
-                  "type": "ExpressionRef",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": [],
-            "where": {
-              "locator": "112:13-112:59",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-              "type": "After",
-              "operand": [
-                {
-                  "name": "ToDateTime",
-                  "libraryName": "FHIRHelpers",
-                  "type": "FunctionRef",
-                  "operand": [
-                    {
-                      "asType": "{http://hl7.org/fhir}dateTime",
-                      "type": "As",
-                      "operand": {
-                        "locator": "112:19-112:27",
-                        "path": "onset",
-                        "scope": "c",
-                        "type": "Property",
-                        "resultTypeSpecifier": {
-                          "type": "ChoiceTypeSpecifier",
-                          "choice": [
-                            {
-                              "name": "{http://hl7.org/fhir}dateTime",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Age",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Period",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Range",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}string",
-                              "type": "NamedTypeSpecifier"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "locator": "112:35-112:59",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                  "type": "DateTime",
-                  "year": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "2020",
-                    "type": "Literal"
-                  },
-                  "month": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "1",
-                    "type": "Literal"
-                  },
-                  "day": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "1",
-                    "type": "Literal"
-                  },
-                  "hour": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "minute": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "second": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "millisecond": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "timezoneOffset": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                    "value": "0.0",
-                    "type": "Literal"
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "114:1-115:32",
-          "name": "MultipleNestedTest1",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "115:2-115:32",
-            "name": "RetrieveReferenceWithFilterTest",
-            "type": "ExpressionRef",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            }
-          }
-        },
-        {
-          "locator": "117:1-118:69",
-          "name": "MultipleNestedTest2",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "resultTypeSpecifier": {
-            "type": "ListTypeSpecifier",
-            "elementType": {
-              "name": "{http://hl7.org/fhir}Condition",
-              "type": "NamedTypeSpecifier"
-            }
-          },
-          "expression": {
-            "locator": "118:2-118:69",
-            "type": "Query",
-            "resultTypeSpecifier": {
-              "type": "ListTypeSpecifier",
-              "elementType": {
-                "name": "{http://hl7.org/fhir}Condition",
-                "type": "NamedTypeSpecifier"
-              }
-            },
-            "source": [
-              {
-                "locator": "118:2-118:22",
-                "alias": "m",
-                "resultTypeSpecifier": {
-                  "type": "ListTypeSpecifier",
-                  "elementType": {
-                    "name": "{http://hl7.org/fhir}Condition",
-                    "type": "NamedTypeSpecifier"
-                  }
-                },
-                "expression": {
-                  "locator": "118:2-118:20",
-                  "name": "MultipleNestedTest1",
-                  "type": "ExpressionRef",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{http://hl7.org/fhir}Condition",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  }
-                }
-              }
-            ],
-            "relationship": [],
-            "where": {
-              "locator": "118:24-118:69",
-              "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-              "type": "Before",
-              "operand": [
-                {
-                  "name": "ToDateTime",
-                  "libraryName": "FHIRHelpers",
-                  "type": "FunctionRef",
-                  "operand": [
-                    {
-                      "asType": "{http://hl7.org/fhir}dateTime",
-                      "type": "As",
-                      "operand": {
-                        "locator": "118:30-118:36",
-                        "path": "onset",
-                        "scope": "m",
-                        "type": "Property",
-                        "resultTypeSpecifier": {
-                          "type": "ChoiceTypeSpecifier",
-                          "choice": [
-                            {
-                              "name": "{http://hl7.org/fhir}dateTime",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Age",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Period",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}Range",
-                              "type": "NamedTypeSpecifier"
-                            },
-                            {
-                              "name": "{http://hl7.org/fhir}string",
-                              "type": "NamedTypeSpecifier"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "locator": "118:45-118:69",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}DateTime",
-                  "type": "DateTime",
-                  "year": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "2021",
-                    "type": "Literal"
-                  },
-                  "month": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "1",
-                    "type": "Literal"
-                  },
-                  "day": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "1",
-                    "type": "Literal"
-                  },
-                  "hour": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "minute": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "second": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "millisecond": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                    "value": "0",
-                    "type": "Literal"
-                  },
-                  "timezoneOffset": {
-                    "valueType": "{urn:hl7-org:elm-types:r1}Decimal",
-                    "value": "0.0",
-                    "type": "Literal"
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "locator": "123:1-123:15",
-          "name": "Patient",
-          "context": "Patient",
-          "expression": {
-            "type": "SingletonFrom",
-            "operand": {
-              "locator": "123:1-123:15",
-              "dataType": "{http://hl7.org/fhir}Patient",
-              "templateId": "http://hl7.org/fhir/StructureDefinition/Patient",
-              "type": "Retrieve"
-            }
-          }
-        },
-        {
-          "locator": "125:1-126:33",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-          "name": "In Initial Population",
-          "context": "Patient",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "126:3-126:33",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-            "type": "GreaterOrEqual",
-            "operand": [
-              {
-                "locator": "126:3-126:27",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "precision": "Year",
-                "type": "CalculateAgeAt",
-                "operand": [
-                  {
-                    "path": "birthDate.value",
-                    "type": "Property",
-                    "source": {
-                      "name": "Patient",
-                      "type": "ExpressionRef"
-                    }
-                  },
-                  {
-                    "locator": "126:16-126:26",
-                    "resultTypeName": "{urn:hl7-org:elm-types:r1}Date",
-                    "type": "Date",
-                    "year": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "2013",
-                      "type": "Literal"
-                    },
-                    "month": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    },
-                    "day": {
-                      "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                      "value": "1",
-                      "type": "Literal"
-                    }
-                  }
-                ]
-              },
-              {
-                "locator": "126:32-126:33",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-                "valueType": "{urn:hl7-org:elm-types:r1}Integer",
-                "value": "16",
-                "type": "Literal"
-              }
-            ]
-          }
-        },
-        {
-          "locator": "130:1-131:52",
-          "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-          "name": "Initial Population Count",
-          "context": "Unfiltered",
-          "accessLevel": "Public",
-          "expression": {
-            "locator": "131:3-131:52",
-            "resultTypeName": "{urn:hl7-org:elm-types:r1}Integer",
-            "type": "Count",
-            "source": {
-              "locator": "131:9-131:51",
-              "type": "Query",
-              "resultTypeSpecifier": {
-                "type": "ListTypeSpecifier",
-                "elementType": {
-                  "name": "{urn:hl7-org:elm-types:r1}Boolean",
-                  "type": "NamedTypeSpecifier"
-                }
-              },
-              "source": [
-                {
-                  "locator": "131:9-131:34",
-                  "alias": "IP",
-                  "resultTypeSpecifier": {
-                    "type": "ListTypeSpecifier",
-                    "elementType": {
-                      "name": "{urn:hl7-org:elm-types:r1}Boolean",
-                      "type": "NamedTypeSpecifier"
-                    }
-                  },
-                  "expression": {
-                    "locator": "131:9-131:31",
-                    "name": "In Initial Population",
-                    "type": "ExpressionRef",
-                    "resultTypeSpecifier": {
-                      "type": "ListTypeSpecifier",
-                      "elementType": {
-                        "name": "{urn:hl7-org:elm-types:r1}Boolean",
-                        "type": "NamedTypeSpecifier"
-                      }
-                    }
-                  }
-                }
-              ],
-              "relationship": [],
-              "where": {
-                "locator": "131:36-131:51",
-                "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                "type": "IsTrue",
-                "operand": {
-                  "locator": "131:42-131:43",
-                  "resultTypeName": "{urn:hl7-org:elm-types:r1}Boolean",
-                  "name": "IP",
-                  "type": "AliasRef"
-                }
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
+   }
 }
+

@@ -53,6 +53,77 @@ RETURN
     SELECT *
     FROM   (VALUES ('59621000', 'http://snomed.info/sct', NULL, NULL)) AS codes(code, codesystem, display, ver)
 GO
+-- start AllPatients
+DROP FUNCTION AllPatients
+GO
+CREATE FUNCTION AllPatients
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT *
+    FROM   patient AS sourceTable
+GO
+-- start ExplicitSingletonFrom
+DROP FUNCTION ExplicitSingletonFrom
+GO
+CREATE FUNCTION ExplicitSingletonFrom
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT TOP 1 *
+    FROM   ((SELECT AllPatients.*
+             FROM   AllPatients() AS AllPatients)) AS UNUSED
+GO
+-- start PatientDateTest
+DROP FUNCTION PatientDateTest
+GO
+CREATE FUNCTION PatientDateTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT *
+    FROM   patient AS sourceTable
+    WHERE  sourceTable.birthDate > ((SELECT TOP 1 DATEFROMPARTS(1970, 1, 1) AS Result
+                                     FROM   (SELECT NULL AS unused_column) AS UNUSED))
+GO
+-- start PatientCountTest
+DROP FUNCTION PatientCountTest
+GO
+CREATE FUNCTION PatientCountTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(1) AS Result
+    FROM   ((SELECT PatientDateTest.*
+             FROM   PatientDateTest() AS PatientDateTest)) AS UNUSED
+GO
+-- start Patient
+DROP FUNCTION Patient
+GO
+CREATE FUNCTION Patient
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT TOP 1 *
+    FROM   (SELECT *
+            FROM   patient AS sourceTable) AS UNUSED
+GO
+-- start AgeInYearsTest
+DROP FUNCTION AgeInYearsTest
+GO
+CREATE FUNCTION AgeInYearsTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT Patient.birthDate AS birthDate
+    FROM   Patient() AS Patient
+GO
 -- start FirstCompare
 DROP FUNCTION FirstCompare
 GO

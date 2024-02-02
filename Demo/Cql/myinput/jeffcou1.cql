@@ -23,9 +23,37 @@ code "Ouchie" : '59621000' from "SnoMed"
 parameter "Measurement Period" Interval<DateTime>
   default Interval[@2019-01-01T00:00:00.0, @2020-01-01T00:00:00.0)
 
+context Unfiltered
+
+define "AllPatients":
+  [Patient]
+
+define "ExplicitSingletonFrom":
+  singleton from "AllPatients"
+
+define "PatientDateTest":
+	[Patient] p
+		where 
+			(p.birthDate) after @1970-01-01
+
+define "PatientCountTest":
+	Count("PatientDateTest")
+
+
+context Patient
+
+define "AgeInYearsTest":
+  Patient.birthDate
+ 
+
+
+context Unfiltered
+
+
+
 define "FirstCompare":
   1 < 2
-
+  
 define "SecondCompare":
   FirstCompare and 2 < 3
 
@@ -34,16 +62,16 @@ define "ThirdCompare":
 
 define "FourthCompare":
   FirstCompare and SecondCompare and ThirdCompare
-
+  
 define "SimpleTrue":
   true
 
 define "SimpleFalse":
   false
-
+  
 define "SimpleAnd":
   true and true
-
+  
 define "First":
   1
 
@@ -120,6 +148,7 @@ define "MultipleNestedTest2":
 
 // test of cross-context querying
 
+/*
 context Patient
 
 define "In Initial Population":
@@ -129,7 +158,7 @@ context Unfiltered
 
 define "Initial Population Count":
   Count("In Initial Population" IP where IP is true)
-
+*/
 
 
 // test from DevDays
