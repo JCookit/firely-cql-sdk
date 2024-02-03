@@ -44,11 +44,18 @@ context Patient
 
 define "AgeInYearsTest":
   Patient.birthDate
- 
+
+
+define "PatientContextRetrieve":
+  [Condition] c
+  		where 
+			(c.onset) after @2020-01-01T00:00:00.000Z 
 
 
 context Unfiltered
 
+define "PatientConditionCountTest":
+	Count("PatientContextRetrieve")
 
 
 define "FirstCompare":

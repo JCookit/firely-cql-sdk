@@ -128,7 +128,7 @@ namespace Hl7.Cql.Compiler
         /// <returns></returns>
         abstract protected T Copy(Dictionary<string, ScopedExpressionBase>? optionalScopes = null);
 
-        protected IList<elm.Element> Predecessors { get; init; } = new List<elm.Element>();
+        public IList<elm.Element> Predecessors { get; init; } = new List<elm.Element>();
 
         /// <summary>
         /// Gets the builder from which this context derives.

@@ -35,6 +35,8 @@ public class JeffCou1_1_0_0
     internal Lazy<int?> __PatientCountTest;
     internal Lazy<Patient> __Patient;
     internal Lazy<Date> __AgeInYearsTest;
+    internal Lazy<IEnumerable<Condition>> __PatientContextRetrieve;
+    internal Lazy<int?> __PatientConditionCountTest;
     internal Lazy<bool?> __FirstCompare;
     internal Lazy<bool?> __SecondCompare;
     internal Lazy<bool?> __ThirdCompare;
@@ -86,6 +88,8 @@ public class JeffCou1_1_0_0
         __PatientCountTest = new Lazy<int?>(this.PatientCountTest_Value);
         __Patient = new Lazy<Patient>(this.Patient_Value);
         __AgeInYearsTest = new Lazy<Date>(this.AgeInYearsTest_Value);
+        __PatientContextRetrieve = new Lazy<IEnumerable<Condition>>(this.PatientContextRetrieve_Value);
+        __PatientConditionCountTest = new Lazy<int?>(this.PatientConditionCountTest_Value);
         __FirstCompare = new Lazy<bool?>(this.FirstCompare_Value);
         __SecondCompare = new Lazy<bool?>(this.SecondCompare_Value);
         __ThirdCompare = new Lazy<bool?>(this.ThirdCompare_Value);
@@ -294,6 +298,38 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("AgeInYearsTest")]
 	public Date AgeInYearsTest() => 
 		__AgeInYearsTest.Value;
+
+	private IEnumerable<Condition> PatientContextRetrieve_Value()
+	{
+		var a_ = context.Operators.RetrieveByValueSet<Condition>(null, null);
+		bool? b_(Condition c)
+		{
+			var d_ = FHIRHelpers_4_0_001.ToDateTime((c?.Onset as FhirDateTime));
+			var e_ = context.Operators.DateTime((int?)2020, (int?)1, (int?)1, (int?)0, (int?)0, (int?)0, (int?)0, (decimal?)0.0m);
+			var f_ = context.Operators.After(d_, e_, null);
+
+			return f_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+
+		return c_;
+	}
+
+    [CqlDeclaration("PatientContextRetrieve")]
+	public IEnumerable<Condition> PatientContextRetrieve() => 
+		__PatientContextRetrieve.Value;
+
+	private int? PatientConditionCountTest_Value()
+	{
+		var a_ = this.PatientContextRetrieve();
+		var b_ = context.Operators.CountOrNull<Condition>(a_);
+
+		return b_;
+	}
+
+    [CqlDeclaration("PatientConditionCountTest")]
+	public int? PatientConditionCountTest() => 
+		__PatientConditionCountTest.Value;
 
 	private bool? FirstCompare_Value()
 	{

@@ -61,8 +61,8 @@ CREATE FUNCTION AllPatients
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   patient AS sourceTable
+    SELECT _sourceTable.*
+    FROM   patient AS _sourceTable
 GO
 -- start ExplicitSingletonFrom
 DROP FUNCTION ExplicitSingletonFrom
@@ -74,7 +74,7 @@ AS
 RETURN 
     SELECT TOP 1 *
     FROM   ((SELECT AllPatients.*
-             FROM   AllPatients() AS AllPatients)) AS UNUSED
+             FROM   AllPatients() AS AllPatients)) AS _UNUSED
 GO
 -- start PatientDateTest
 DROP FUNCTION PatientDateTest
@@ -84,10 +84,10 @@ CREATE FUNCTION PatientDateTest
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   patient AS sourceTable
-    WHERE  sourceTable.birthDate > ((SELECT TOP 1 DATEFROMPARTS(1970, 1, 1) AS Result
-                                     FROM   (SELECT NULL AS unused_column) AS UNUSED))
+    SELECT _sourceTable.*
+    FROM   patient AS _sourceTable
+    WHERE  _sourceTable.birthDate > ((SELECT TOP 1 DATEFROMPARTS(1970, 1, 1) AS _Result
+                                      FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
 GO
 -- start PatientCountTest
 DROP FUNCTION PatientCountTest
@@ -97,9 +97,9 @@ CREATE FUNCTION PatientCountTest
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT COUNT(1) AS Result
+    SELECT COUNT(1) AS _Result
     FROM   ((SELECT PatientDateTest.*
-             FROM   PatientDateTest() AS PatientDateTest)) AS UNUSED
+             FROM   PatientDateTest() AS PatientDateTest)) AS _UNUSED
 GO
 -- start Patient
 DROP FUNCTION Patient
@@ -110,8 +110,9 @@ RETURNS TABLE
 AS
 RETURN 
     SELECT TOP 1 *
-    FROM   (SELECT *
-            FROM   patient AS sourceTable) AS UNUSED
+    FROM   (SELECT _sourceTable.*,
+                   _sourceTable.id AS _Context
+            FROM   patient AS _sourceTable) AS _UNUSED
 GO
 -- start AgeInYearsTest
 DROP FUNCTION AgeInYearsTest
@@ -121,8 +122,34 @@ CREATE FUNCTION AgeInYearsTest
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT Patient.birthDate AS birthDate
+    SELECT Patient.birthDate AS _Result
     FROM   Patient() AS Patient
+GO
+-- start PatientContextRetrieve
+DROP FUNCTION PatientContextRetrieve
+GO
+CREATE FUNCTION PatientContextRetrieve
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT _sourceTable.*,
+           JSON_VALUE(_sourceTable.subject_string, '$.id') AS _Context
+    FROM   condition AS _sourceTable
+    WHERE  _sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                          FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
+GO
+-- start PatientConditionCountTest
+DROP FUNCTION PatientConditionCountTest
+GO
+CREATE FUNCTION PatientConditionCountTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(1) AS _Result
+    FROM   ((SELECT PatientContextRetrieve.*
+             FROM   PatientContextRetrieve() AS PatientContextRetrieve)) AS _UNUSED
 GO
 -- start FirstCompare
 DROP FUNCTION FirstCompare
@@ -132,10 +159,10 @@ CREATE FUNCTION FirstCompare
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT IIF (((SELECT TOP 1 1 AS Result
-                  FROM   (SELECT NULL AS unused_column) AS UNUSED)) < ((SELECT TOP 1 2 AS Result
-                                                                        FROM   (SELECT NULL AS unused_column) AS UNUSED)), 1, 0) AS Result
-    FROM   (SELECT NULL AS unused_column) AS UNUSED
+    SELECT IIF (((SELECT TOP 1 1 AS _Result
+                  FROM   (SELECT NULL AS _unused_column) AS _UNUSED)) < ((SELECT TOP 1 2 AS _Result
+                                                                          FROM   (SELECT NULL AS _unused_column) AS _UNUSED)), 1, 0) AS _Result
+    FROM   (SELECT NULL AS _unused_column) AS _UNUSED
 GO
 -- start SecondCompare
 DROP FUNCTION SecondCompare
@@ -145,11 +172,11 @@ CREATE FUNCTION SecondCompare
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT IIF (FirstCompare.Result = 1
-                AND ((SELECT TOP 1 2 AS Result
-                      FROM   (SELECT NULL AS unused_column) AS UNUSED)) < ((SELECT TOP 1 3 AS Result
-                                                                            FROM   (SELECT NULL AS unused_column) AS UNUSED)), 1, 0) AS Result
-    FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY FirstCompare() AS FirstCompare
+    SELECT IIF (FirstCompare._Result = 1
+                AND ((SELECT TOP 1 2 AS _Result
+                      FROM   (SELECT NULL AS _unused_column) AS _UNUSED)) < ((SELECT TOP 1 3 AS _Result
+                                                                              FROM   (SELECT NULL AS _unused_column) AS _UNUSED)), 1, 0) AS _Result
+    FROM   (SELECT NULL AS _unused_column) AS _UNUSED CROSS APPLY FirstCompare() AS FirstCompare
 GO
 -- start ThirdCompare
 DROP FUNCTION ThirdCompare
@@ -159,12 +186,12 @@ CREATE FUNCTION ThirdCompare
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT IIF (SecondCompare.Result = 1
-                OR (5 >= ((SELECT TOP 1 1 AS Result
-                           FROM   (SELECT NULL AS unused_column) AS UNUSED))
-                    AND 5 <= ((SELECT TOP 1 10 AS Result
-                               FROM   (SELECT NULL AS unused_column) AS UNUSED))), 1, 0) AS Result
-    FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY SecondCompare() AS SecondCompare
+    SELECT IIF (SecondCompare._Result = 1
+                OR (5 >= ((SELECT TOP 1 1 AS _Result
+                           FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
+                    AND 5 <= ((SELECT TOP 1 10 AS _Result
+                               FROM   (SELECT NULL AS _unused_column) AS _UNUSED))), 1, 0) AS _Result
+    FROM   (SELECT NULL AS _unused_column) AS _UNUSED CROSS APPLY SecondCompare() AS SecondCompare
 GO
 -- start FourthCompare
 DROP FUNCTION FourthCompare
@@ -174,9 +201,9 @@ CREATE FUNCTION FourthCompare
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT IIF (FirstCompare.Result = 1
-                AND SecondCompare.Result = 1
-                AND ThirdCompare.Result = 1, 1, 0) AS Result
+    SELECT IIF (FirstCompare._Result = 1
+                AND SecondCompare._Result = 1
+                AND ThirdCompare._Result = 1, 1, 0) AS _Result
     FROM   FirstCompare() AS FirstCompare CROSS APPLY SecondCompare() AS SecondCompare CROSS APPLY ThirdCompare() AS ThirdCompare
 GO
 -- start SimpleTrue
@@ -187,8 +214,8 @@ CREATE FUNCTION SimpleTrue
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 1 AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+    (SELECT TOP 1 1 AS _Result
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start SimpleFalse
 DROP FUNCTION SimpleFalse
@@ -198,8 +225,8 @@ CREATE FUNCTION SimpleFalse
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 0 AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+    (SELECT TOP 1 0 AS _Result
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start SimpleAnd
 DROP FUNCTION SimpleAnd
@@ -210,8 +237,8 @@ RETURNS TABLE
 AS
 RETURN 
     SELECT IIF (1 = 1
-                AND 1 = 1, 1, 0) AS Result
-    FROM   (SELECT NULL AS unused_column) AS UNUSED
+                AND 1 = 1, 1, 0) AS _Result
+    FROM   (SELECT NULL AS _unused_column) AS _UNUSED
 GO
 -- start First
 DROP FUNCTION First
@@ -221,8 +248,8 @@ CREATE FUNCTION First
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 1 AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+    (SELECT TOP 1 1 AS _Result
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start Second
 DROP FUNCTION Second
@@ -232,8 +259,8 @@ CREATE FUNCTION Second
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 1 + 1 AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+    (SELECT TOP 1 1 + 1 AS _Result
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start PEDMASTest
 DROP FUNCTION PEDMASTest
@@ -243,8 +270,8 @@ CREATE FUNCTION PEDMASTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 (CAST ((3) AS DECIMAL) + 4.0) / CAST ((1 + 2) AS DECIMAL) AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+    (SELECT TOP 1 (CAST ((3) AS DECIMAL) + 4.0) / CAST ((1 + 2) AS DECIMAL) AS _Result
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start CompoundMathTest
 DROP FUNCTION CompoundMathTest
@@ -254,8 +281,8 @@ CREATE FUNCTION CompoundMathTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 CAST ((1) AS DECIMAL) + PEDMASTest.Result AS Result
-     FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY PEDMASTest() AS PEDMASTest)
+    (SELECT TOP 1 CAST ((1) AS DECIMAL) + PEDMASTest._Result AS _Result
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED CROSS APPLY PEDMASTest() AS PEDMASTest)
 GO
 -- start MultipleCompoundMathTest
 DROP FUNCTION MultipleCompoundMathTest
@@ -265,8 +292,8 @@ CREATE FUNCTION MultipleCompoundMathTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 CompoundMathTest.Result + PEDMASTest.Result * CAST ((2) AS DECIMAL) AS Result
-     FROM   CompoundMathTest() AS CompoundMathTest CROSS APPLY (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY PEDMASTest() AS PEDMASTest)
+    (SELECT TOP 1 CompoundMathTest._Result + PEDMASTest._Result * CAST ((2) AS DECIMAL) AS _Result
+     FROM   CompoundMathTest() AS CompoundMathTest CROSS APPLY (SELECT NULL AS _unused_column) AS _UNUSED CROSS APPLY PEDMASTest() AS PEDMASTest)
 GO
 -- start SimpleRefTest
 DROP FUNCTION SimpleRefTest
@@ -276,7 +303,7 @@ CREATE FUNCTION SimpleRefTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 MultipleCompoundMathTest.Result AS Result
+    (SELECT TOP 1 MultipleCompoundMathTest._Result AS _Result
      FROM   MultipleCompoundMathTest() AS MultipleCompoundMathTest)
 GO
 -- start SimpleTest
@@ -287,8 +314,8 @@ CREATE FUNCTION SimpleTest
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
+    SELECT _sourceTable.*
+    FROM   condition AS _sourceTable
 GO
 -- start CodeTest
 DROP FUNCTION CodeTest
@@ -298,16 +325,16 @@ CREATE FUNCTION CodeTest
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
+    SELECT _sourceTable.*
+    FROM   condition AS _sourceTable
            INNER JOIN
            (SELECT TOP 1 code,
                          codesystem,
                          display,
                          ver
             FROM   Ouchie()) AS codeTable
-           ON sourceTable.code_coding_code = codeTable.code
-              AND sourceTable.code_coding_system = codeTable.codesystem
+           ON _sourceTable.code_coding_code = codeTable.code
+              AND _sourceTable.code_coding_system = codeTable.codesystem
 GO
 -- start DateTest2
 DROP FUNCTION DateTest2
@@ -317,10 +344,10 @@ CREATE FUNCTION DateTest2
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
-    WHERE  sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
-                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
+    SELECT _sourceTable.*
+    FROM   condition AS _sourceTable
+    WHERE  _sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                          FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
 GO
 -- start DateTest3
 DROP FUNCTION DateTest3
@@ -330,12 +357,12 @@ CREATE FUNCTION DateTest3
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
-    WHERE  sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
-                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
-           AND sourceTable.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
-                                             FROM   (SELECT NULL AS unused_column) AS UNUSED))
+    SELECT _sourceTable.*
+    FROM   condition AS _sourceTable
+    WHERE  _sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                          FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
+           AND _sourceTable.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS _Result
+                                              FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
 GO
 -- start DateTest4
 DROP FUNCTION DateTest4
@@ -345,20 +372,20 @@ CREATE FUNCTION DateTest4
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT *
-    FROM   condition AS sourceTable
+    SELECT _sourceTable.*
+    FROM   condition AS _sourceTable
            INNER JOIN
            (SELECT TOP 1 code,
                          codesystem,
                          display,
                          ver
             FROM   Ouchie()) AS codeTable
-           ON sourceTable.code_coding_code = codeTable.code
-              AND sourceTable.code_coding_system = codeTable.codesystem
-    WHERE  sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
-                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
-           AND sourceTable.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
-                                             FROM   (SELECT NULL AS unused_column) AS UNUSED))
+           ON _sourceTable.code_coding_code = codeTable.code
+              AND _sourceTable.code_coding_system = codeTable.codesystem
+    WHERE  _sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                          FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
+           AND _sourceTable.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS _Result
+                                              FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
 GO
 -- start IntervalDateDefinition
 DROP FUNCTION IntervalDateDefinition
@@ -372,7 +399,7 @@ RETURN
                   DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS hi,
                   1 AS lowClosed,
                   0 AS hiClosed
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start IntervalIntegerDefinition
 DROP FUNCTION IntervalIntegerDefinition
@@ -386,7 +413,7 @@ RETURN
                   10 * 3 AS hi,
                   0 AS lowClosed,
                   1 AS hiClosed
-     FROM   (SELECT NULL AS unused_column) AS UNUSED)
+     FROM   (SELECT NULL AS _unused_column) AS _UNUSED)
 GO
 -- start IntervalIntegerReferenceTestDoesntWork
 DROP FUNCTION IntervalIntegerReferenceTestDoesntWork
@@ -396,11 +423,11 @@ CREATE FUNCTION IntervalIntegerReferenceTestDoesntWork
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT IIF ((5 >= ((SELECT TOP 1 IntervalIntegerDefinition.low AS Result
+    SELECT IIF ((5 >= ((SELECT TOP 1 IntervalIntegerDefinition.low AS _Result
                         FROM   IntervalIntegerDefinition() AS IntervalIntegerDefinition))
-                 AND 5 <= ((SELECT TOP 1 IntervalIntegerDefinition.hi AS Result
-                            FROM   IntervalIntegerDefinition() AS IntervalIntegerDefinition))), 1, 0) AS Result
-    FROM   (SELECT NULL AS unused_column) AS UNUSED CROSS APPLY IntervalIntegerDefinition() AS IntervalIntegerDefinition
+                 AND 5 <= ((SELECT TOP 1 IntervalIntegerDefinition.hi AS _Result
+                            FROM   IntervalIntegerDefinition() AS IntervalIntegerDefinition))), 1, 0) AS _Result
+    FROM   (SELECT NULL AS _unused_column) AS _UNUSED CROSS APPLY IntervalIntegerDefinition() AS IntervalIntegerDefinition
 GO
 -- start IntervalTest
 DROP FUNCTION IntervalTest
@@ -412,10 +439,10 @@ AS
 RETURN 
     (SELECT CodeTest.*
      FROM   CodeTest() AS CodeTest
-     WHERE  (CodeTest.onsetDateTime >= ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
-                                         FROM   (SELECT NULL AS unused_column) AS UNUSED))
-             AND CodeTest.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS Result
-                                            FROM   (SELECT NULL AS unused_column) AS UNUSED))))
+     WHERE  (CodeTest.onsetDateTime >= ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                         FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
+             AND CodeTest.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS _Result
+                                            FROM   (SELECT NULL AS _unused_column) AS _UNUSED))))
 GO
 -- start FirstExists
 DROP FUNCTION FirstExists
@@ -427,8 +454,8 @@ AS
 RETURN 
     SELECT IIF ((SELECT COUNT(1)
                  FROM   ((SELECT IntervalTest.*
-                          FROM   IntervalTest() AS IntervalTest)) AS UNUSED) > 0, 1, 0)
-    FROM   (SELECT NULL AS unused_column) AS UNUSED
+                          FROM   IntervalTest() AS IntervalTest)) AS _UNUSED) > 0, 1, 0) AS _Result
+    FROM   (SELECT NULL AS _unused_column) AS _UNUSED
 GO
 -- start SimpleRetrieveReferenceTest
 DROP FUNCTION SimpleRetrieveReferenceTest
@@ -451,8 +478,8 @@ AS
 RETURN 
     (SELECT CodeTest.*
      FROM   CodeTest() AS CodeTest
-     WHERE  CodeTest.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS Result
-                                       FROM   (SELECT NULL AS unused_column) AS UNUSED)))
+     WHERE  CodeTest.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                       FROM   (SELECT NULL AS _unused_column) AS _UNUSED)))
 GO
 -- start MultipleNestedTest1
 DROP FUNCTION MultipleNestedTest1
@@ -475,6 +502,6 @@ AS
 RETURN 
     (SELECT MultipleNestedTest1.*
      FROM   MultipleNestedTest1() AS MultipleNestedTest1
-     WHERE  MultipleNestedTest1.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2021, 1, 1, 0, 0, 0, 0, 7) AS Result
-                                                  FROM   (SELECT NULL AS unused_column) AS UNUSED)))
+     WHERE  MultipleNestedTest1.onsetDateTime < ((SELECT TOP 1 DATETIME2FROMPARTS(2021, 1, 1, 0, 0, 0, 0, 7) AS _Result
+                                                  FROM   (SELECT NULL AS _unused_column) AS _UNUSED)))
 GO

@@ -349,7 +349,7 @@ namespace Hl7.Cql.Compiler
                         {
                             buildContext.LogError($"Failed to create SQL expression for {def.name} --- {e.Message}", def);
                         }
-
+                        
                         //var lambda = Expression.Lambda(bodyExpression, parameters);
                         //if (function?.operand != null && definitions.ContainsKey(ThisLibraryKey, def.name, functionParameterTypes))
                         //{
@@ -987,7 +987,7 @@ namespace Hl7.Cql.Compiler
 
         private SqlExpression? Count(Count ce, SqlExpressionBuilderContext ctx)
         {
-            // TODO YOU ARE HERE --- currently this works when in an unfiltered context, and counting something in an unfiltere context
+            // TODO YOU ARE HERE --- currently this works when in an unfiltered context, and counting something in an unfiltered context
             // the real trick is what happens when the thing being counted is, for example, Patient context
             // then, we have to make sure that a) the subquery has a property which allows it to be grouped, and b) this aggregate query does grouping
             //
@@ -1073,7 +1073,7 @@ namespace Hl7.Cql.Compiler
             var existsSelect = existsExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
 
             // wrap the given select in a pattern
-            // SELECT IIF( (SELECT COUNT(1) FROM (<existsexpression>) AS UNUSED)> 0,1,0) FROM (SELECT NULL AS unused_column) AS UNUSED
+            // SELECT IIF( (SELECT COUNT(1) AS Result FROM (<existsexpression>) AS UNUSED)> 0,1,0) FROM (SELECT NULL AS unused_column) AS UNUSED
 
             var newSelect = new SelectStatement
             {
@@ -1120,7 +1120,8 @@ namespace Hl7.Cql.Compiler
                                 },
                                 ThenExpression = new IntegerLiteral { Value = "1" },
                                 ElseExpression = new IntegerLiteral { Value = "0" }
-                            }
+                            },
+                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName } }
                         }
                     },
                     FromClause = NullFromClause()
@@ -1378,13 +1379,15 @@ namespace Hl7.Cql.Compiler
             Type sourceTableType;
             Identifier sourceTableIdentifier;
             FromClause fromClause;
+            string? elmElementType = null; // TODO not sure we can always figure this out?  but works in some cases
 
             if (!String.IsNullOrEmpty(pe.scope))
             {
-                // I think? this is the case where the property source is a table.   Don't know if this is always true
+                // I think? this is the case where the property source is the result of a Retrieve.   Don't know if this is always true
                 var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
                 sourceTableType = sourceTable.Type;
                 sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
+                elmElementType = (sourceTable.ElmExpression as Elm.Retrieve)?.dataType.Name;
 
                 fromClause = new FromClause
                 {
@@ -1439,7 +1442,7 @@ namespace Hl7.Cql.Compiler
                                     },
                                     ColumnName = new IdentifierOrValueExpression
                                     {
-                                        Identifier = new Identifier { Value = destinationcolumnName }
+                                        Identifier = new Identifier { Value = ResultColumnName }
                                     }
                                 };
                                 break;
@@ -1467,7 +1470,7 @@ namespace Hl7.Cql.Compiler
                                     },
                                     ColumnName = new IdentifierOrValueExpression
                                     {
-                                        Identifier = new Identifier { Value = destinationcolumnName }
+                                        Identifier = new Identifier { Value = ResultColumnName }
                                     }
                                 };
                                 break;
@@ -1479,20 +1482,46 @@ namespace Hl7.Cql.Compiler
             if (selectScalarExpression == null)
                 throw new NotImplementedException();
 
-            return new SqlExpression(
-                new SelectStatement
+            var sqlSelect = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
                 {
-                    QueryExpression = new QuerySpecification
-                    {
-                        SelectElements =
+                    SelectElements =
                         {
                             selectScalarExpression,
                         },
-                        FromClause = fromClause
+                    FromClause = fromClause
+                }
+            };
+
+            // TODO YOU ARE HERE
+            // somethis is still broken about this logic
+
+            // if this is a filtered context, then also add a context column
+            // TODO right now other code assumes that the property column is _first_ (because it is unwrapped in other places, like where clauses)
+            // but in cases where this SELECT is used as-in, we need to add the context column
+            var context = FindElmContext(ctx);
+            if (elmElementType != null
+                && context != null
+                && FhirSqlTableMap.TryGetValue(elmElementType, out var sqlTableEntry)
+                && sqlTableEntry.ContextIdentifierExpression != null
+                && sqlTableEntry.ContextIdentifierExpression.TryGetValue(context.ToLowerInvariant(), out var contextIdentifierExpression))
+            {
+                // if there needs to be a context column, add it
+                (sqlSelect.QueryExpression as QuerySpecification ?? throw new InvalidOperationException())?.SelectElements.Add(new SelectScalarExpression
+                {
+                    Expression = contextIdentifierExpression,
+                    ColumnName = new IdentifierOrValueExpression
+                    {
+                        Identifier = new Identifier { Value = ContextColumnName }
                     }
-                },
+                });
+            }
+
+            return new SqlExpression(
+                sqlSelect,
                 SqlExpression.FragmentTypes.SelectStatement,
-                typeof(object));  // TODO: infer type?
+                typeof(object));  // TODO: infer type?;
         }
 
         private SqlExpression? As(As @as, SqlExpressionBuilderContext ctx)
@@ -1938,10 +1967,35 @@ namespace Hl7.Cql.Compiler
             List<SelectElement> selectElements = new List<SelectElement>();
             List<TableReference> tableReferences = new List<TableReference>();
             //WhereClause? whereClause = null;
-            ScalarExpression? codeColumnExpression = sqlTableEntry.DefaultCodingCodeExpression;
+            //ScalarExpression? codeColumnExpression = sqlTableEntry.DefaultCodingCodeExpression;
 
             // TODO: for now select * --- maybe will have to shape the result later
-            selectElements.Add(new SelectStarExpression());
+            selectElements.Add(new SelectStarExpression
+            {
+                Qualifier = new MultiPartIdentifier
+                {
+                    Identifiers =
+                    {
+                        new Identifier { Value = SourceTableAlias }
+                    }
+                }
+            });
+
+            string? context = FindElmContext(ctx);
+            if (context != null
+                && sqlTableEntry.ContextIdentifierExpression != null
+                && sqlTableEntry.ContextIdentifierExpression.TryGetValue(context.ToLowerInvariant(), out var contextIdentifierExpression))
+            {
+                // if there needs to be a context column, add it
+                selectElements.Add(new SelectScalarExpression
+                {
+                    Expression = contextIdentifierExpression,
+                    ColumnName = new IdentifierOrValueExpression
+                    {
+                        Identifier = new Identifier { Value = ContextColumnName }
+                    }
+                });
+            }
 
             TableReference sourceTableReference = new NamedTableReference
             {
@@ -1952,7 +2006,7 @@ namespace Hl7.Cql.Compiler
                                     new Identifier { Value = sqlTableEntry.SqlTableName }
                                 }
                 },
-                Alias = new Identifier { Value = "sourceTable" }  // TODO: should this be a dynamic name?  see joins below
+                Alias = new Identifier { Value = SourceTableAlias }  // TODO: should this be a dynamic name?  see joins below
             };
 
 
@@ -2092,6 +2146,20 @@ namespace Hl7.Cql.Compiler
 
         }
 
+        private string? FindElmContext(SqlExpressionBuilderContext ctx)
+        {
+            // TODO: this assumes that the interesting context is on the ExpressionDef predecessor.  Always true?
+            for (int i = ctx.Predecessors.Count-1; i >=0; i--)
+            {
+                if (ctx.Predecessors[i] is Elm.ExpressionDef expressionDef)
+                {
+                    return expressionDef.context;
+                }
+            }
+
+            return null;
+        }
+
         public class FhirSqlTableMapEntry
         {
             public string SqlTableName { get; init; } = String.Empty;
@@ -2099,17 +2167,53 @@ namespace Hl7.Cql.Compiler
             // how to find the default code property into sql (typically a column reference)
             public ScalarExpression? DefaultCodingCodeExpression { get; init; } = null;
             public ScalarExpression? DefaultCodingCodeSystemExpression { get; init; } = null;
+
+            // dictionary that maps
+            // the current elm context -> the sql expression (if applicable) that will produce an identity of that context
+            // TODO: unclear what do do with the table qualification so far
+            public Dictionary<string, ScalarExpression>? ContextIdentifierExpression { get; init; } = null;
         }
 
         /// <summary>
-        /// for now, harded metadata about the FHIR tables. 
+        /// for now, hard coded metadata about the FHIR tables. 
         /// this should be data-driven, and also may have some dynamic components 
         /// </summary>
         public Dictionary<string, FhirSqlTableMapEntry> FhirSqlTableMap { get; } = new Dictionary<string, FhirSqlTableMapEntry>
         {
-            { "{http://hl7.org/fhir}Patient", new FhirSqlTableMapEntry { SqlTableName = "patient" } },
-            { "{http://hl7.org/fhir}Encounter", new FhirSqlTableMapEntry { SqlTableName = "encounter" } },
-            { "{http://hl7.org/fhir}Condition",
+            {
+                "{http://hl7.org/fhir}Patient",
+                new FhirSqlTableMapEntry
+                {
+                    SqlTableName = "patient",
+                    ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
+                    {
+                        // a Patient object in a Patient context (just the id column)
+                        {
+                            "patient",
+                            new ColumnReferenceExpression
+                            {
+                                MultiPartIdentifier = new MultiPartIdentifier
+                                {
+                                    Identifiers =
+                                    {
+                                        new Identifier { Value = SourceTableAlias },
+                                        new Identifier { Value = "id" }
+                                    }
+                                }
+                            }
+                        },
+                    }
+                }
+            },
+            {
+                "{http://hl7.org/fhir}Encounter",
+                new FhirSqlTableMapEntry 
+                { 
+                    SqlTableName = "encounter" 
+                }
+            },
+            {
+                "{http://hl7.org/fhir}Condition",
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "condition",
@@ -2118,19 +2222,46 @@ namespace Hl7.Cql.Compiler
                         MultiPartIdentifier = new MultiPartIdentifier
                         { 
                             // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_code"  } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_code"  } }
                         }
                     },
                     DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
                     {
                         MultiPartIdentifier = new MultiPartIdentifier
                         {
-                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_system" } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_system" } }
+                        }
+                    },
+                    ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
+                    {
+                        // a Condition object in a Patient context (extract the patient id)
+                        {
+                            "patient",
+                            new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    new ColumnReferenceExpression
+                                    {
+                                        MultiPartIdentifier = new MultiPartIdentifier
+                                        {
+                                            Identifiers =
+                                            {
+                                                new Identifier { Value = SourceTableAlias },
+                                                new Identifier { Value = "subject_string" }
+                                            }
+                                        }
+                                    },
+                                    new StringLiteral { Value = "$.id" }
+                                }
+                            }
                         }
                     }
                 }
             },
-            { "{http://hl7.org/fhir}Observation",
+            {
+                "{http://hl7.org/fhir}Observation",
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "observation",
@@ -2139,14 +2270,14 @@ namespace Hl7.Cql.Compiler
                         MultiPartIdentifier = new MultiPartIdentifier
                         { 
                             // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_code"  } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_code"  } }
                         }
                     },
                     DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
                     {
                         MultiPartIdentifier = new MultiPartIdentifier
                         {
-                            Identifiers = { new Identifier { Value = "sourceTable" }, new Identifier { Value = "code_coding_system" } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_system" } }
                         }
                     }
                 }
@@ -2351,9 +2482,11 @@ namespace Hl7.Cql.Compiler
         }
 
         // TODO: bad things would happen if user tokens collided with these
-        private const string UnusedTableName = "UNUSED";
-        private const string UnusedColumnName = "unused_column";
-        private const string ResultColumnName = "Result";
+        private const string UnusedTableName = "_UNUSED";
+        private const string UnusedColumnName = "_unused_column";
+        private const string ResultColumnName = "_Result";
+        private const string SourceTableAlias = "_sourceTable"; // TODO: this is used everywhere but probably shouldn't be
+        private const string ContextColumnName = "_Context";
 
         private FromClause NullFromClause()
         {
@@ -2642,6 +2775,8 @@ namespace Hl7.Cql.Compiler
                     inner = queryParenthesisExpression.QueryExpression;
 
                 QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
+                // TODO: strong assumption here is that the 0th element is the one we want
+                // to be complete, it is the one marked "_Result" or a tuple if we get that fancy
                 SelectScalarExpression selectScalarExpression = querySpecification.SelectElements[0] as SelectScalarExpression ?? throw new InvalidOperationException();
 
                 return (selectScalarExpression.Expression, querySpecification.FromClause);
