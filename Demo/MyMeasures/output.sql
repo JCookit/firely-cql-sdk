@@ -101,6 +101,20 @@ RETURN
     FROM   ((SELECT PatientDateTest.*
              FROM   PatientDateTest() AS PatientDateTest)) AS _UNUSED
 GO
+-- start PatientCountTest2
+DROP FUNCTION PatientCountTest2
+GO
+CREATE FUNCTION PatientCountTest2
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(1) AS _Result
+    FROM   ((SELECT PatientDateTest.*
+             FROM   PatientDateTest() AS PatientDateTest
+             WHERE  PatientDateTest.birthDate < ((SELECT TOP 1 DATEFROMPARTS(1971, 1, 1) AS _Result
+                                                  FROM   (SELECT NULL AS _unused_column) AS _UNUSED)))) AS _UNUSED
+GO
 -- start Patient
 DROP FUNCTION Patient
 GO
@@ -138,6 +152,29 @@ RETURN
     FROM   condition AS _sourceTable
     WHERE  _sourceTable.onsetDateTime > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS _Result
                                           FROM   (SELECT NULL AS _unused_column) AS _UNUSED))
+GO
+-- start PatientContextRetrieveReference
+DROP FUNCTION PatientContextRetrieveReference
+GO
+CREATE FUNCTION PatientContextRetrieveReference
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT PatientContextRetrieve.*
+     FROM   PatientContextRetrieve() AS PatientContextRetrieve)
+GO
+-- start PatientContextRetrieveCount
+DROP FUNCTION PatientContextRetrieveCount
+GO
+CREATE FUNCTION PatientContextRetrieveCount
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(1) AS _Result
+    FROM   ((SELECT PatientContextRetrieve.*
+             FROM   PatientContextRetrieve() AS PatientContextRetrieve)) AS _UNUSED
 GO
 -- start PatientConditionCountTest
 DROP FUNCTION PatientConditionCountTest

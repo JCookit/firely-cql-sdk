@@ -33,9 +33,12 @@ public class JeffCou1_1_0_0
     internal Lazy<Patient> __ExplicitSingletonFrom;
     internal Lazy<IEnumerable<Patient>> __PatientDateTest;
     internal Lazy<int?> __PatientCountTest;
+    internal Lazy<int?> __PatientCountTest2;
     internal Lazy<Patient> __Patient;
     internal Lazy<Date> __AgeInYearsTest;
     internal Lazy<IEnumerable<Condition>> __PatientContextRetrieve;
+    internal Lazy<IEnumerable<Condition>> __PatientContextRetrieveReference;
+    internal Lazy<int?> __PatientContextRetrieveCount;
     internal Lazy<int?> __PatientConditionCountTest;
     internal Lazy<bool?> __FirstCompare;
     internal Lazy<bool?> __SecondCompare;
@@ -86,9 +89,12 @@ public class JeffCou1_1_0_0
         __ExplicitSingletonFrom = new Lazy<Patient>(this.ExplicitSingletonFrom_Value);
         __PatientDateTest = new Lazy<IEnumerable<Patient>>(this.PatientDateTest_Value);
         __PatientCountTest = new Lazy<int?>(this.PatientCountTest_Value);
+        __PatientCountTest2 = new Lazy<int?>(this.PatientCountTest2_Value);
         __Patient = new Lazy<Patient>(this.Patient_Value);
         __AgeInYearsTest = new Lazy<Date>(this.AgeInYearsTest_Value);
         __PatientContextRetrieve = new Lazy<IEnumerable<Condition>>(this.PatientContextRetrieve_Value);
+        __PatientContextRetrieveReference = new Lazy<IEnumerable<Condition>>(this.PatientContextRetrieveReference_Value);
+        __PatientContextRetrieveCount = new Lazy<int?>(this.PatientContextRetrieveCount_Value);
         __PatientConditionCountTest = new Lazy<int?>(this.PatientConditionCountTest_Value);
         __FirstCompare = new Lazy<bool?>(this.FirstCompare_Value);
         __SecondCompare = new Lazy<bool?>(this.SecondCompare_Value);
@@ -276,6 +282,27 @@ public class JeffCou1_1_0_0
 	public int? PatientCountTest() => 
 		__PatientCountTest.Value;
 
+	private int? PatientCountTest2_Value()
+	{
+		var a_ = this.PatientDateTest();
+		bool? b_(Patient p)
+		{
+			var e_ = FHIRHelpers_4_0_001.ToDate(p?.BirthDateElement);
+			var f_ = context.Operators.Date((int?)1971, (int?)1, (int?)1);
+			var g_ = context.Operators.Before(e_, f_, null);
+
+			return g_;
+		};
+		var c_ = context.Operators.WhereOrNull<Patient>(a_, b_);
+		var d_ = context.Operators.CountOrNull<Patient>(c_);
+
+		return d_;
+	}
+
+    [CqlDeclaration("PatientCountTest2")]
+	public int? PatientCountTest2() => 
+		__PatientCountTest2.Value;
+
 	private Patient Patient_Value()
 	{
 		var a_ = context.Operators.RetrieveByValueSet<Patient>(null, null);
@@ -318,6 +345,29 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("PatientContextRetrieve")]
 	public IEnumerable<Condition> PatientContextRetrieve() => 
 		__PatientContextRetrieve.Value;
+
+	private IEnumerable<Condition> PatientContextRetrieveReference_Value()
+	{
+		var a_ = this.PatientContextRetrieve();
+
+		return a_;
+	}
+
+    [CqlDeclaration("PatientContextRetrieveReference")]
+	public IEnumerable<Condition> PatientContextRetrieveReference() => 
+		__PatientContextRetrieveReference.Value;
+
+	private int? PatientContextRetrieveCount_Value()
+	{
+		var a_ = this.PatientContextRetrieve();
+		var b_ = context.Operators.CountOrNull<Condition>(a_);
+
+		return b_;
+	}
+
+    [CqlDeclaration("PatientContextRetrieveCount")]
+	public int? PatientContextRetrieveCount() => 
+		__PatientContextRetrieveCount.Value;
 
 	private int? PatientConditionCountTest_Value()
 	{

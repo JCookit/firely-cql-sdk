@@ -47,6 +47,8 @@ namespace Hl7.Cql.Compiler
 
         public FragmentTypes FragmentType { get;init; }
 
+        public string? CqlContext { get; init; }
+
         // TODO: hijacking .net type system to describe the types here, in a limited way.  Only use the ones that there is a clear 1:1 correspondence
         // bool, int, DateTime --- primitives
         // Patient, Condition, etc. --- FHIR types
@@ -54,11 +56,12 @@ namespace Hl7.Cql.Compiler
         // TODO:  should IEnumerable be used here or is it implicit with SelectStatement vs SelectStatementScalar
         public Type DataType { get; init; }  
 
-        public SqlExpression(TSqlFragment sqlFragment, FragmentTypes fragmentType, Type dataType)
+        public SqlExpression(TSqlFragment sqlFragment, FragmentTypes fragmentType, Type dataType, string? cqlContext = null)
         {
             SqlFragment = sqlFragment;
             FragmentType = fragmentType;
             DataType = dataType;
+            CqlContext = cqlContext;
         }
     }
 
@@ -269,10 +272,13 @@ namespace Hl7.Cql.Compiler
                 {
                     if (def.expression != null)
                     {
+                        var context = def.context;
+
                         //var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
                         var buildContext = new SqlExpressionBuilderContext(this,
                             localLibraryIdentifiers,
-                            definitions);
+                            definitions,
+                            context);
 
                         if (string.IsNullOrWhiteSpace(def.name))
                         {
@@ -441,7 +447,10 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            return new SqlExpression(select, SqlExpression.FragmentTypes.SelectStatement, typeof(IEnumerable<CqlCode>));
+            return new SqlExpression(
+                select, 
+                SqlExpression.FragmentTypes.SelectStatement, 
+                typeof(IEnumerable<CqlCode>));
         }
 
         private SqlExpression BuildSelectForCode(CqlCode systemCode)
@@ -995,6 +1004,28 @@ namespace Hl7.Cql.Compiler
             var sourceExpression = TranslateExpression(ce.source, ctx);
             var sourceSelect = sourceExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
 
+            // HACK
+            // are we in unfiltered context?
+            // look up the from clause of the sourceExpression
+            // - does it match a known def?
+            // - if it does, what is the context of that def?
+            //   - if it's something other than unfiltered, do an additional wrapping
+            //if (String.IsNullOrEmpty(ctx.CqlContext)
+            // || String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
+            //{
+            //    var query = sourceSelect.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
+            //    var firstTableReference = query.FromClause.TableReferences.Single();
+
+            //    var functionName = (firstTableReference as SchemaObjectFunctionTableReference)?.SchemaObject.BaseIdentifier.Value;
+
+            //    ctx.
+
+            //    if (functionName
+            //     && ctx.Definitions.TryGetValue(this.ThisLibraryKey, functionName, out var definition)
+            //     && definition.)
+
+            //}
+
             // wrap in SELECT COUNT(1) AS Result FROM <sourceSelect>
             var select = new SelectStatement
             {
@@ -1029,7 +1060,8 @@ namespace Hl7.Cql.Compiler
             return new SqlExpression(
                 select, 
                 SqlExpression.FragmentTypes.SelectStatementScalar, 
-                typeof(long));
+                typeof(long),
+                ctx.CqlContext);
         }
 
         private SqlExpression? SingletonFrom(SingletonFrom sf, SqlExpressionBuilderContext ctx)
@@ -1064,7 +1096,11 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            return new SqlExpression(select, SqlExpression.FragmentTypes.SelectStatement, listExpression.DataType);
+            return new SqlExpression(
+                select, 
+                SqlExpression.FragmentTypes.SelectStatement, 
+                listExpression.DataType,
+                ctx.CqlContext);
         }
 
         private SqlExpression? Exists(Exists ex, SqlExpressionBuilderContext ctx)
@@ -1128,7 +1164,11 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            return new SqlExpression(newSelect, SqlExpression.FragmentTypes.SelectStatementScalar, typeof(bool));
+            return new SqlExpression(
+                newSelect, 
+                SqlExpression.FragmentTypes.SelectStatementScalar, 
+                typeof(bool),
+                ctx.CqlContext);
         }
 
         /// <summary>
@@ -1170,7 +1210,7 @@ namespace Hl7.Cql.Compiler
 
             var fromClause = ReconcileScalarFromClauses(lowFrom, hiFrom);
 
-            return WrapInSelectScalarExpression(intervalTuple, fromClause);
+            return WrapInSelectScalarExpression(intervalTuple, fromClause, ctx);
         }
 
         // returns a select statement wrapping BooleanExpression
@@ -1185,10 +1225,10 @@ namespace Hl7.Cql.Compiler
             var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElement(originalRhs);
 
             ScalarExpression newLhs = originalLhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
-                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
+                    ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, ctx, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
                     : unwrappedLhs;
             ScalarExpression newRhs = originalRhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
-                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
+                    ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, ctx, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
                     : unwrappedRhs;
 
             var binaryExpression = new BooleanComparisonExpression
@@ -1200,7 +1240,8 @@ namespace Hl7.Cql.Compiler
 
             return WrapBooleanExpressionInSelectStatement(
                 binaryExpression, 
-                ReconcileScalarFromClauses(lhsFrom, rhsFrom));
+                ReconcileScalarFromClauses(lhsFrom, rhsFrom),
+                ctx);
         }
 
         private SqlExpression? After(After after, SqlExpressionBuilderContext ctx) =>
@@ -1244,8 +1285,8 @@ namespace Hl7.Cql.Compiler
             var lhsSingleValue = unwrappedLhs.SingleValue;
 
             // rewrap rhs parts as a scalarsubquery
-            var rhsLow = WrapInSelectScalarExpression(unwrappedRhs.Values["low"], rhsFrom, true);
-            var rhsHi = WrapInSelectScalarExpression(unwrappedRhs.Values["hi"], rhsFrom, true);
+            var rhsLow = WrapInSelectScalarExpression(unwrappedRhs.Values["low"], rhsFrom, ctx, true);
+            var rhsHi = WrapInSelectScalarExpression(unwrappedRhs.Values["hi"], rhsFrom, ctx, true);
 
             // TODO:  this works if the interval is a literal
             // if it's a columnref, we'll just hardcode to true for now.   But to fix it right, it needs to generate conditional
@@ -1280,7 +1321,8 @@ namespace Hl7.Cql.Compiler
 
             return WrapBooleanExpressionInSelectStatement(
                 andExpression,
-                ReconcileScalarFromClauses(lhsFrom, rhsFrom));
+                ReconcileScalarFromClauses(lhsFrom, rhsFrom),
+                ctx);
         }
 
         private bool SqlIntegerScalarExpressionToBoolean(ScalarExpression scalarExpression)
@@ -1303,7 +1345,8 @@ namespace Hl7.Cql.Compiler
                     BinaryExpressionType = bbet,
                     SecondExpression = rhs,
                 },
-                ReconcileScalarFromClauses(lhsFrom, rhsFrom));
+                ReconcileScalarFromClauses(lhsFrom, rhsFrom),
+                ctx);
         }
 
         // returns a boolean expression; expects BooleanExpression operands
@@ -1344,7 +1387,7 @@ namespace Hl7.Cql.Compiler
 
             FromClause combinedFrom = ReconcileScalarFromClauses(fromYear, fromMonth, fromDay, fromHour, fromMinute, fromSecond, fromMillisecond);
 
-            return WrapInSelectScalarExpression(functionExpression, combinedFrom);
+            return WrapInSelectScalarExpression(functionExpression, combinedFrom, ctx);
         }
 
         private SqlExpression? Date(Date d, SqlExpressionBuilderContext ctx)
@@ -1366,7 +1409,7 @@ namespace Hl7.Cql.Compiler
 
             FromClause combinedFrom = ReconcileScalarFromClauses(fromYear, fromMonth, fromDay);
 
-            return WrapInSelectScalarExpression(functionExpression, combinedFrom);
+            return WrapInSelectScalarExpression(functionExpression, combinedFrom, ctx);
         }
 
 
@@ -1494,9 +1537,6 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            // TODO YOU ARE HERE
-            // somethis is still broken about this logic
-
             // if this is a filtered context, then also add a context column
             // TODO right now other code assumes that the property column is _first_ (because it is unwrapped in other places, like where clauses)
             // but in cases where this SELECT is used as-in, we need to add the context column
@@ -1521,7 +1561,8 @@ namespace Hl7.Cql.Compiler
             return new SqlExpression(
                 sqlSelect,
                 SqlExpression.FragmentTypes.SelectStatement,
-                typeof(object));  // TODO: infer type?;
+                typeof(object),      // TODO: infer type?;
+                ctx.CqlContext);  
         }
 
         private SqlExpression? As(As @as, SqlExpressionBuilderContext ctx)
@@ -1607,7 +1648,8 @@ namespace Hl7.Cql.Compiler
                     QueryExpression = querySpecification,
                 },
                 SqlExpression.FragmentTypes.SelectStatementScalar,
-                typeof(CqlCode));
+                typeof(CqlCode),
+                ctx.CqlContext);
         }
 
         private SqlExpression? Query(Query query, SqlExpressionBuilderContext ctx)
@@ -2142,7 +2184,8 @@ namespace Hl7.Cql.Compiler
             return new SqlExpression(
                 select,
                 SqlExpression.FragmentTypes.SelectStatement,
-                sourceElementType!);
+                sourceElementType!,
+                ctx.CqlContext);
 
         }
 
@@ -2330,7 +2373,7 @@ namespace Hl7.Cql.Compiler
                     intervalTuple.Values.Add("lowClosed", BuildColumnReferenceExpression(functionName, "lowClosed"));
                     intervalTuple.Values.Add("hiClosed", BuildColumnReferenceExpression(functionName, "hiClosed"));
 
-                    return WrapInSelectScalarExpression(intervalTuple, fromClause);
+                    return WrapInSelectScalarExpression(intervalTuple, fromClause, ctx);
                 }
                 else if (ere.resultTypeSpecifier == null
                     && ere.resultTypeName != null
@@ -2374,13 +2417,14 @@ namespace Hl7.Cql.Compiler
                         {
                             QueryExpression = queryExpression
                         },
-                        SqlExpression.FragmentTypes.SelectStatementScalar, fhirType); // TODO: type needs to be passed in
+                        SqlExpression.FragmentTypes.SelectStatementScalar, fhirType, ctx.CqlContext); // TODO: type needs to be passed in
                 }
                 else
                 {
                     return WrapInSelectScalarExpression(
                         BuildColumnReferenceExpression(functionName, ResultColumnName),
-                        fromClause);
+                        fromClause,
+                        ctx);
                 }
             }
             else
@@ -2411,7 +2455,8 @@ namespace Hl7.Cql.Compiler
                         },
                     },
                     SqlExpression.FragmentTypes.SelectStatement,
-                    typeof(object)); // TODO: infer type
+                    typeof(object),   // TODO: infer type
+                    ctx.CqlContext); 
             }
 
 
@@ -2478,7 +2523,7 @@ namespace Hl7.Cql.Compiler
                     throw new NotImplementedException();
             }
 
-            return WrapInSelectScalarExpression(result, NullFromClause());
+            return WrapInSelectScalarExpression(result, NullFromClause(), ctx);
         }
 
         // TODO: bad things would happen if user tokens collided with these
@@ -2548,7 +2593,7 @@ namespace Hl7.Cql.Compiler
 
                 fragment = parenthesis;
             }
-            return WrapInSelectScalarExpression(fragment, ReconcileScalarFromClauses(lhsFrom, rhsFrom));
+            return WrapInSelectScalarExpression(fragment, ReconcileScalarFromClauses(lhsFrom, rhsFrom), ctx);
         }
 
         private FromClause ReconcileScalarFromClauses(params FromClause[] froms)
@@ -2696,7 +2741,11 @@ namespace Hl7.Cql.Compiler
         //
         //
         // NOTE:  an explicit TOP 1 is added to indicate a scalar. 
-        private SqlExpression WrapInSelectScalarExpression(ScalarTuple scalarTuple, FromClause fromClause, bool createScalarSubquery = false)
+        private SqlExpression WrapInSelectScalarExpression(
+            ScalarTuple scalarTuple, 
+            FromClause fromClause,
+            SqlExpressionBuilderContext ctx,
+            bool createScalarSubquery = false)
         {
             // build the basic query specification
             QuerySpecification querySpecification = new QuerySpecification
@@ -2735,7 +2784,8 @@ namespace Hl7.Cql.Compiler
                     {
                         QueryExpression = queryExpression
                     },
-                    SqlExpression.FragmentTypes.SelectStatementScalar, scalarTuple.DataType);
+                    SqlExpression.FragmentTypes.SelectStatementScalar, scalarTuple.DataType,
+                    ctx.CqlContext);
             }
             else
             {
@@ -2744,12 +2794,17 @@ namespace Hl7.Cql.Compiler
                     {
                         QueryExpression = queryExpression
                     },
-                    SqlExpression.FragmentTypes.SelectStatementScalar, scalarTuple.DataType); // TODO: type needs to be passed in
+                    SqlExpression.FragmentTypes.SelectStatementScalar, scalarTuple.DataType,  // TODO: type needs to be passed in
+                    ctx.CqlContext); 
             }
         }
 
         // helper method when the scalar is just one field (TODO: is this still useful?)
-        private SqlExpression WrapInSelectScalarExpression(ScalarExpression scalar, FromClause fromClause, bool createScalarSubquery = false)
+        private SqlExpression WrapInSelectScalarExpression(
+            ScalarExpression scalar, 
+            FromClause fromClause, 
+            SqlExpressionBuilderContext ctx, 
+            bool createScalarSubquery = false)
         {
             return WrapInSelectScalarExpression(
                 new ScalarTuple
@@ -2758,6 +2813,7 @@ namespace Hl7.Cql.Compiler
                     DataType = typeof(object) // TODO: type needs to be inferred?
                 },
                 fromClause,
+                ctx,
                 createScalarSubquery);
         }
 
@@ -2857,7 +2913,7 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            return WrapInSelectScalarExpression(fragment, fromClause);
+            return WrapInSelectScalarExpression(fragment, fromClause, ctx);
         }
 
         /// <summary>
@@ -2896,7 +2952,7 @@ namespace Hl7.Cql.Compiler
             return result;
         }
 
-        private SqlExpression WrapBooleanExpressionInSelectStatement(ScalarExpression scalarExpression, FromClause fromClause)
+        private SqlExpression WrapBooleanExpressionInSelectStatement(ScalarExpression scalarExpression, FromClause fromClause, SqlExpressionBuilderContext ctx)
         {
             return WrapBooleanExpressionInSelectStatement(
                 new BooleanComparisonExpression
@@ -2905,7 +2961,8 @@ namespace Hl7.Cql.Compiler
                     FirstExpression = scalarExpression,
                     SecondExpression = new IntegerLiteral { Value = "1" }
                 },
-                fromClause);
+                fromClause,
+                ctx);
         }
 
         /// <summary>
@@ -2913,9 +2970,10 @@ namespace Hl7.Cql.Compiler
         /// </summary>
         /// <param name="booleanExpression"></param>
         /// <param name="fromClause"></param>
+        /// <param name="ctx"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private SqlExpression WrapBooleanExpressionInSelectStatement(BooleanExpression booleanExpression, FromClause fromClause)
+        private SqlExpression WrapBooleanExpressionInSelectStatement(BooleanExpression booleanExpression, FromClause fromClause, SqlExpressionBuilderContext ctx)
         {
             var booleanSelectStatement = new SelectStatement
             {
@@ -2944,7 +3002,8 @@ namespace Hl7.Cql.Compiler
             return new SqlExpression(
                 booleanSelectStatement,
                 SqlExpression.FragmentTypes.SelectBooleanExpression,
-                typeof(bool));
+                typeof(bool),
+                ctx.CqlContext);
         }
 
     }

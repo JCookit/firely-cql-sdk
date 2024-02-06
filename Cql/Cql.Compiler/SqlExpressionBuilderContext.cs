@@ -109,6 +109,8 @@ namespace Hl7.Cql.Compiler
 
         public SqlOutputContext OutputContext { get; } = new SqlOutputContext();
 
+        public string CqlContext { get; init; }
+
         /// <summary>
         /// Parameters for function definitions.
         /// </summary>
@@ -119,10 +121,12 @@ namespace Hl7.Cql.Compiler
         internal SqlExpressionBuilderContext(
             SqlExpressionBuilder builder,
             IDictionary<string, string> localLibraryIdentifiers,
-            DefinitionDictionary<SqlExpression> definitions)
+            DefinitionDictionary<SqlExpression> definitions,
+            string cqlContext)
             : base(builder, localLibraryIdentifiers)
         {
             this.Definitions = definitions;
+            this.CqlContext = cqlContext;
         }
 
         private SqlExpressionBuilderContext(
@@ -141,6 +145,9 @@ namespace Hl7.Cql.Compiler
 
             if (scopes != null)
                 Scopes = scopes;
+
+            // by default, context is the same as the parent (i don't think there is a case where this is not true)
+            CqlContext = other.CqlContext;
         }
 
         protected override SqlExpressionBuilderContext Copy(Dictionary<string, ScopedExpressionBase>? scopes)

@@ -39,24 +39,35 @@ define "PatientDateTest":
 define "PatientCountTest":
 	Count("PatientDateTest")
 
+define "PatientCountTest2":
+	Count("PatientDateTest" p where p.birthDate before @1971-01-01)
+
 
 context Patient
 
 define "AgeInYearsTest":
   Patient.birthDate
 
-
 define "PatientContextRetrieve":
   [Condition] c
   		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z 
 
+define "PatientContextRetrieveReference":
+  "PatientContextRetrieve"
+
+define "PatientContextRetrieveCount":
+	Count("PatientContextRetrieve")
 
 context Unfiltered
 
 define "PatientConditionCountTest":
 	Count("PatientContextRetrieve")
 
+/* this requires joining patient table with the define result
+define "Test":
+   Count(from [Patient] p return "PatientContextRetrieve")
+*/
 
 define "FirstCompare":
   1 < 2
