@@ -75,7 +75,9 @@ namespace Hl7.Cql.Compiler
                     {
                         string normalizedName = ExpressionBuilderContext.NormalizeIdentifier(define.Key) ?? throw new InvalidOperationException();
 
+                        writer.WriteLine("--");
                         writer.WriteLine($"-- start {normalizedName}");
+                        writer.WriteLine("--");
                         generator.GenerateScript(BuildDropFunction(normalizedName), writer);
                         writer.WriteLine();
                         writer.WriteLine("GO");

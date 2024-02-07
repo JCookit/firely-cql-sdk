@@ -124,16 +124,6 @@ namespace Hl7.Cql.Packager
 
             var typeResolver = new FhirTypeResolver(ModelInfo.ModelInspector);
 
-            var packager = new LibraryPackager();
-            var resources = packager.PackageResources(elmDir,
-                cqlDir,
-                graph,
-                typeResolver,
-                new CqlOperatorsBinding(typeResolver, FhirTypeConverter.Create(ModelInfo.ModelInspector)),
-                new TypeManager(typeResolver),
-                CanonicalUri,
-                logFactory);
-
             if (sqlDir != null)
             {
                 // skip the part where the SQL is wrapped in a library and then extracted from the library....
@@ -146,6 +136,16 @@ namespace Hl7.Cql.Packager
                 cliLogger.LogInformation($"Writing {file.FullName}");
                 File.WriteAllText(file.FullName, sqlStatement);
             }
+
+            var packager = new LibraryPackager();
+            var resources = packager.PackageResources(elmDir,
+                cqlDir,
+                graph,
+                typeResolver,
+                new CqlOperatorsBinding(typeResolver, FhirTypeConverter.Create(ModelInfo.ModelInspector)),
+                new TypeManager(typeResolver),
+                CanonicalUri,
+                logFactory);
 
             if (fhirDir != null)
             {

@@ -16,6 +16,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -235,37 +236,49 @@ namespace Hl7.Cql.Compiler
 
                 if (this.Library.parameters != null)
                 {
-                    //foreach (var parameter in Library.parameters ?? Enumerable.Empty<elm.ParameterDef>())
-                    //{
-                    //    if (definitions.ContainsKey(null, parameter.name!))
-                    //        throw new InvalidOperationException($"There is already a definition named {parameter.name}");
+                    foreach (var parameter in Library.parameters ?? Enumerable.Empty<Hl7.Cql.Elm.ParameterDef>())
+                    {
+                        if (definitions.ContainsKey(null, parameter.name!))
+                            throw new InvalidOperationException($"There is already a definition named {parameter.name}");
 
-                    //    var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
-                    //    var buildContext = new ExpressionBuilderContext(this,
-                    //        contextParameter,
-                    //        definitions,
-                    //        localLibraryIdentifiers);
+                        if (parameter.@default != null)
+                        {
+                            var defaultValue = TranslateExpression(
+                                parameter.@default, 
+                                new SqlExpressionBuilderContext(this, localLibraryIdentifiers, definitions, 
+                                "unfiltered"));
+                            definitions.Add(ThisLibraryKey, parameter.name!, defaultValue);
+                        }
+                        else
+                        {
+                            throw new NotImplementedException("Parameter without default value");
+                        }
+                        //    var contextParameter = Expression.Parameter(typeof(CqlContext), "context");
+                        //    var buildContext = new ExpressionBuilderContext(this,
+                        //        contextParameter,
+                        //        definitions,
+                        //        localLibraryIdentifiers);
 
-                    //    Expression? defaultValue = null;
-                    //    if (parameter.@default != null)
-                    //        defaultValue = Expression.TypeAs(TranslateExpression(parameter.@default, buildContext), typeof(object));
-                    //    else defaultValue = Expression.Constant(null, typeof(object));
+                        //    Expression? defaultValue = null;
+                        //    if (parameter.@default != null)
+                        //        defaultValue = Expression.TypeAs(TranslateExpression(parameter.@default, buildContext), typeof(object));
+                        //    else defaultValue = Expression.Constant(null, typeof(object));
 
-                    //    var resolveParam = Expression.Call(
-                    //        contextParameter,
-                    //        typeof(CqlContext).GetMethod(nameof(CqlContext.ResolveParameter))!,
-                    //        Expression.Constant(Library.NameAndVersion),
-                    //        Expression.Constant(parameter.name),
-                    //        defaultValue
-                    //    );
+                        //    var resolveParam = Expression.Call(
+                        //        contextParameter,
+                        //        typeof(CqlContext).GetMethod(nameof(CqlContext.ResolveParameter))!,
+                        //        Expression.Constant(Library.NameAndVersion),
+                        //        Expression.Constant(parameter.name),
+                        //        defaultValue
+                        //    );
 
-                    //    var parameterType = TypeManager.TypeFor(parameter.parameterTypeSpecifier!, buildContext);
-                    //    var cast = Expression.Convert(resolveParam, parameterType);
-                    //    // e.g. (bundle, context) => context.Parameters["Measurement Period"]
-                    //    var lambda = Expression.Lambda(cast, contextParameter);
+                        //    var parameterType = TypeManager.TypeFor(parameter.parameterTypeSpecifier!, buildContext);
+                        //    var cast = Expression.Convert(resolveParam, parameterType);
+                        //    // e.g. (bundle, context) => context.Parameters["Measurement Period"]
+                        //    var lambda = Expression.Lambda(cast, contextParameter);
 
-                    //    definitions.Add(ThisLibraryKey, parameter.name!, lambda);
-                    //}
+                        //    definitions.Add(ThisLibraryKey, parameter.name!, lambda);
+                    }
                 }
 
                 foreach (var def in this.Library.statements ?? Enumerable.Empty<Hl7.Cql.Elm.ExpressionDef>())
@@ -606,7 +619,7 @@ namespace Hl7.Cql.Compiler
                     // result = EndsWith(e, ctx);
                     break;
                 case Equal eq:
-                    // result = Equal(eq, ctx);
+                    result = Equal(eq, ctx);
                     break;
                 case Equivalent eqv:
                     // result = Equivalent(eqv, ctx);
@@ -780,7 +793,7 @@ namespace Hl7.Cql.Compiler
                     // result = Not(not, ctx);
                     break;
                 case NotEqual ne:
-                    // result = NotEqual(ne, ctx);
+                    result = NotEqual(ne, ctx);
                     break;
                 case Now now:
                     // result = Now(now, ctx);
@@ -804,7 +817,7 @@ namespace Hl7.Cql.Compiler
                     // result = OverlapsBefore(olb, ctx);
                     break;
                 case ParameterRef pre:
-                    // result = ParameterRef(pre, ctx);
+                    result = ParameterRef(pre, ctx);
                     break;
                 case PointFrom pf:
                     // result = PointFrom(pf, ctx);
@@ -994,13 +1007,13 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        private SqlExpression? ParameterRef(ParameterRef pre, SqlExpressionBuilderContext ctx)
+        {
+            return BuildSqlFunctionReference(pre.name, pre, ctx);
+        }
+
         private SqlExpression? Count(Count ce, SqlExpressionBuilderContext ctx)
         {
-            // TODO YOU ARE HERE --- currently this works when in an unfiltered context, and counting something in an unfiltered context
-            // the real trick is what happens when the thing being counted is, for example, Patient context
-            // then, we have to make sure that a) the subquery has a property which allows it to be grouped, and b) this aggregate query does grouping
-            //
-
             var sourceExpression = TranslateExpression(ce.source, ctx);
             var sourceSelect = sourceExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
 
@@ -1010,21 +1023,69 @@ namespace Hl7.Cql.Compiler
             // - does it match a known def?
             // - if it does, what is the context of that def?
             //   - if it's something other than unfiltered, do an additional wrapping
-            //if (String.IsNullOrEmpty(ctx.CqlContext)
-            // || String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
-            //{
-            //    var query = sourceSelect.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
-            //    var firstTableReference = query.FromClause.TableReferences.Single();
+            //
+            // the table of a filtered-context define always contains a _Context column (which should be the unique ids of that context type - ie Patient ids)
+            // the behavior of an unfiltered
+            // Count(<Patient context query>)
+            // is under the covers like
+            // Count(from [Patient] p return <Patient context query>(p))
+            //
+            // <Patient context query> could return a scalar or a list
+            // this wrapping of 'from [Patient] p return' means the <Patient context query> is virtually called N times, building
+            // a list of the results.   So, this could be either a List<scalar> or a List<List<>>
+            // since this is hard to express in SQL, we use the DISTINCT _Context values to form the outer list
+            //
+            // I think this will break down if there is more than one level nesting, but lots of other things will break in that case too
 
-            //    var functionName = (firstTableReference as SchemaObjectFunctionTableReference)?.SchemaObject.BaseIdentifier.Value;
+            if (String.IsNullOrEmpty(ctx.CqlContext)
+             || String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var query = FindQuerySpecification(sourceSelect);
+                var firstTableReference = query.FromClause.TableReferences.Single();
 
-            //    ctx.
+                var functionName = (firstTableReference as SchemaObjectFunctionTableReference)?.SchemaObject?.BaseIdentifier?.Value;
 
-            //    if (functionName
-            //     && ctx.Definitions.TryGetValue(this.ThisLibraryKey, functionName, out var definition)
-            //     && definition.)
+                if (!String.IsNullOrEmpty(functionName)
+                 && ctx.Definitions.TryGetValue(this.ThisLibraryKey, functionName, out var definition)
+                 && !String.Equals(definition?.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // <sourceSelect> becomes
+                    // SELECT DISTINCT _Context FROM (<sourceSelect>) AS UNUSED
+                    sourceSelect = new SelectStatement
+                    {
+                        QueryExpression = new QuerySpecification
+                        {
+                            SelectElements =
+                            {
+                                new SelectScalarExpression
+                                {
+                                    Expression = new ColumnReferenceExpression
+                                    {
+                                        MultiPartIdentifier = new MultiPartIdentifier
+                                        {
+                                            Identifiers = { new Identifier { Value = ContextColumnName, QuoteType = QuoteType.SquareBracket } }
+                                        }
+                                    }
+                                }
+                            },
+                            FromClause = new FromClause
+                            {
+                                TableReferences =
+                                {
+                                    new QueryDerivedTable
+                                    {
+                                        QueryExpression = sourceSelect.QueryExpression,
+                                        Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
+                                    }
+                                }
+                            },
+                            UniqueRowFilter = UniqueRowFilter.Distinct,
+                        }
+                    };
+                }
 
-            //}
+            }
+
 
             // wrap in SELECT COUNT(1) AS Result FROM <sourceSelect>
             var select = new SelectStatement
@@ -1040,7 +1101,7 @@ namespace Hl7.Cql.Compiler
                                 FunctionName = new Identifier { Value = "COUNT" },
                                 Parameters = {new IntegerLiteral { Value = "1" } },
                             },
-                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName } }
+                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } }
                         }
                     },
                     FromClause = new FromClause
@@ -1050,12 +1111,49 @@ namespace Hl7.Cql.Compiler
                             new QueryDerivedTable
                             {
                                 QueryExpression = sourceSelect.QueryExpression,
-                                Alias = new Identifier { Value = UnusedTableName }
+                                Alias = new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }
                             }
                         }
-                    }
+                    },
                 }
             };
+
+            // TODO:  decide how to handle scalar results in filtered contexts
+            // (list results work in the limited case where counting is done at the unfiltered context due to the _Context column)
+            // 
+            //if (!String.IsNullOrEmpty(ctx.CqlContext)
+            //    && !String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
+            //{
+            //    // in a filtered context, group by the _Context column
+            //    var querySpec = FindQuerySpecification(select);
+
+            //    querySpec.GroupByClause = new GroupByClause
+            //    {
+            //        GroupingSpecifications =
+            //        {
+            //            new ExpressionGroupingSpecification
+            //            {
+            //                Expression = new ColumnReferenceExpression
+            //                {
+            //                    MultiPartIdentifier = new MultiPartIdentifier
+            //                    {
+            //                        Identifiers = { new Identifier { Value = ContextColumnName } }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    };
+            //    querySpec.SelectElements.Add(new SelectScalarExpression
+            //    {
+            //        Expression = new ColumnReferenceExpression
+            //        {
+            //            MultiPartIdentifier = new MultiPartIdentifier
+            //            {
+            //                Identifiers = { new Identifier { Value = ContextColumnName } }
+            //            }
+            //        }
+            //    });
+            //}
 
             return new SqlExpression(
                 select, 
@@ -1085,7 +1183,7 @@ namespace Hl7.Cql.Compiler
                             new QueryDerivedTable
                             {
                                 QueryExpression = listSelect.QueryExpression,
-                                Alias = new Identifier { Value = UnusedTableName }
+                                Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
                             }
                         }
                     },
@@ -1145,7 +1243,7 @@ namespace Hl7.Cql.Compiler
                                                     new QueryDerivedTable
                                                     {
                                                         QueryExpression = existsSelect.QueryExpression,
-                                                        Alias = new Identifier { Value = UnusedTableName }
+                                                        Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
                                                     }
                                                 }
                                             }
@@ -1157,7 +1255,7 @@ namespace Hl7.Cql.Compiler
                                 ThenExpression = new IntegerLiteral { Value = "1" },
                                 ElseExpression = new IntegerLiteral { Value = "0" }
                             },
-                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName } }
+                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } }
                         }
                     },
                     FromClause = NullFromClause()
@@ -1262,6 +1360,13 @@ namespace Hl7.Cql.Compiler
         private SqlExpression? LessOrEqual(LessOrEqual lessOrEqual, SqlExpressionBuilderContext ctx) =>
             BooleanComparisonOperator(lessOrEqual, BooleanComparisonType.LessThanOrEqualTo, ctx);
 
+        // this only works for the same types as SQL right now
+        private SqlExpression? Equal(Equal eq, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(eq, BooleanComparisonType.Equals, ctx);
+
+        private SqlExpression? NotEqual(NotEqual neq, SqlExpressionBuilderContext ctx) =>
+            BooleanComparisonOperator(neq, BooleanComparisonType.NotEqualToExclamation, ctx);
+
         // returns BooleanExpression; expects Select operands
         private SqlExpression? In(Elm.In inExpression, SqlExpressionBuilderContext ctx)
         {
@@ -1276,51 +1381,176 @@ namespace Hl7.Cql.Compiler
             // "lhs in rhs" is equivalent to
             // "(lhs > rhs.start AND lhs < rhs.end)" (or >= <= depending on open/closed)
             // (and assuming multiple evaluations of lhs/rhs are ok.  No side effects, right?)
+            //
+            // the dynamic version is
+            // (rhs.lowClosed = 0 and lhs > rhs.low or lhs >= rhs.low) and (rhs.hiClosed = 0 and lhs < rhs.hi or lhs <= rhs.hi)
 
             // assuming rhs is an interval --- what if it is a columnref that is an interval?
             if (unwrappedRhs.DataType.GetGenericTypeDefinition() != typeof(CqlInterval<>))
                 throw new InvalidOperationException();
 
-            // assuming lhs is a single value
+            // assuming lhs is a single value 
             var lhsSingleValue = unwrappedLhs.SingleValue;
 
             // rewrap rhs parts as a scalarsubquery
             var rhsLow = WrapInSelectScalarExpression(unwrappedRhs.Values["low"], rhsFrom, ctx, true);
             var rhsHi = WrapInSelectScalarExpression(unwrappedRhs.Values["hi"], rhsFrom, ctx, true);
 
+            BooleanExpression resultExpression;
+
             // TODO:  this works if the interval is a literal
             // if it's a columnref, we'll just hardcode to true for now.   But to fix it right, it needs to generate conditional
-            // expression to do < or <= depending on whether the interval is open or closed
-            bool lowClosed = true;
-            bool hiClosed = true;
             if (unwrappedRhs.Values["lowClosed"] is Microsoft.SqlServer.TransactSql.ScriptDom.Literal)
             {
-                lowClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["lowClosed"]);
-                hiClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["hiClosed"]);
+                bool lowClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["lowClosed"]);
+                bool hiClosed = SqlIntegerScalarExpressionToBoolean(unwrappedRhs.Values["hiClosed"]);
+
+                resultExpression = new BooleanParenthesisExpression
+                {
+                    Expression = new BooleanBinaryExpression
+                    {
+                        FirstExpression = new BooleanComparisonExpression
+                        {
+                            FirstExpression = lhsSingleValue,
+                            ComparisonType = lowClosed ? BooleanComparisonType.GreaterThanOrEqualTo : BooleanComparisonType.GreaterThan,
+                            SecondExpression = rhsLow.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                        },
+                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                        SecondExpression = new BooleanComparisonExpression
+                        {
+                            FirstExpression = lhsSingleValue,
+                            ComparisonType = hiClosed ? BooleanComparisonType.LessThanOrEqualTo : BooleanComparisonType.LessThan,
+                            SecondExpression = rhsHi.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                        }
+                    }
+                };
+
+
+            }
+            else
+            {
+                var rhsLowClosed = WrapInSelectScalarExpression(unwrappedRhs.Values["lowClosed"], rhsFrom, ctx, true);
+                var rhsHiClosed = WrapInSelectScalarExpression(unwrappedRhs.Values["hiClosed"], rhsFrom, ctx, true);
+
+                // the dynamic version is
+
+                // ((rhs.lowClosed = 0 and lhs > rhs.low) or (rhs.lowClosed = 1 and lhs >= rhs.low)) and
+                // ((rhs.hiClosed = 0 and lhs < rhs.hi) or (rhs.hiClosed = 1 and lhs <= rhs.hi))
+                resultExpression = new BooleanParenthesisExpression
+                {
+                    Expression = new BooleanBinaryExpression
+                    {
+                        // ((rhs.lowClosed = 0 and lhs > rhs.low) or (rhs.lowClosed = 1 and lhs >= rhs.low))
+                        FirstExpression = new BooleanParenthesisExpression
+                        {
+                            Expression = new BooleanBinaryExpression
+                            {
+                                //(rhs.lowClosed = 0 and lhs > rhs.low)
+                                FirstExpression = new BooleanParenthesisExpression
+                                {
+                                    Expression = new BooleanBinaryExpression
+                                    {
+                                        //rhs.lowClosed = 0
+                                        FirstExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = rhsLowClosed.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                            ComparisonType = BooleanComparisonType.Equals,
+                                            SecondExpression = new IntegerLiteral { Value = "0" },
+                                        },
+                                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                                        //lhs > rhs.low
+                                        SecondExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = lhsSingleValue,
+                                            ComparisonType = BooleanComparisonType.GreaterThan,
+                                            SecondExpression = rhsLow.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                        }
+                                    }
+                                },
+                                BinaryExpressionType = BooleanBinaryExpressionType.Or,
+                                //(rhs.lowClosed = 1 and lhs >= rhs.low)
+                                SecondExpression = new BooleanParenthesisExpression
+                                {
+                                    Expression = new BooleanBinaryExpression
+                                    {
+                                        //rhs.lowClosed = 1
+                                        FirstExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = rhsLowClosed.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                            ComparisonType = BooleanComparisonType.Equals,
+                                            SecondExpression = new IntegerLiteral { Value = "1" },
+                                        },
+                                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                                        //lhs >= rhs.low
+                                        SecondExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = lhsSingleValue,
+                                            ComparisonType = BooleanComparisonType.GreaterThanOrEqualTo,
+                                            SecondExpression = rhsLow.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                        //((rhs.hiClosed = 0 and lhs < rhs.hi) or (rhs.hiClosed = 1 and lhs <= rhs.hi))
+                        SecondExpression = new BooleanParenthesisExpression
+                        {
+                            Expression = new BooleanBinaryExpression
+                            {
+                                //(rhs.hiClosed = 0 and lhs < rhs.hi)
+                                FirstExpression = new BooleanParenthesisExpression
+                                {
+                                    Expression = new BooleanBinaryExpression
+                                    {
+                                        //rhs.hiClosed = 0
+                                        FirstExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = rhsHiClosed.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                            ComparisonType = BooleanComparisonType.Equals,
+                                            SecondExpression = new IntegerLiteral { Value = "0" },
+                                        },
+                                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                                        //lhs < rhs.hi
+                                        SecondExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = lhsSingleValue,
+                                            ComparisonType = BooleanComparisonType.LessThan,
+                                            SecondExpression = rhsHi.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                        }
+                                    }
+                                },
+                                BinaryExpressionType = BooleanBinaryExpressionType.Or,
+                                //(rhs.hiClosed = 1 and lhs <= rhs.hi)
+                                SecondExpression = new BooleanParenthesisExpression
+                                {
+                                    Expression = new BooleanBinaryExpression
+                                    {
+                                        //rhs.hiClosed = 1
+                                        FirstExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = rhsHiClosed.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                            ComparisonType = BooleanComparisonType.Equals,
+                                            SecondExpression = new IntegerLiteral { Value = "1" },
+                                        },
+                                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                                        //lhs <= rhs.hi
+                                        SecondExpression = new BooleanComparisonExpression
+                                        {
+                                            FirstExpression = lhsSingleValue,
+                                            ComparisonType = BooleanComparisonType.LessThanOrEqualTo,
+                                            SecondExpression = rhsHi.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
             }
 
-            var andExpression = new BooleanParenthesisExpression
-            {
-                Expression = new BooleanBinaryExpression
-                {
-                    FirstExpression = new BooleanComparisonExpression
-                    {
-                        FirstExpression = lhsSingleValue,
-                        ComparisonType = lowClosed ? BooleanComparisonType.GreaterThanOrEqualTo : BooleanComparisonType.GreaterThan,
-                        SecondExpression = rhsLow.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
-                    },
-                    BinaryExpressionType = BooleanBinaryExpressionType.And,
-                    SecondExpression = new BooleanComparisonExpression
-                    {
-                        FirstExpression = lhsSingleValue,
-                        ComparisonType = hiClosed ? BooleanComparisonType.LessThanOrEqualTo : BooleanComparisonType.LessThan,
-                        SecondExpression = rhsHi.SqlFragment as ScalarSubquery ?? throw new InvalidOperationException(),
-                    }
-                }
-            };
-
             return WrapBooleanExpressionInSelectStatement(
-                andExpression,
+                resultExpression,
                 ReconcileScalarFromClauses(lhsFrom, rhsFrom),
                 ctx);
         }
@@ -1455,7 +1685,7 @@ namespace Hl7.Cql.Compiler
                 // this means the source is the result of another expression
                 var sourceExpression = TranslateExpression(pe.source, ctx);
                 sourceTableType = sourceExpression.DataType;
-                sourceTableIdentifier = new Identifier { Value = sourceTableType.Name };
+                sourceTableIdentifier = new Identifier { Value = sourceTableType.Name, QuoteType = QuoteType.SquareBracket };
 
                 // the from clause is the same as the one from the source expression
                 fromClause = FindTableReference(sourceExpression.SqlFragment);
@@ -1469,25 +1699,7 @@ namespace Hl7.Cql.Compiler
                         switch (pe.path)
                         {
                             case "onset":
-                                string destinationcolumnName = "onsetDateTime";
-                                selectScalarExpression = new SelectScalarExpression
-                                {
-                                    Expression = new ColumnReferenceExpression
-                                    {
-                                        MultiPartIdentifier = new MultiPartIdentifier
-                                        {
-                                            Identifiers =
-                                            {
-                                                sourceTableIdentifier,
-                                                new Identifier { Value = destinationcolumnName }
-                                            }
-                                        }
-                                    },
-                                    ColumnName = new IdentifierOrValueExpression
-                                    {
-                                        Identifier = new Identifier { Value = ResultColumnName }
-                                    }
-                                };
+                                selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "onsetDateTime");
                                 break;
                         }
                         break;
@@ -1497,25 +1709,20 @@ namespace Hl7.Cql.Compiler
                         switch (pe.path)
                         {
                             case "birthDate":
-                                string destinationcolumnName = "birthDate";
-                                selectScalarExpression = new SelectScalarExpression
-                                {
-                                    Expression = new ColumnReferenceExpression
-                                    {
-                                        MultiPartIdentifier = new MultiPartIdentifier
-                                        {
-                                            Identifiers =
-                                            {
-                                                sourceTableIdentifier,
-                                                new Identifier { Value = destinationcolumnName }
-                                            }
-                                        }
-                                    },
-                                    ColumnName = new IdentifierOrValueExpression
-                                    {
-                                        Identifier = new Identifier { Value = ResultColumnName }
-                                    }
-                                };
+                                selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "birthDate");
+                                break;
+                        }
+                        break;
+                    }
+                case "procedure":
+                    {
+                        switch (pe.path)
+                        {
+                            case "performed":   // TODO: hack because performed is a range
+                                selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "performedPeriod_end");
+                                break;
+                            case "status":
+                                selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "status");
                                 break;
                         }
                         break;
@@ -1553,7 +1760,7 @@ namespace Hl7.Cql.Compiler
                     Expression = contextIdentifierExpression,
                     ColumnName = new IdentifierOrValueExpression
                     {
-                        Identifier = new Identifier { Value = ContextColumnName }
+                        Identifier = new Identifier { Value = ContextColumnName, QuoteType = QuoteType.SquareBracket }
                     }
                 });
             }
@@ -1562,7 +1769,29 @@ namespace Hl7.Cql.Compiler
                 sqlSelect,
                 SqlExpression.FragmentTypes.SelectStatement,
                 typeof(object),      // TODO: infer type?;
-                ctx.CqlContext);  
+                ctx.CqlContext);
+
+            static SelectScalarExpression BuildSimpleColumnReference(Identifier sourceTableIdentifier, string destinationcolumnName)
+            {
+                return new SelectScalarExpression
+                {
+                    Expression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        {
+                            Identifiers =
+                                {
+                                    sourceTableIdentifier,
+                                    new Identifier { Value = destinationcolumnName, QuoteType = QuoteType.SquareBracket }
+                                }
+                        }
+                    },
+                    ColumnName = new IdentifierOrValueExpression
+                    {
+                        Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket }
+                    }
+                };
+            }
         }
 
         private SqlExpression? As(As @as, SqlExpressionBuilderContext ctx)
@@ -1581,7 +1810,11 @@ namespace Hl7.Cql.Compiler
                 {
                     // TODO: no-op the ToDateTime function since we'll assume it already is a datetime
                     return TranslateExpression(fre.operand[0], ctx);
-
+                }
+                else if (StringComparer.InvariantCultureIgnoreCase.Compare(fre.name, "ToString") == 0)
+                {
+                    // also assume this is a no-op
+                    return TranslateExpression(fre.operand[0], ctx);
                 }
             }
             throw new NotImplementedException();
@@ -1594,7 +1827,6 @@ namespace Hl7.Cql.Compiler
         }
 
         /// <summary>
-        /// Return a QueryExpression (expected to be integrated into another statement)
         /// </summary>
         /// <param name="cre"></param>
         /// <param name="ctx"></param>
@@ -1613,7 +1845,7 @@ namespace Hl7.Cql.Compiler
                                 {
                                     Identifiers =
                                     {
-                                        new Identifier { Value = ScopedSymbolsContext.NormalizeIdentifier(cre.name) }
+                                        new Identifier { Value = ScopedSymbolsContext.NormalizeIdentifier(cre.name), QuoteType = QuoteType.SquareBracket }
                                     }
                                 }
                             }
@@ -1792,11 +2024,7 @@ namespace Hl7.Cql.Compiler
                 // TODO: how to reconcile the fromClause in the where 
                 var (whereBody, whereFrom) = UnwrapBooleanExpression(whereExpression);
 
-                var queryExpression = sourceSelect.QueryExpression;
-
-                while (queryExpression is QueryParenthesisExpression queryParenthesisExpression)
-                    queryExpression = queryParenthesisExpression.QueryExpression;
-                var querySpecification = queryExpression as QuerySpecification ?? throw new InvalidOperationException();
+                var querySpecification = FindQuerySpecification(sourceSelect);
 
                 querySpecification.WhereClause = new WhereClause
                 {
@@ -1941,6 +2169,32 @@ namespace Hl7.Cql.Compiler
             //return @return;
         }
 
+        /// <summary>
+        /// Given a SqlExpression, find the QuerySpecification inside
+        /// Unwraps parenthesis.  Throws on error.
+        /// </summary>
+        /// <param name="sqlExpression"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private QuerySpecification FindQuerySpecification(SqlExpression sqlExpression)
+        {
+            var sqlFragment = sqlExpression.SqlFragment;
+            if (sqlFragment is SelectStatement selectStatement)
+            {
+                return FindQuerySpecification(selectStatement);
+            }
+            else
+                throw new InvalidOperationException();
+        }
+
+        private QuerySpecification FindQuerySpecification(SelectStatement selectStatement)
+        {
+            var queryExpression = selectStatement.QueryExpression;
+            while (queryExpression is QueryParenthesisExpression queryParenthesisExpression)
+                queryExpression = queryParenthesisExpression.QueryExpression;
+            return queryExpression as QuerySpecification ?? throw new InvalidOperationException();
+        }
+
         protected string TypeNameToIdentifier(Type type, SqlExpressionBuilderContext? ctx)
         {
             var typeName = type.Name.ToLowerInvariant();
@@ -2018,7 +2272,7 @@ namespace Hl7.Cql.Compiler
                 {
                     Identifiers =
                     {
-                        new Identifier { Value = SourceTableAlias }
+                        new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }
                     }
                 }
             });
@@ -2034,7 +2288,7 @@ namespace Hl7.Cql.Compiler
                     Expression = contextIdentifierExpression,
                     ColumnName = new IdentifierOrValueExpression
                     {
-                        Identifier = new Identifier { Value = ContextColumnName }
+                        Identifier = new Identifier { Value = ContextColumnName, QuoteType = QuoteType.SquareBracket }
                     }
                 });
             }
@@ -2045,10 +2299,10 @@ namespace Hl7.Cql.Compiler
                 {
                     Identifiers =
                                 {
-                                    new Identifier { Value = sqlTableEntry.SqlTableName }
+                                    new Identifier { Value = sqlTableEntry.SqlTableName, QuoteType = QuoteType.SquareBracket }
                                 }
                 },
-                Alias = new Identifier { Value = SourceTableAlias }  // TODO: should this be a dynamic name?  see joins below
+                Alias = new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }  // TODO: should this be a dynamic name?  see joins below
             };
 
 
@@ -2239,8 +2493,8 @@ namespace Hl7.Cql.Compiler
                                 {
                                     Identifiers =
                                     {
-                                        new Identifier { Value = SourceTableAlias },
-                                        new Identifier { Value = "id" }
+                                        new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket },
+                                        new Identifier { Value = "id", QuoteType = QuoteType.SquareBracket }
                                     }
                                 }
                             }
@@ -2254,25 +2508,25 @@ namespace Hl7.Cql.Compiler
                 { 
                     SqlTableName = "encounter" 
                 }
-            },
+            },            
             {
-                "{http://hl7.org/fhir}Condition",
+                "{http://hl7.org/fhir}Procedure",
                 new FhirSqlTableMapEntry
                 {
-                    SqlTableName = "condition",
+                    SqlTableName = "procedure",
                     DefaultCodingCodeExpression = new ColumnReferenceExpression
                     {
                         MultiPartIdentifier = new MultiPartIdentifier
                         { 
                             // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_code"  } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_code", QuoteType = QuoteType.SquareBracket } }
                         }
                     },
                     DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
                     {
                         MultiPartIdentifier = new MultiPartIdentifier
                         {
-                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_system" } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_system", QuoteType = QuoteType.SquareBracket } }
                         }
                     },
                     ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
@@ -2291,8 +2545,56 @@ namespace Hl7.Cql.Compiler
                                         {
                                             Identifiers =
                                             {
-                                                new Identifier { Value = SourceTableAlias },
-                                                new Identifier { Value = "subject_string" }
+                                                new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket },
+                                                new Identifier { Value = "subject_string", QuoteType = QuoteType.SquareBracket }
+                                            }
+                                        }
+                                    },
+                                    new StringLiteral { Value = "$.id" }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "{http://hl7.org/fhir}Condition",
+                new FhirSqlTableMapEntry
+                {
+                    SqlTableName = "condition",
+                    DefaultCodingCodeExpression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        { 
+                            // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
+                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_code", QuoteType = QuoteType.SquareBracket } }
+                        }
+                    },
+                    DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
+                    {
+                        MultiPartIdentifier = new MultiPartIdentifier
+                        {
+                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_system", QuoteType = QuoteType.SquareBracket } }
+                        }
+                    },
+                    ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
+                    {
+                        // a Condition object in a Patient context (extract the patient id)
+                        {
+                            "patient",
+                            new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    new ColumnReferenceExpression
+                                    {
+                                        MultiPartIdentifier = new MultiPartIdentifier
+                                        {
+                                            Identifiers =
+                                            {
+                                                new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket },
+                                                new Identifier { Value = "subject_string", QuoteType = QuoteType.SquareBracket}
                                             }
                                         }
                                     },
@@ -2313,14 +2615,14 @@ namespace Hl7.Cql.Compiler
                         MultiPartIdentifier = new MultiPartIdentifier
                         { 
                             // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_code"  } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_code", QuoteType = QuoteType.SquareBracket } }
                         }
                     },
                     DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
                     {
                         MultiPartIdentifier = new MultiPartIdentifier
                         {
-                            Identifiers = { new Identifier { Value = SourceTableAlias }, new Identifier { Value = "code_coding_system" } }
+                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_system", QuoteType = QuoteType.SquareBracket } }
                         }
                     }
                 }
@@ -2331,7 +2633,12 @@ namespace Hl7.Cql.Compiler
         // returns a selectstatement, which could be a selectscalarexpression or selectstarexpression
         private SqlExpression? ExpressionRef(ExpressionRef ere, SqlExpressionBuilderContext ctx)
         {
-            string functionName = ere.name;
+            return BuildSqlFunctionReference(ere.name, ere, ctx);
+        }
+
+        private SqlExpression BuildSqlFunctionReference(string functionName, Elm.Expression ere, SqlExpressionBuilderContext ctx)
+        {
+            functionName = ScopedSymbolsContext.NormalizeIdentifier(functionName) ?? throw new InvalidOperationException();
 
             // is this a scalar or list function?
             // scalar hardcodes to a column called 'result'
@@ -2348,10 +2655,10 @@ namespace Hl7.Cql.Compiler
                         {
                             Identifiers =
                             {
-                                new Identifier { Value = functionName }
+                                new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket }
                             }
                         },
-                        Alias = new Identifier { Value = functionName },
+                        Alias = new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket },
                     }
                 }
             };
@@ -2400,7 +2707,7 @@ namespace Hl7.Cql.Compiler
                         {
                             Identifiers =
                             {
-                                new Identifier { Value = functionName }
+                                new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket }
                             }
                         }
                     });
@@ -2444,7 +2751,7 @@ namespace Hl7.Cql.Compiler
                                     {
                                         Identifiers =
                                         {
-                                            new Identifier { Value = functionName}
+                                            new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket }
                                         }
                                     }
                                 }
@@ -2456,7 +2763,7 @@ namespace Hl7.Cql.Compiler
                     },
                     SqlExpression.FragmentTypes.SelectStatement,
                     typeof(object),   // TODO: infer type
-                    ctx.CqlContext); 
+                    ctx.CqlContext);
             }
 
 
@@ -2468,8 +2775,8 @@ namespace Hl7.Cql.Compiler
                     {
                         Identifiers =
                             {
-                                new Identifier { Value = functionName},
-                                new Identifier { Value = columnName }
+                                new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket },
+                                new Identifier { Value = columnName, QuoteType = QuoteType.SquareBracket }
                             }
                     }
                 };
@@ -2511,6 +2818,8 @@ namespace Hl7.Cql.Compiler
                     break;
 
                 case "{urn:hl7-org:elm-types:r1}string":
+                    result = new StringLiteral { Value = lit.value };
+                    break;
                 case "{urn:hl7-org:elm-types:r1}ratio":
                 case "{urn:hl7-org:elm-types:r1}code":
                 case "{urn:hl7-org:elm-types:r1}codesystem":
@@ -2550,12 +2859,12 @@ namespace Hl7.Cql.Compiler
                                                 Expression = new NullLiteral(),
                                                 ColumnName = new IdentifierOrValueExpression
                                                 {
-                                                    Identifier = new Identifier { Value = UnusedColumnName }
+                                                    Identifier = new Identifier { Value = UnusedColumnName, QuoteType = QuoteType.SquareBracket }
                                                 }
                                             }
                                         }
                         },
-                        Alias = new Identifier { Value = UnusedTableName }
+                        Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
                     }
                 }
             };
@@ -2700,13 +3009,7 @@ namespace Hl7.Cql.Compiler
         {
             if (sqlFragment is SelectStatement selectStatment)
             {
-                QueryExpression inner = selectStatment.QueryExpression;
-
-                // unwrap brackets
-                while (inner is QueryParenthesisExpression queryParenthesisExpression)
-                    inner = queryParenthesisExpression.QueryExpression;
-
-                QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
+                var querySpecification = FindQuerySpecification(selectStatment);
 
                 return querySpecification.FromClause;
             }
@@ -2723,14 +3026,15 @@ namespace Hl7.Cql.Compiler
 
             /// <summary>
             /// A handy shortcut for returning a single value if the tuple only has one
+            /// (or at least the 'Result' column --- a filtered context will create a second column)
             /// </summary>
             public ScalarExpression SingleValue
             {
                 get
                 {
-                    if (Count != 1)
+                    if (!Values.TryGetValue(ResultColumnName, out var value))
                         throw new InvalidOperationException();
-                    return Values.Values.First();
+                    return value;
                 }
             }
         }
@@ -2765,7 +3069,7 @@ namespace Hl7.Cql.Compiler
                     Expression = field.Value,
                     ColumnName = new IdentifierOrValueExpression
                     {
-                        Identifier = new Identifier { Value = field.Key }
+                        Identifier = new Identifier { Value = field.Key, QuoteType = QuoteType.SquareBracket }
                     }
                 });
             }
@@ -2824,13 +3128,8 @@ namespace Hl7.Cql.Compiler
             if (sqlFragment.IsSelectStatement
                 && sqlFragment.SqlFragment is SelectStatement selectStatment)
             {
-                QueryExpression inner = selectStatment.QueryExpression;
+                  var querySpecification = FindQuerySpecification(selectStatment);
 
-                // unwrap brackets
-                while (inner is QueryParenthesisExpression queryParenthesisExpression)
-                    inner = queryParenthesisExpression.QueryExpression;
-
-                QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
                 // TODO: strong assumption here is that the 0th element is the one we want
                 // to be complete, it is the one marked "_Result" or a tuple if we get that fancy
                 SelectScalarExpression selectScalarExpression = querySpecification.SelectElements[0] as SelectScalarExpression ?? throw new InvalidOperationException();
@@ -2846,13 +3145,7 @@ namespace Hl7.Cql.Compiler
             if (sqlFragment.IsSelectStatement
                 && sqlFragment.SqlFragment is SelectStatement selectStatment)
             {
-                QueryExpression inner = selectStatment.QueryExpression;
-
-                // unwrap brackets
-                while (inner is QueryParenthesisExpression queryParenthesisExpression)
-                    inner = queryParenthesisExpression.QueryExpression;
-
-                QuerySpecification querySpecification = inner as QuerySpecification ?? throw new InvalidOperationException();
+                var querySpecification = FindQuerySpecification(selectStatment);
 
                 ScalarTuple result = new()
                 {
@@ -2991,7 +3284,7 @@ namespace Hl7.Cql.Compiler
                             },
                             ColumnName = new IdentifierOrValueExpression
                             {
-                                Identifier = new Identifier { Value  = ResultColumnName }
+                                Identifier = new Identifier { Value  = ResultColumnName, QuoteType = QuoteType.SquareBracket }
                             }
                         }
                     },

@@ -18,6 +18,9 @@ code "Sucked into jet engine, subsequent encounter": 'V97.33XD' from "ICD10"
 //
 
 codesystem "SnoMed" : 'http://snomed.info/sct'
+
+code "Flexible Sigmoidoscopy": '73761001' from "SnoMed"
+
 code "Ouchie" : '59621000' from "SnoMed"
 
 parameter "Measurement Period" Interval<DateTime>
@@ -28,45 +31,69 @@ context Unfiltered
 define "AllPatients":
   [Patient]
 
+define "AllPatientsCount":
+  Count("AllPatients")
+
+// NOTE:  Count("AllPatients") > 5 doesn't currently work because of table join logic; but works if you separate the steps
+define "AllPatientCountBoolean":
+  "AllPatientsCount" > 5
+
 define "ExplicitSingletonFrom":
   singleton from "AllPatients"
 
-define "PatientDateTest":
+define "PatientBirthDateTest":
 	[Patient] p
 		where 
 			(p.birthDate) after @1970-01-01
 
-define "PatientCountTest":
-	Count("PatientDateTest")
+define "PatientCountBirthDateTest":
+	Count("PatientBirthDateTest")
 
-define "PatientCountTest2":
-	Count("PatientDateTest" p where p.birthDate before @1971-01-01)
-
+define "PatientCountBirthDateTestWithFilter":
+	Count("PatientBirthDateTest" p where p.birthDate before @1971-01-01)
 
 context Patient
+
+
+define "Flexible Sigmoidoscopy Performed":
+	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
+		where FlexibleSigmoidoscopy.status = 'completed'
+			and FlexibleSigmoidoscopy.performed in "Measurement Period"
+
+define "Flexible Sigmoidoscopy Performed Full":
+	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
+		where FlexibleSigmoidoscopy.status = 'completed'
+			and FlexibleSigmoidoscopy.performed ends 5 years or less on or before end of "Measurement Period"
 
 define "AgeInYearsTest":
   Patient.birthDate
 
-define "PatientContextRetrieve":
+define "PatientContextRetrieveFilteredConditions":
   [Condition] c
   		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z 
 
 define "PatientContextRetrieveReference":
-  "PatientContextRetrieve"
+  "PatientContextRetrieveFilteredConditions"
 
-define "PatientContextRetrieveCount":
-	Count("PatientContextRetrieve")
 
 context Unfiltered
 
-define "PatientConditionCountTest":
-	Count("PatientContextRetrieve")
+define "CrossContextCountPatientsWithConditions":
+	Count("PatientContextRetrieveFilteredConditions")
+
+/*
+define "DoesThisWork":
+       Count(from "PatientContextRetrieveFilteredConditions" pcr where Count(pcr) > 2)
+
+
+define "CrossContextCountPatientWithTwoConditions":
+	Count("PatientContextCountConditions" pccc where pccc >= 2)
+*/
 
 /* this requires joining patient table with the define result
 define "Test":
-   Count(from [Patient] p return "PatientContextRetrieve")
+   Count(from [Patient] p return "PatientContextRetrieveFilteredConditions")
 */
 
 define "FirstCompare":
