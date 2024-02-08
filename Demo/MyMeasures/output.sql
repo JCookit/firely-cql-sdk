@@ -89,8 +89,7 @@ RETURN
     (SELECT TOP 1 DATETIME2FROMPARTS(2019, 1, 1, 0, 0, 0, 0, 7) AS [low],
                   DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [hi],
                   1 AS [lowClosed],
-                  0 AS [hiClosed]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+                  0 AS [hiClosed])
 GO
 --
 -- start AllPatients
@@ -130,9 +129,8 @@ RETURNS TABLE
 AS
 RETURN 
     SELECT IIF (((SELECT TOP 1 [AllPatientsCount].[_Result] AS [_Result]
-                  FROM   [AllPatientsCount]() AS [AllPatientsCount])) > ((SELECT TOP 1 5 AS [_Result]
-                                                                          FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])), 1, 0) AS [_Result]
-    FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED] CROSS APPLY [AllPatientsCount]() AS [AllPatientsCount]
+                  FROM   [AllPatientsCount]() AS [AllPatientsCount])) > ((SELECT TOP 1 5 AS [_Result])), 1, 0) AS [_Result]
+    FROM   [AllPatientsCount]() AS [AllPatientsCount]
 GO
 --
 -- start ExplicitSingletonFrom
@@ -160,8 +158,7 @@ AS
 RETURN 
     SELECT [_sourceTable].*
     FROM   [patient] AS [_sourceTable]
-    WHERE  [_sourceTable].[birthDate] > ((SELECT TOP 1 DATEFROMPARTS(1970, 1, 1) AS [_Result]
-                                          FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
+    WHERE  [_sourceTable].[birthDate] > ((SELECT TOP 1 DATEFROMPARTS(1970, 1, 1) AS [_Result]))
 GO
 --
 -- start PatientCountBirthDateTest
@@ -190,8 +187,7 @@ RETURN
     SELECT COUNT(1) AS [_Result]
     FROM   ((SELECT [PatientBirthDateTest].*
              FROM   [PatientBirthDateTest]() AS [PatientBirthDateTest]
-             WHERE  [PatientBirthDateTest].[birthDate] < ((SELECT TOP 1 DATEFROMPARTS(1971, 1, 1) AS [_Result]
-                                                           FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])))) AS [_sourceTable]
+             WHERE  [PatientBirthDateTest].[birthDate] < ((SELECT TOP 1 DATEFROMPARTS(1971, 1, 1) AS [_Result])))) AS [_sourceTable]
 GO
 --
 -- start Patient
@@ -207,6 +203,39 @@ RETURN
     FROM   (SELECT [_sourceTable].*,
                    [_sourceTable].[id] AS [_Context]
             FROM   [patient] AS [_sourceTable]) AS [_UNUSED]
+GO
+--
+-- start StartOfTest
+--
+DROP FUNCTION StartOfTest
+GO
+CREATE FUNCTION StartOfTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 [low] AS [low],
+                  [hi] AS [hi],
+                  1 AS [lowClosed],
+                  1 AS [hiClosed]
+     FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                          [Measurement_Period].[hi] AS [hi],
+                          [Measurement_Period].[lowClosed] AS [lowClosed],
+                          [Measurement_Period].[hiClosed] AS [hiClosed]
+             FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_UNUSED])
+GO
+--
+-- start QuantityTest
+--
+DROP FUNCTION QuantityTest
+GO
+CREATE FUNCTION QuantityTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 5 AS [value],
+                  'years' AS [units])
 GO
 --
 -- start Flexible_Sigmoidoscopy_Performed
@@ -229,24 +258,19 @@ RETURN
             FROM   [Flexible_Sigmoidoscopy]()) AS codeTable
            ON [_sourceTable].[code_coding_code] = codeTable.code
               AND [_sourceTable].[code_coding_system] = codeTable.codesystem
-    WHERE  [_sourceTable].[status] = ((SELECT TOP 1 'completed' AS [_Result]
-                                       FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
-           AND (((((SELECT TOP 1 [Measurement_Period].[lowClosed] AS [_Result]
-                    FROM   [Measurement_Period]() AS [Measurement_Period])) = 0
-                  AND [_sourceTable].[performedPeriod_end] > ((SELECT TOP 1 [Measurement_Period].[low] AS [_Result]
-                                                               FROM   [Measurement_Period]() AS [Measurement_Period])))
-                 OR (((SELECT TOP 1 [Measurement_Period].[lowClosed] AS [_Result]
-                       FROM   [Measurement_Period]() AS [Measurement_Period])) = 1
-                     AND [_sourceTable].[performedPeriod_end] >= ((SELECT TOP 1 [Measurement_Period].[low] AS [_Result]
-                                                                   FROM   [Measurement_Period]() AS [Measurement_Period]))))
-                AND ((((SELECT TOP 1 [Measurement_Period].[hiClosed] AS [_Result]
-                        FROM   [Measurement_Period]() AS [Measurement_Period])) = 0
-                      AND [_sourceTable].[performedPeriod_end] < ((SELECT TOP 1 [Measurement_Period].[hi] AS [_Result]
-                                                                   FROM   [Measurement_Period]() AS [Measurement_Period])))
-                     OR (((SELECT TOP 1 [Measurement_Period].[hiClosed] AS [_Result]
-                           FROM   [Measurement_Period]() AS [Measurement_Period])) = 1
-                         AND [_sourceTable].[performedPeriod_end] <= ((SELECT TOP 1 [Measurement_Period].[hi] AS [_Result]
-                                                                       FROM   [Measurement_Period]() AS [Measurement_Period])))))
+    WHERE  [_sourceTable].[status] = ((SELECT TOP 1 'completed' AS [_Result]))
+           AND ([_sourceTable].[performedPeriod_end] >= ((SELECT TOP 1 [low] AS [_Result]
+                                                          FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                                                                               [Measurement_Period].[hi] AS [hi],
+                                                                               [Measurement_Period].[lowClosed] AS [lowClosed],
+                                                                               [Measurement_Period].[hiClosed] AS [hiClosed]
+                                                                  FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_UNUSED]))
+                AND [_sourceTable].[performedPeriod_end] <= ((SELECT TOP 1 [hi] AS [_Result]
+                                                              FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                                                                                   [Measurement_Period].[hi] AS [hi],
+                                                                                   [Measurement_Period].[lowClosed] AS [lowClosed],
+                                                                                   [Measurement_Period].[hiClosed] AS [hiClosed]
+                                                                      FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_UNUSED])))
 GO
 --
 -- start AgeInYearsTest
@@ -274,8 +298,7 @@ RETURN
     SELECT [_sourceTable].*,
            JSON_VALUE([_sourceTable].[subject_string], '$.id') AS [_Context]
     FROM   [condition] AS [_sourceTable]
-    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                              FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
+    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
 GO
 --
 -- start PatientContextRetrieveReference
@@ -315,10 +338,7 @@ CREATE FUNCTION FirstCompare
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT IIF (((SELECT TOP 1 1 AS [_Result]
-                  FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])) < ((SELECT TOP 1 2 AS [_Result]
-                                                                              FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])), 1, 0) AS [_Result]
-    FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]
+    SELECT IIF (((SELECT TOP 1 1 AS [_Result])) < ((SELECT TOP 1 2 AS [_Result])), 1, 0) AS [_Result]
 GO
 --
 -- start SecondCompare
@@ -331,10 +351,8 @@ RETURNS TABLE
 AS
 RETURN 
     SELECT IIF ([FirstCompare].[_Result] = 1
-                AND ((SELECT TOP 1 2 AS [_Result]
-                      FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])) < ((SELECT TOP 1 3 AS [_Result]
-                                                                                  FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])), 1, 0) AS [_Result]
-    FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED] CROSS APPLY [FirstCompare]() AS [FirstCompare]
+                AND ((SELECT TOP 1 2 AS [_Result])) < ((SELECT TOP 1 3 AS [_Result])), 1, 0) AS [_Result]
+    FROM   [FirstCompare]() AS [FirstCompare]
 GO
 --
 -- start ThirdCompare
@@ -347,11 +365,9 @@ RETURNS TABLE
 AS
 RETURN 
     SELECT IIF ([SecondCompare].[_Result] = 1
-                OR (5 >= ((SELECT TOP 1 1 AS [_Result]
-                           FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
-                    AND 5 <= ((SELECT TOP 1 10 AS [_Result]
-                               FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))), 1, 0) AS [_Result]
-    FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED] CROSS APPLY [SecondCompare]() AS [SecondCompare]
+                OR (5 >= ((SELECT TOP 1 1 AS [_Result]))
+                    AND 5 <= ((SELECT TOP 1 10 AS [_Result]))), 1, 0) AS [_Result]
+    FROM   [SecondCompare]() AS [SecondCompare]
 GO
 --
 -- start FourthCompare
@@ -378,8 +394,7 @@ CREATE FUNCTION SimpleTrue
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 1 AS [_Result]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+    (SELECT TOP 1 1 AS [_Result])
 GO
 --
 -- start SimpleFalse
@@ -391,8 +406,7 @@ CREATE FUNCTION SimpleFalse
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 0 AS [_Result]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+    (SELECT TOP 1 0 AS [_Result])
 GO
 --
 -- start SimpleAnd
@@ -406,7 +420,6 @@ AS
 RETURN 
     SELECT IIF (1 = 1
                 AND 1 = 1, 1, 0) AS [_Result]
-    FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]
 GO
 --
 -- start First
@@ -418,8 +431,7 @@ CREATE FUNCTION First
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 1 AS [_Result]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+    (SELECT TOP 1 1 AS [_Result])
 GO
 --
 -- start Second
@@ -431,8 +443,7 @@ CREATE FUNCTION Second
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 1 + 1 AS [_Result]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+    (SELECT TOP 1 (((SELECT TOP 1 1 AS [_Result]))) + (((SELECT TOP 1 1 AS [_Result]))) AS [_Result])
 GO
 --
 -- start PEDMASTest
@@ -444,8 +455,7 @@ CREATE FUNCTION PEDMASTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 (CAST ((3) AS DECIMAL) + 4.0) / CAST ((1 + 2) AS DECIMAL) AS [_Result]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+    (SELECT TOP 1 (((SELECT TOP 1 (((SELECT TOP 1 CAST ((3) AS DECIMAL) AS [_Result]))) + (((SELECT TOP 1 4.0 AS [_Result]))) AS [_Result]))) / (((SELECT TOP 1 CAST (((((SELECT TOP 1 1 AS [_Result]))) + (((SELECT TOP 1 2 AS [_Result])))) AS DECIMAL) AS [_Result]))) AS [_Result])
 GO
 --
 -- start CompoundMathTest
@@ -457,8 +467,8 @@ CREATE FUNCTION CompoundMathTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 CAST ((1) AS DECIMAL) + [PEDMASTest].[_Result] AS [_Result]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED] CROSS APPLY [PEDMASTest]() AS [PEDMASTest])
+    (SELECT TOP 1 (((SELECT TOP 1 CAST ((1) AS DECIMAL) AS [_Result]))) + (((SELECT TOP 1 [PEDMASTest].[_Result] AS [_Result]
+                                                                             FROM   [PEDMASTest]() AS [PEDMASTest]))) AS [_Result])
 GO
 --
 -- start MultipleCompoundMathTest
@@ -470,8 +480,9 @@ CREATE FUNCTION MultipleCompoundMathTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 [CompoundMathTest].[_Result] + [PEDMASTest].[_Result] * CAST ((2) AS DECIMAL) AS [_Result]
-     FROM   [CompoundMathTest]() AS [CompoundMathTest] CROSS APPLY (SELECT NULL AS [_unused_column]) AS [_UNUSED] CROSS APPLY [PEDMASTest]() AS [PEDMASTest])
+    (SELECT TOP 1 (((SELECT TOP 1 [CompoundMathTest].[_Result] AS [_Result]
+                     FROM   [CompoundMathTest]() AS [CompoundMathTest]))) + (((SELECT TOP 1 (((SELECT TOP 1 [PEDMASTest].[_Result] AS [_Result]
+                                                                                               FROM   [PEDMASTest]() AS [PEDMASTest]))) * (((SELECT TOP 1 CAST ((2) AS DECIMAL) AS [_Result]))) AS [_Result]))) AS [_Result])
 GO
 --
 -- start SimpleRefTest
@@ -532,8 +543,7 @@ AS
 RETURN 
     SELECT [_sourceTable].*
     FROM   [condition] AS [_sourceTable]
-    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                              FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
+    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
 GO
 --
 -- start DateTest3
@@ -547,10 +557,8 @@ AS
 RETURN 
     SELECT [_sourceTable].*
     FROM   [condition] AS [_sourceTable]
-    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                              FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
-           AND [_sourceTable].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                                  FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
+    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
+           AND [_sourceTable].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]))
 GO
 --
 -- start DateTest4
@@ -572,10 +580,8 @@ RETURN
             FROM   [Ouchie]()) AS codeTable
            ON [_sourceTable].[code_coding_code] = codeTable.code
               AND [_sourceTable].[code_coding_system] = codeTable.codesystem
-    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                              FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
-           AND [_sourceTable].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                                  FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
+    WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
+           AND [_sourceTable].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]))
 GO
 --
 -- start IntervalDateDefinition
@@ -590,8 +596,7 @@ RETURN
     (SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [low],
                   DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [hi],
                   1 AS [lowClosed],
-                  0 AS [hiClosed]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+                  0 AS [hiClosed])
 GO
 --
 -- start IntervalIntegerDefinition
@@ -604,10 +609,9 @@ RETURNS TABLE
 AS
 RETURN 
     (SELECT TOP 1 1 AS [low],
-                  10 * 3 AS [hi],
+                  (((SELECT TOP 1 10 AS [_Result]))) * (((SELECT TOP 1 3 AS [_Result]))) AS [hi],
                   0 AS [lowClosed],
-                  1 AS [hiClosed]
-     FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])
+                  1 AS [hiClosed])
 GO
 --
 -- start IntervalIntegerReferenceTestDoesntWork
@@ -635,7 +639,7 @@ RETURN
                             FROM   [IntervalIntegerDefinition]() AS [IntervalIntegerDefinition])) = 1
                           AND 5 <= ((SELECT TOP 1 [IntervalIntegerDefinition].[hi] AS [_Result]
                                      FROM   [IntervalIntegerDefinition]() AS [IntervalIntegerDefinition]))))), 1, 0) AS [_Result]
-    FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED] CROSS APPLY [IntervalIntegerDefinition]() AS [IntervalIntegerDefinition]
+    FROM   [IntervalIntegerDefinition]() AS [IntervalIntegerDefinition]
 GO
 --
 -- start IntervalTest
@@ -649,10 +653,8 @@ AS
 RETURN 
     (SELECT [CodeTest].*
      FROM   [CodeTest]() AS [CodeTest]
-     WHERE  ([CodeTest].[onsetDateTime] >= ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                             FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))
-             AND [CodeTest].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                                FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED]))))
+     WHERE  ([CodeTest].[onsetDateTime] >= ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
+             AND [CodeTest].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]))))
 GO
 --
 -- start FirstExists
@@ -694,8 +696,7 @@ AS
 RETURN 
     (SELECT [CodeTest].*
      FROM   [CodeTest]() AS [CodeTest]
-     WHERE  [CodeTest].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                           FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])))
+     WHERE  [CodeTest].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result])))
 GO
 --
 -- start MultipleNestedTest1
@@ -722,6 +723,5 @@ AS
 RETURN 
     (SELECT [MultipleNestedTest1].*
      FROM   [MultipleNestedTest1]() AS [MultipleNestedTest1]
-     WHERE  [MultipleNestedTest1].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2021, 1, 1, 0, 0, 0, 0, 7) AS [_Result]
-                                                      FROM   (SELECT NULL AS [_unused_column]) AS [_UNUSED])))
+     WHERE  [MultipleNestedTest1].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2021, 1, 1, 0, 0, 0, 0, 7) AS [_Result])))
 GO

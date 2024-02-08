@@ -55,15 +55,18 @@ define "PatientCountBirthDateTestWithFilter":
 context Patient
 
 
+define "StartOfTest":
+  Interval[start of "Measurement Period", end of "Measurement Period"]
+
+define "QuantityTest":
+  5 years
+
 define "Flexible Sigmoidoscopy Performed":
 	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
 		where FlexibleSigmoidoscopy.status = 'completed'
-			and FlexibleSigmoidoscopy.performed in "Measurement Period"
+		//	and FlexibleSigmoidoscopy.performed in Interval[(end of "Measurement Period") - 5 years, end of "Measurement Period"]
+			and FlexibleSigmoidoscopy.performed in Interval[(start of "Measurement Period"), end of "Measurement Period"]
 
-define "Flexible Sigmoidoscopy Performed Full":
-	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
-		where FlexibleSigmoidoscopy.status = 'completed'
-			and FlexibleSigmoidoscopy.performed ends 5 years or less on or before end of "Measurement Period"
 
 define "AgeInYearsTest":
   Patient.birthDate

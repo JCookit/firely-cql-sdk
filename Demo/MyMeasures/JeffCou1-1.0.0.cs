@@ -38,6 +38,8 @@ public class JeffCou1_1_0_0
     internal Lazy<int?> __PatientCountBirthDateTest;
     internal Lazy<int?> __PatientCountBirthDateTestWithFilter;
     internal Lazy<Patient> __Patient;
+    internal Lazy<CqlInterval<CqlDateTime>> __StartOfTest;
+    internal Lazy<CqlQuantity> __QuantityTest;
     internal Lazy<IEnumerable<Procedure>> __Flexible_Sigmoidoscopy_Performed;
     internal Lazy<Date> __AgeInYearsTest;
     internal Lazy<IEnumerable<Condition>> __PatientContextRetrieveFilteredConditions;
@@ -97,6 +99,8 @@ public class JeffCou1_1_0_0
         __PatientCountBirthDateTest = new Lazy<int?>(this.PatientCountBirthDateTest_Value);
         __PatientCountBirthDateTestWithFilter = new Lazy<int?>(this.PatientCountBirthDateTestWithFilter_Value);
         __Patient = new Lazy<Patient>(this.Patient_Value);
+        __StartOfTest = new Lazy<CqlInterval<CqlDateTime>>(this.StartOfTest_Value);
+        __QuantityTest = new Lazy<CqlQuantity>(this.QuantityTest_Value);
         __Flexible_Sigmoidoscopy_Performed = new Lazy<IEnumerable<Procedure>>(this.Flexible_Sigmoidoscopy_Performed_Value);
         __AgeInYearsTest = new Lazy<Date>(this.AgeInYearsTest_Value);
         __PatientContextRetrieveFilteredConditions = new Lazy<IEnumerable<Condition>>(this.PatientContextRetrieveFilteredConditions_Value);
@@ -353,6 +357,31 @@ public class JeffCou1_1_0_0
 	public Patient Patient() => 
 		__Patient.Value;
 
+	private CqlInterval<CqlDateTime> StartOfTest_Value()
+	{
+		var a_ = this.Measurement_Period();
+		var b_ = context.Operators.Start(a_);
+		var d_ = context.Operators.End(a_);
+		var e_ = context.Operators.Interval(b_, d_, true, true);
+
+		return e_;
+	}
+
+    [CqlDeclaration("StartOfTest")]
+	public CqlInterval<CqlDateTime> StartOfTest() => 
+		__StartOfTest.Value;
+
+	private CqlQuantity QuantityTest_Value()
+	{
+		var a_ = context.Operators.Quantity(5m, "years");
+
+		return a_;
+	}
+
+    [CqlDeclaration("QuantityTest")]
+	public CqlQuantity QuantityTest() => 
+		__QuantityTest.Value;
+
 	private IEnumerable<Procedure> Flexible_Sigmoidoscopy_Performed_Value()
 	{
 		var a_ = this.Flexible_Sigmoidoscopy();
@@ -364,10 +393,13 @@ public class JeffCou1_1_0_0
 			var g_ = context.Operators.Equal(f_, "completed");
 			var h_ = FHIRHelpers_4_0_001.ToDateTime((FlexibleSigmoidoscopy?.Performed as FhirDateTime));
 			var i_ = this.Measurement_Period();
-			var j_ = context.Operators.ElementInInterval<CqlDateTime>(h_, i_, null);
-			var k_ = context.Operators.And(g_, j_);
+			var j_ = context.Operators.Start(i_);
+			var l_ = context.Operators.End(i_);
+			var m_ = context.Operators.Interval(j_, l_, true, true);
+			var n_ = context.Operators.ElementInInterval<CqlDateTime>(h_, m_, null);
+			var o_ = context.Operators.And(g_, n_);
 
-			return k_;
+			return o_;
 		};
 		var e_ = context.Operators.WhereOrNull<Procedure>(c_, d_);
 

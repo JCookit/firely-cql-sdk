@@ -610,7 +610,7 @@ namespace Hl7.Cql.Compiler
                     // result = DurationBetween(dbe, ctx);
                     break;
                 case End e:
-                    // result = End(e, ctx);
+                    result = End(e, ctx);
                     break;
                 case Ends e:
                     // result = Ends(e, ctx);
@@ -859,7 +859,7 @@ namespace Hl7.Cql.Compiler
                     result = Property(pe, ctx);
                     break;
                 case Quantity qua:
-                    // result = Quantity(qua, ctx);
+                    result = Quantity(qua, ctx);
                     break;
                 case Query qe:
                     result = Query(qe, ctx);
@@ -913,7 +913,7 @@ namespace Hl7.Cql.Compiler
                     // result = Starts(starts, ctx);
                     break;
                 case Start start:
-                    // result = Start(start, ctx);
+                    result = Start(start, ctx);
                     break;
                 case StartsWith e:
                     // result = StartsWith(e, ctx);
@@ -1005,6 +1005,63 @@ namespace Hl7.Cql.Compiler
             //}
 
             return result!;
+        }
+
+        private SqlExpression? Start(Start start, SqlExpressionBuilderContext ctx)
+            => BuildIntervalPartQuery(start.operand, "low", ctx);
+
+        private SqlExpression? End(End e, SqlExpressionBuilderContext ctx) 
+            => BuildIntervalPartQuery(e.operand, "hi", ctx);
+
+        private SqlExpression BuildIntervalPartQuery(Hl7.Cql.Elm.Expression elmOperand, string intervalPart, SqlExpressionBuilderContext ctx)
+        {
+            var operand = TranslateExpression(elmOperand, ctx);
+
+            // create SELECT TOP 1 [hi] FROM <operand>
+            var selectStatement = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = new ColumnReferenceExpression
+                            {
+                                MultiPartIdentifier = new MultiPartIdentifier
+                                {
+                                    // TODO: hardcode this because this is what the Interval type builds
+                                    Identifiers = { new Identifier { Value = intervalPart, QuoteType = QuoteType.SquareBracket } }
+                                },
+                            },
+                            ColumnName = new IdentifierOrValueExpression 
+                            { 
+                                Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } 
+                            }
+                        }
+                    },
+                    FromClause = new FromClause
+                    {
+                        TableReferences =
+                        {
+                            new QueryDerivedTable
+                            {
+                                QueryExpression = FindQuerySpecification(operand),
+                                Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
+                            }
+                        }
+                    },
+                    TopRowFilter = new TopRowFilter
+                    {
+                        Expression = new IntegerLiteral { Value = "1" }
+                    }
+                }
+            };
+
+            return new SqlExpression(
+                selectStatement,
+                SqlExpression.FragmentTypes.SelectStatement,
+                typeof(CqlDateTime));
         }
 
         private SqlExpression? ParameterRef(ParameterRef pre, SqlExpressionBuilderContext ctx)
@@ -1642,6 +1699,23 @@ namespace Hl7.Cql.Compiler
             return WrapInSelectScalarExpression(functionExpression, combinedFrom, ctx);
         }
 
+        private SqlExpression? Quantity(Quantity qua, SqlExpressionBuilderContext ctx)
+        {
+            ScalarTuple tuple = new ScalarTuple
+            {
+                DataType = typeof(CqlQuantity),
+                Values =
+                {
+                    { "value", new NumericLiteral { Value = qua.value.ToString(System.Globalization.CultureInfo.InvariantCulture) } },
+                    { "units", new StringLiteral { Value = qua.unit } }
+                }
+            };
+
+            return WrapInSelectScalarExpression(
+                tuple, 
+                null, 
+                ctx);
+        }
 
         // returns SelectStatement
         // TODO: returns a fully formed select with table name, which might not be relevant to all contexts?
@@ -2832,7 +2906,7 @@ namespace Hl7.Cql.Compiler
                     throw new NotImplementedException();
             }
 
-            return WrapInSelectScalarExpression(result, NullFromClause(), ctx);
+            return WrapInSelectScalarExpression(result, null, ctx);
         }
 
         // TODO: bad things would happen if user tokens collided with these
@@ -2883,26 +2957,205 @@ namespace Hl7.Cql.Compiler
         // returns a SelectStatement
         private SqlExpression BinaryScalarExpression(BinaryExpressionType binType, Elm.BinaryExpression binaryExpression, SqlExpressionBuilderContext ctx)
         {
-            var (lhs, lhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[0], ctx));
-            var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[1], ctx));
+            if (binaryExpression.operand.Count() != 2)
+                throw new InvalidOperationException();
+
+            var op1 = TranslateExpression(binaryExpression.operand[0], ctx);
+            var op2 = TranslateExpression(binaryExpression.operand[1], ctx);
+
+            // do special things if dealing with dates; for now just check the type of first arg
+            if (binaryExpression.operand[0].resultTypeName != null)
+            {
+                var op1Type = TypeResolver.ResolveType(binaryExpression.operand[0].resultTypeName.Name) ?? throw new InvalidOperationException();
+                if (op1Type == typeof(CqlDate) || op1Type == typeof(CqlDateTime))
+                {
+                    // this just became date math --- second param better be Quantity and this better be + or -
+                    // (cql->elm might enforce this, not sure)
+
+                    var op2Type = TypeResolver.ResolveType(binaryExpression.operand[1].resultTypeName.Name) ?? throw new InvalidOperationException();
+                    if (op2Type != typeof(CqlQuantity) || (binType != BinaryExpressionType.Add && binType != BinaryExpressionType.Subtract))
+                        throw new InvalidOperationException();
+
+                    // expression becomes
+                    // case (select top(1) units from op2) 
+                    // when 'years' THEN DATEADD(year, (select top(1) value from op2), op1) end
+                    // when 'months' THEN DATEADD(month, (select top(1) value from op2), op1) end
+                    // etc
+
+                    SimpleCaseExpression caseFragment = new SimpleCaseExpression
+                    {
+                        InputExpression = new ScalarSubquery
+                        {
+                            QueryExpression = new QuerySpecification
+                            {
+                                SelectElements =
+                                {
+                                    new SelectScalarExpression
+                                    {
+                                        Expression = new ColumnReferenceExpression
+                                        {
+                                            MultiPartIdentifier = new MultiPartIdentifier
+                                            {
+                                                Identifiers =
+                                                {
+                                                    new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket },
+                                                    new Identifier { Value = "units", QuoteType = QuoteType.SquareBracket }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                FromClause = new FromClause
+                                {
+                                    TableReferences =
+                                    {
+                                        new QueryDerivedTable
+                                        {
+                                            QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
+                                            Alias = new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        WhenClauses =
+                        {
+                            new SimpleWhenClause
+                            {
+                                WhenExpression = new StringLiteral { Value = "years" },
+                                ThenExpression = new FunctionCall
+                                {
+                                    FunctionName = new Identifier { Value = "DATEADD" },
+                                    Parameters =
+                                    {
+                                        new ColumnReferenceExpression
+                                        {
+                                            MultiPartIdentifier = new MultiPartIdentifier
+                                            {
+                                                Identifiers =
+                                                {
+                                                    new Identifier { Value = "year" }
+                                                }
+                                            }
+                                        },
+                                        new ScalarSubquery
+                                        {
+                                            QueryExpression = new QuerySpecification
+                                            {
+                                                SelectElements =
+                                                {
+                                                    new SelectScalarExpression
+                                                    {
+                                                        Expression = new ColumnReferenceExpression
+                                                        {
+                                                            MultiPartIdentifier = new MultiPartIdentifier
+                                                            {
+                                                                Identifiers =
+                                                                {
+                                                                    new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket },
+                                                                    new Identifier { Value = "value", QuoteType = QuoteType.SquareBracket }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                FromClause = new FromClause
+                                                {
+                                                    TableReferences =
+                                                    {
+                                                        new QueryDerivedTable
+                                                        {
+                                                            QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
+                                                            Alias = new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        new ScalarSubquery
+                                        {
+                                            QueryExpression = new QuerySpecification
+                                            {
+                                                SelectElements =
+                                                {
+                                                    new SelectScalarExpression
+                                                    {
+                                                        Expression = new ColumnReferenceExpression
+                                                        {
+                                                            MultiPartIdentifier = new MultiPartIdentifier
+                                                            {
+                                                                Identifiers =
+                                                                {
+                                                                    new Identifier { Value = "op1", QuoteType = QuoteType.SquareBracket },
+                                                                    new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                FromClause = new FromClause
+                                                {
+                                                    TableReferences =
+                                                    {
+                                                        new QueryDerivedTable
+                                                        {
+                                                            QueryExpression = (op1.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
+                                                            Alias = new Identifier { Value = "op1", QuoteType = QuoteType.SquareBracket }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                    }
+                                }
+                            },
+                        }
+                    };
+                }
+            }
+
 
             ScalarExpression fragment = new BinaryExpression
             {
                 BinaryExpressionType = binType,
-                FirstExpression = lhs,
-                SecondExpression = rhs
-            };
-
-            if (NeedsParenthesis(binaryExpression, ctx.Parent))
-            {
-                var parenthesis = new ParenthesisExpression
+                FirstExpression = new ScalarSubquery
                 {
-                    Expression = fragment
-                };
+                    QueryExpression = new QueryParenthesisExpression
+                    {
+                        QueryExpression = (op1.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression
+                    }
+                },
+                SecondExpression = new ScalarSubquery
+                {
+                    QueryExpression = new QueryParenthesisExpression
+                    {
+                        QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression
+                    }
+                }
+            };
+            return WrapInSelectScalarExpression(fragment, null, ctx);
 
-                fragment = parenthesis;
-            }
-            return WrapInSelectScalarExpression(fragment, ReconcileScalarFromClauses(lhsFrom, rhsFrom), ctx);
+
+            //var (lhs, lhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[0], ctx));
+            //var (rhs, rhsFrom) = UnwrapScalarSelectElement(TranslateExpression(binaryExpression.operand[1], ctx));
+
+            //ScalarExpression fragment = new BinaryExpression
+            //{
+            //    BinaryExpressionType = binType,
+            //    FirstExpression = lhs,
+            //    SecondExpression = rhs
+            //};
+
+            //if (NeedsParenthesis(binaryExpression, ctx.Parent))
+            //{
+            //    var parenthesis = new ParenthesisExpression
+            //    {
+            //        Expression = fragment
+            //    };
+
+            //    fragment = parenthesis;
+            //}
+            //return WrapInSelectScalarExpression(fragment, ReconcileScalarFromClauses(lhsFrom, rhsFrom), ctx);
         }
 
         private FromClause ReconcileScalarFromClauses(params FromClause[] froms)
@@ -2920,10 +3173,21 @@ namespace Hl7.Cql.Compiler
 
             List<FromClause> fromList = froms.ToList();
 
+            // remove the empties first
+            for (int i = fromList.Count() - 1; i >= 0; i--)
+            {
+                FromClause from = fromList[i];
+                if (from == null || from.TableReferences.Count == 0)
+                {
+                    fromList.RemoveAt(i);
+                    continue;
+                }
+            }
+
             // search through the from clauses (backwards); remember if any are literal scalar, and remove them
             for (int i = fromList.Count() - 1; i >= 0; i--)
             {
-                FromClause from = froms[i];
+                FromClause from = fromList[i];
 
                 if (from.TableReferences.Count == 1)
                 {
@@ -2947,6 +3211,21 @@ namespace Hl7.Cql.Compiler
                                 }
                             }
                         }
+                    }
+
+                    // also attempt to diagnose duplicates and remove this one if a dupe is found (yay n^2)
+                    for (int j = i - 1; j >= 0; j--)
+                    {
+                        FromClause fromClauseOther = froms[j];
+                        if (fromClauseOther.TableReferences.Count > 1)
+                            throw new InvalidOperationException();   // TODO: what does this mean?
+
+                        TableReference tableReferenceOther = fromClauseOther.TableReferences[0];
+                        if (AreEqualTableReferences(tableReference, tableReferenceOther))
+                        {
+                            fromList.RemoveAt(i);
+                            break;
+                        }  
                     }
                 }
                 else
@@ -3005,6 +3284,44 @@ namespace Hl7.Cql.Compiler
             return result;
         }
 
+        private bool AreEqualTableReferences(TableReference tableReference, TableReference tableReferenceOther)
+        {
+            // do some basic checks to see if the table references are the same
+            // handles tables, functions and simple subselects
+            if (tableReference is NamedTableReference namedTableReference
+                && tableReferenceOther is NamedTableReference namedTableReferenceOther)
+            {
+                return namedTableReference.SchemaObject.BaseIdentifier.Value
+                    == namedTableReferenceOther.SchemaObject.BaseIdentifier.Value;
+            }
+            else if (tableReference is SchemaObjectFunctionTableReference schemaObjectFunctionTableReference
+                && tableReferenceOther is SchemaObjectFunctionTableReference schemaObjectFunctionTableReferenceOther)
+            {
+                return schemaObjectFunctionTableReference.SchemaObject.BaseIdentifier.Value
+                    == schemaObjectFunctionTableReferenceOther.SchemaObject.BaseIdentifier.Value;
+            }
+            else if (tableReference is QueryDerivedTable queryDerivedTable
+                && tableReferenceOther is QueryDerivedTable queryDerivedTableOther)
+            {
+                var querySpecification = queryDerivedTable.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
+                var querySpecificationOther = queryDerivedTableOther.QueryExpression as QuerySpecification ?? throw new InvalidOperationException();
+           
+                // TODO: could do some more comparisons on the select elements, but in practice this should be good enough for now
+                if (querySpecification.SelectElements.Count != querySpecificationOther.SelectElements.Count)
+                    return false;
+
+                if (querySpecification.FromClause.TableReferences.Count != 1
+                    || querySpecificationOther.FromClause.TableReferences.Count != 1)
+                    return false;
+
+                return AreEqualTableReferences(
+                    querySpecification.FromClause.TableReferences[0], 
+                    querySpecificationOther.FromClause.TableReferences[0]);
+            }
+
+            return false;
+        }
+
         private FromClause FindTableReference(TSqlFragment sqlFragment)
         {
             if (sqlFragment is SelectStatement selectStatment)
@@ -3047,7 +3364,7 @@ namespace Hl7.Cql.Compiler
         // NOTE:  an explicit TOP 1 is added to indicate a scalar. 
         private SqlExpression WrapInSelectScalarExpression(
             ScalarTuple scalarTuple, 
-            FromClause fromClause,
+            FromClause? fromClause,
             SqlExpressionBuilderContext ctx,
             bool createScalarSubquery = false)
         {
@@ -3106,7 +3423,7 @@ namespace Hl7.Cql.Compiler
         // helper method when the scalar is just one field (TODO: is this still useful?)
         private SqlExpression WrapInSelectScalarExpression(
             ScalarExpression scalar, 
-            FromClause fromClause, 
+            FromClause? fromClause, 
             SqlExpressionBuilderContext ctx, 
             bool createScalarSubquery = false)
         {
