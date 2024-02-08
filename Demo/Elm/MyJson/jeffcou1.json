@@ -250,10 +250,10 @@
             "locator" : "29:1-29:18",
             "name" : "Unfiltered"
          }, {
-            "locator" : "55:1-55:15",
+            "locator" : "67:1-67:15",
             "name" : "Patient"
          }, {
-            "locator" : "83:1-83:18",
+            "locator" : "88:1-88:18",
             "name" : "Unfiltered"
          } ]
       },
@@ -542,93 +542,116 @@
                }
             }
          }, {
-            "locator" : "55:1-55:15",
-            "name" : "Patient",
-            "context" : "Patient",
-            "expression" : {
-               "type" : "SingletonFrom",
-               "operand" : {
-                  "locator" : "55:1-55:15",
-                  "dataType" : "{http://hl7.org/fhir}Patient",
-                  "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
-                  "type" : "Retrieve"
-               }
-            }
-         }, {
-            "locator" : "58:1-59:70",
+            "locator" : "55:1-56:31",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
             "name" : "StartOfTest",
-            "context" : "Patient",
+            "context" : "Unfiltered",
             "accessLevel" : "Public",
-            "resultTypeSpecifier" : {
-               "type" : "IntervalTypeSpecifier",
-               "pointType" : {
-                  "name" : "{urn:hl7-org:elm-types:r1}DateTime",
-                  "type" : "NamedTypeSpecifier"
-               }
-            },
             "expression" : {
-               "locator" : "59:3-59:70",
-               "lowClosed" : true,
-               "highClosed" : true,
-               "type" : "Interval",
-               "resultTypeSpecifier" : {
-                  "type" : "IntervalTypeSpecifier",
-                  "pointType" : {
-                     "name" : "{urn:hl7-org:elm-types:r1}DateTime",
-                     "type" : "NamedTypeSpecifier"
-                  }
-               },
-               "low" : {
-                  "locator" : "59:12-59:40",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
-                  "type" : "Start",
-                  "operand" : {
-                     "locator" : "59:21-59:40",
-                     "name" : "Measurement Period",
-                     "type" : "ParameterRef",
-                     "resultTypeSpecifier" : {
-                        "type" : "IntervalTypeSpecifier",
-                        "pointType" : {
-                           "name" : "{urn:hl7-org:elm-types:r1}DateTime",
-                           "type" : "NamedTypeSpecifier"
-                        }
-                     }
-                  }
-               },
-               "high" : {
-                  "locator" : "59:43-59:69",
-                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
-                  "type" : "End",
-                  "operand" : {
-                     "locator" : "59:50-59:69",
-                     "name" : "Measurement Period",
-                     "type" : "ParameterRef",
-                     "resultTypeSpecifier" : {
-                        "type" : "IntervalTypeSpecifier",
-                        "pointType" : {
-                           "name" : "{urn:hl7-org:elm-types:r1}DateTime",
-                           "type" : "NamedTypeSpecifier"
-                        }
+               "locator" : "56:3-56:31",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+               "type" : "Start",
+               "operand" : {
+                  "locator" : "56:12-56:31",
+                  "name" : "Measurement Period",
+                  "type" : "ParameterRef",
+                  "resultTypeSpecifier" : {
+                     "type" : "IntervalTypeSpecifier",
+                     "pointType" : {
+                        "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                        "type" : "NamedTypeSpecifier"
                      }
                   }
                }
             }
          }, {
-            "locator" : "61:1-62:9",
+            "locator" : "58:1-59:9",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Quantity",
             "name" : "QuantityTest",
-            "context" : "Patient",
+            "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "62:3-62:9",
+               "locator" : "59:3-59:9",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Quantity",
                "value" : 5,
                "unit" : "years",
                "type" : "Quantity"
             }
          }, {
-            "locator" : "64:1-68:112",
-            "name" : "Flexible Sigmoidoscopy Performed",
+            "locator" : "61:1-62:23",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Date",
+            "name" : "DateMathTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "62:3-62:23",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Date",
+               "type" : "Subtract",
+               "operand" : [ {
+                  "locator" : "62:3-62:13",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Date",
+                  "type" : "Date",
+                  "year" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "2020",
+                     "type" : "Literal"
+                  },
+                  "month" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  },
+                  "day" : {
+                     "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
+                     "value" : "1",
+                     "type" : "Literal"
+                  }
+               }, {
+                  "locator" : "62:17-62:23",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Quantity",
+                  "value" : 5,
+                  "unit" : "years",
+                  "type" : "Quantity"
+               } ]
+            }
+         }, {
+            "locator" : "64:1-65:28",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+            "name" : "ReferenceDateMathTest",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "65:3-65:28",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+               "type" : "Subtract",
+               "operand" : [ {
+                  "locator" : "65:3-65:13",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                  "name" : "StartOfTest",
+                  "type" : "ExpressionRef"
+               }, {
+                  "locator" : "65:17-65:28",
+                  "resultTypeName" : "{urn:hl7-org:elm-types:r1}Quantity",
+                  "name" : "QuantityTest",
+                  "type" : "ExpressionRef"
+               } ]
+            }
+         }, {
+            "locator" : "67:1-67:15",
+            "name" : "Patient",
+            "context" : "Patient",
+            "expression" : {
+               "type" : "SingletonFrom",
+               "operand" : {
+                  "locator" : "67:1-67:15",
+                  "dataType" : "{http://hl7.org/fhir}Patient",
+                  "templateId" : "http://hl7.org/fhir/StructureDefinition/Patient",
+                  "type" : "Retrieve"
+               }
+            }
+         }, {
+            "locator" : "71:1-74:120",
+            "name" : "FlexibleSigmoidoscopyPerformed",
             "context" : "Patient",
             "accessLevel" : "Public",
             "resultTypeSpecifier" : {
@@ -639,7 +662,7 @@
                }
             },
             "expression" : {
-               "locator" : "65:2-68:112",
+               "locator" : "72:2-74:120",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -649,7 +672,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "65:2-65:60",
+                  "locator" : "72:2-72:60",
                   "alias" : "FlexibleSigmoidoscopy",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -659,7 +682,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "65:2-65:38",
+                     "locator" : "72:2-72:38",
                      "dataType" : "{http://hl7.org/fhir}Procedure",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Procedure",
                      "codeProperty" : "code",
@@ -675,7 +698,7 @@
                      "codes" : {
                         "type" : "ToList",
                         "operand" : {
-                           "locator" : "65:14-65:37",
+                           "locator" : "72:14-72:37",
                            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
                            "name" : "Flexible Sigmoidoscopy",
                            "type" : "CodeRef"
@@ -685,11 +708,11 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "66:3-68:112",
+                  "locator" : "73:3-74:120",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "And",
                   "operand" : [ {
-                     "locator" : "66:9-66:50",
+                     "locator" : "73:9-73:50",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "type" : "Equal",
                      "operand" : [ {
@@ -697,21 +720,21 @@
                         "libraryName" : "FHIRHelpers",
                         "type" : "FunctionRef",
                         "operand" : [ {
-                           "locator" : "66:9-66:36",
+                           "locator" : "73:9-73:36",
                            "resultTypeName" : "{http://hl7.org/fhir}ProcedureStatus",
                            "path" : "status",
                            "scope" : "FlexibleSigmoidoscopy",
                            "type" : "Property"
                         } ]
                      }, {
-                        "locator" : "66:40-66:50",
+                        "locator" : "73:40-73:50",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}String",
                         "valueType" : "{urn:hl7-org:elm-types:r1}String",
                         "value" : "completed",
                         "type" : "Literal"
                      } ]
                   }, {
-                     "locator" : "68:8-68:112",
+                     "locator" : "74:8-74:120",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "type" : "In",
                      "operand" : [ {
@@ -722,7 +745,7 @@
                            "asType" : "{http://hl7.org/fhir}dateTime",
                            "type" : "As",
                            "operand" : {
-                              "locator" : "68:8-68:38",
+                              "locator" : "74:8-74:38",
                               "path" : "performed",
                               "scope" : "FlexibleSigmoidoscopy",
                               "type" : "Property",
@@ -748,7 +771,7 @@
                            }
                         } ]
                      }, {
-                        "locator" : "68:43-68:112",
+                        "locator" : "74:43-74:120",
                         "lowClosed" : true,
                         "highClosed" : true,
                         "type" : "Interval",
@@ -760,28 +783,39 @@
                            }
                         },
                         "low" : {
-                           "locator" : "68:52-68:82",
+                           "locator" : "74:52-74:90",
                            "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
-                           "type" : "Start",
-                           "operand" : {
-                              "locator" : "68:62-68:81",
-                              "name" : "Measurement Period",
-                              "type" : "ParameterRef",
-                              "resultTypeSpecifier" : {
-                                 "type" : "IntervalTypeSpecifier",
-                                 "pointType" : {
-                                    "name" : "{urn:hl7-org:elm-types:r1}DateTime",
-                                    "type" : "NamedTypeSpecifier"
+                           "type" : "Subtract",
+                           "operand" : [ {
+                              "locator" : "74:52-74:80",
+                              "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
+                              "type" : "End",
+                              "operand" : {
+                                 "locator" : "74:60-74:79",
+                                 "name" : "Measurement Period",
+                                 "type" : "ParameterRef",
+                                 "resultTypeSpecifier" : {
+                                    "type" : "IntervalTypeSpecifier",
+                                    "pointType" : {
+                                       "name" : "{urn:hl7-org:elm-types:r1}DateTime",
+                                       "type" : "NamedTypeSpecifier"
+                                    }
                                  }
                               }
-                           }
+                           }, {
+                              "locator" : "74:84-74:90",
+                              "resultTypeName" : "{urn:hl7-org:elm-types:r1}Quantity",
+                              "value" : 5,
+                              "unit" : "years",
+                              "type" : "Quantity"
+                           } ]
                         },
                         "high" : {
-                           "locator" : "68:85-68:111",
+                           "locator" : "74:93-74:119",
                            "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                            "type" : "End",
                            "operand" : {
-                              "locator" : "68:92-68:111",
+                              "locator" : "74:100-74:119",
                               "name" : "Measurement Period",
                               "type" : "ParameterRef",
                               "resultTypeSpecifier" : {
@@ -798,25 +832,25 @@
                }
             }
          }, {
-            "locator" : "71:1-72:19",
+            "locator" : "76:1-77:19",
             "resultTypeName" : "{http://hl7.org/fhir}date",
             "name" : "AgeInYearsTest",
             "context" : "Patient",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "72:3-72:19",
+               "locator" : "77:3-77:19",
                "resultTypeName" : "{http://hl7.org/fhir}date",
                "path" : "birthDate",
                "type" : "Property",
                "source" : {
-                  "locator" : "72:3-72:9",
+                  "locator" : "77:3-77:9",
                   "resultTypeName" : "{http://hl7.org/fhir}Patient",
                   "name" : "Patient",
                   "type" : "ExpressionRef"
                }
             }
          }, {
-            "locator" : "74:1-77:44",
+            "locator" : "79:1-82:44",
             "name" : "PatientContextRetrieveFilteredConditions",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -828,7 +862,7 @@
                }
             },
             "expression" : {
-               "locator" : "75:3-77:44",
+               "locator" : "80:3-82:44",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -838,7 +872,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "75:3-75:15",
+                  "locator" : "80:3-80:15",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -848,7 +882,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "75:3-75:13",
+                     "locator" : "80:3-80:13",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "type" : "Retrieve",
@@ -863,7 +897,7 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "76:5-77:44",
+                  "locator" : "81:5-82:44",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "After",
                   "operand" : [ {
@@ -874,7 +908,7 @@
                         "asType" : "{http://hl7.org/fhir}dateTime",
                         "type" : "As",
                         "operand" : {
-                           "locator" : "77:4-77:12",
+                           "locator" : "82:4-82:12",
                            "path" : "onset",
                            "scope" : "c",
                            "type" : "Property",
@@ -900,7 +934,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "77:20-77:44",
+                     "locator" : "82:20-82:44",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                      "type" : "DateTime",
                      "year" : {
@@ -947,7 +981,7 @@
                }
             }
          }, {
-            "locator" : "79:1-80:44",
+            "locator" : "84:1-85:44",
             "name" : "PatientContextRetrieveReference",
             "context" : "Patient",
             "accessLevel" : "Public",
@@ -959,7 +993,7 @@
                }
             },
             "expression" : {
-               "locator" : "80:3-80:44",
+               "locator" : "85:3-85:44",
                "name" : "PatientContextRetrieveFilteredConditions",
                "type" : "ExpressionRef",
                "resultTypeSpecifier" : {
@@ -971,17 +1005,40 @@
                }
             }
          }, {
-            "locator" : "85:1-86:50",
+            "locator" : "90:1-91:41",
+            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+            "name" : "CountPatientsFlexibleSigmoidoscopyPerformed",
+            "context" : "Unfiltered",
+            "accessLevel" : "Public",
+            "expression" : {
+               "locator" : "91:3-91:41",
+               "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
+               "type" : "Count",
+               "source" : {
+                  "locator" : "91:9-91:40",
+                  "name" : "FlexibleSigmoidoscopyPerformed",
+                  "type" : "ExpressionRef",
+                  "resultTypeSpecifier" : {
+                     "type" : "ListTypeSpecifier",
+                     "elementType" : {
+                        "name" : "{http://hl7.org/fhir}Procedure",
+                        "type" : "NamedTypeSpecifier"
+                     }
+                  }
+               }
+            }
+         }, {
+            "locator" : "93:1-94:50",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
             "name" : "CrossContextCountPatientsWithConditions",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "86:2-86:50",
+               "locator" : "94:2-94:50",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                "type" : "Count",
                "source" : {
-                  "locator" : "86:8-86:49",
+                  "locator" : "94:8-94:49",
                   "name" : "PatientContextRetrieveFilteredConditions",
                   "type" : "ExpressionRef",
                   "resultTypeSpecifier" : {
@@ -994,23 +1051,23 @@
                }
             }
          }, {
-            "locator" : "102:1-103:7",
+            "locator" : "110:1-111:7",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "FirstCompare",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "103:3-103:7",
+               "locator" : "111:3-111:7",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "Less",
                "operand" : [ {
-                  "locator" : "103:3",
+                  "locator" : "111:3",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "1",
                   "type" : "Literal"
                }, {
-                  "locator" : "103:7",
+                  "locator" : "111:7",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "2",
@@ -1018,32 +1075,32 @@
                } ]
             }
          }, {
-            "locator" : "105:1-106:24",
+            "locator" : "113:1-114:24",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "SecondCompare",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "106:3-106:24",
+               "locator" : "114:3-114:24",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "And",
                "operand" : [ {
-                  "locator" : "106:3-106:14",
+                  "locator" : "114:3-114:14",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "name" : "FirstCompare",
                   "type" : "ExpressionRef"
                }, {
-                  "locator" : "106:20-106:24",
+                  "locator" : "114:20-114:24",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "Less",
                   "operand" : [ {
-                     "locator" : "106:20",
+                     "locator" : "114:20",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "2",
                      "type" : "Literal"
                   }, {
-                     "locator" : "106:24",
+                     "locator" : "114:24",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "3",
@@ -1052,32 +1109,32 @@
                } ]
             }
          }, {
-            "locator" : "108:1-109:38",
+            "locator" : "116:1-117:38",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "ThirdCompare",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "109:3-109:38",
+               "locator" : "117:3-117:38",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "Or",
                "operand" : [ {
-                  "locator" : "109:3-109:15",
+                  "locator" : "117:3-117:15",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "name" : "SecondCompare",
                   "type" : "ExpressionRef"
                }, {
-                  "locator" : "109:20-109:38",
+                  "locator" : "117:20-117:38",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "In",
                   "operand" : [ {
-                     "locator" : "109:20",
+                     "locator" : "117:20",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "5",
                      "type" : "Literal"
                   }, {
-                     "locator" : "109:25-109:38",
+                     "locator" : "117:25-117:38",
                      "lowClosed" : true,
                      "highClosed" : true,
                      "type" : "Interval",
@@ -1089,14 +1146,14 @@
                         }
                      },
                      "low" : {
-                        "locator" : "109:34",
+                        "locator" : "117:34",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "1",
                         "type" : "Literal"
                      },
                      "high" : {
-                        "locator" : "109:36-109:37",
+                        "locator" : "117:36-117:37",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "10",
@@ -1106,81 +1163,81 @@
                } ]
             }
          }, {
-            "locator" : "111:1-112:49",
+            "locator" : "119:1-120:49",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "FourthCompare",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "112:3-112:49",
+               "locator" : "120:3-120:49",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "And",
                "operand" : [ {
-                  "locator" : "112:3-112:32",
+                  "locator" : "120:3-120:32",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "And",
                   "operand" : [ {
-                     "locator" : "112:3-112:14",
+                     "locator" : "120:3-120:14",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "name" : "FirstCompare",
                      "type" : "ExpressionRef"
                   }, {
-                     "locator" : "112:20-112:32",
+                     "locator" : "120:20-120:32",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "name" : "SecondCompare",
                      "type" : "ExpressionRef"
                   } ]
                }, {
-                  "locator" : "112:38-112:49",
+                  "locator" : "120:38-120:49",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "name" : "ThirdCompare",
                   "type" : "ExpressionRef"
                } ]
             }
          }, {
-            "locator" : "114:1-115:6",
+            "locator" : "122:1-123:6",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "SimpleTrue",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "115:3-115:6",
+               "locator" : "123:3-123:6",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
                "value" : "true",
                "type" : "Literal"
             }
          }, {
-            "locator" : "117:1-118:7",
+            "locator" : "125:1-126:7",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "SimpleFalse",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "118:3-118:7",
+               "locator" : "126:3-126:7",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
                "value" : "false",
                "type" : "Literal"
             }
          }, {
-            "locator" : "120:1-121:15",
+            "locator" : "128:1-129:15",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "SimpleAnd",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "121:3-121:15",
+               "locator" : "129:3-129:15",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "And",
                "operand" : [ {
-                  "locator" : "121:3-121:6",
+                  "locator" : "129:3-129:6",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "value" : "true",
                   "type" : "Literal"
                }, {
-                  "locator" : "121:12-121:15",
+                  "locator" : "129:12-129:15",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "value" : "true",
@@ -1188,36 +1245,36 @@
                } ]
             }
          }, {
-            "locator" : "123:1-124:3",
+            "locator" : "131:1-132:3",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
             "name" : "First",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "124:3",
+               "locator" : "132:3",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                "value" : "1",
                "type" : "Literal"
             }
          }, {
-            "locator" : "126:1-127:5",
+            "locator" : "134:1-135:5",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
             "name" : "Second",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "127:3-127:5",
+               "locator" : "135:3-135:5",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                "type" : "Add",
                "operand" : [ {
-                  "locator" : "127:3",
+                  "locator" : "135:3",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "1",
                   "type" : "Literal"
                }, {
-                  "locator" : "127:5",
+                  "locator" : "135:5",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "1",
@@ -1225,30 +1282,30 @@
                } ]
             }
          }, {
-            "locator" : "129:1-130:15",
+            "locator" : "137:1-138:15",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "PEDMASTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "130:3-130:15",
+               "locator" : "138:3-138:15",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "type" : "Divide",
                "operand" : [ {
-                  "locator" : "130:3-130:9",
+                  "locator" : "138:3-138:9",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "type" : "Add",
                   "operand" : [ {
                      "type" : "ToDecimal",
                      "operand" : {
-                        "locator" : "130:4",
+                        "locator" : "138:4",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "3",
                         "type" : "Literal"
                      }
                   }, {
-                     "locator" : "130:6-130:8",
+                     "locator" : "138:6-138:8",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Decimal",
                      "value" : "4.0",
@@ -1257,17 +1314,17 @@
                }, {
                   "type" : "ToDecimal",
                   "operand" : {
-                     "locator" : "130:11-130:15",
+                     "locator" : "138:11-138:15",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "type" : "Add",
                      "operand" : [ {
-                        "locator" : "130:12",
+                        "locator" : "138:12",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "1",
                         "type" : "Literal"
                      }, {
-                        "locator" : "130:14",
+                        "locator" : "138:14",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "2",
@@ -1277,59 +1334,59 @@
                } ]
             }
          }, {
-            "locator" : "132:1-133:16",
+            "locator" : "140:1-141:16",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "CompoundMathTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "133:3-133:16",
+               "locator" : "141:3-141:16",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "type" : "Add",
                "operand" : [ {
                   "type" : "ToDecimal",
                   "operand" : {
-                     "locator" : "133:3",
+                     "locator" : "141:3",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "1",
                      "type" : "Literal"
                   }
                }, {
-                  "locator" : "133:7-133:16",
+                  "locator" : "141:7-141:16",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "name" : "PEDMASTest",
                   "type" : "ExpressionRef"
                } ]
             }
          }, {
-            "locator" : "135:1-136:35",
+            "locator" : "143:1-144:35",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "MultipleCompoundMathTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "136:3-136:35",
+               "locator" : "144:3-144:35",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "type" : "Add",
                "operand" : [ {
-                  "locator" : "136:3-136:18",
+                  "locator" : "144:3-144:18",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "name" : "CompoundMathTest",
                   "type" : "ExpressionRef"
                }, {
-                  "locator" : "136:22-136:35",
+                  "locator" : "144:22-144:35",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                   "type" : "Multiply",
                   "operand" : [ {
-                     "locator" : "136:22-136:31",
+                     "locator" : "144:22-144:31",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                      "name" : "PEDMASTest",
                      "type" : "ExpressionRef"
                   }, {
                      "type" : "ToDecimal",
                      "operand" : {
-                        "locator" : "136:35",
+                        "locator" : "144:35",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                         "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                         "value" : "2",
@@ -1339,19 +1396,19 @@
                } ]
             }
          }, {
-            "locator" : "138:1-139:26",
+            "locator" : "146:1-147:26",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
             "name" : "SimpleRefTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "139:3-139:26",
+               "locator" : "147:3-147:26",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Decimal",
                "name" : "MultipleCompoundMathTest",
                "type" : "ExpressionRef"
             }
          }, {
-            "locator" : "141:1-142:14",
+            "locator" : "149:1-150:14",
             "name" : "SimpleTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -1363,7 +1420,7 @@
                }
             },
             "expression" : {
-               "locator" : "142:2-142:14",
+               "locator" : "150:2-150:14",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -1373,7 +1430,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "142:2-142:14",
+                  "locator" : "150:2-150:14",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -1383,7 +1440,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "142:2-142:12",
+                     "locator" : "150:2-150:12",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "type" : "Retrieve",
@@ -1399,7 +1456,7 @@
                "relationship" : [ ]
             }
          }, {
-            "locator" : "144:1-145:24",
+            "locator" : "152:1-153:24",
             "name" : "CodeTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -1411,7 +1468,7 @@
                }
             },
             "expression" : {
-               "locator" : "145:2-145:24",
+               "locator" : "153:2-153:24",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -1421,7 +1478,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "145:2-145:24",
+                  "locator" : "153:2-153:24",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -1431,7 +1488,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "145:2-145:22",
+                     "locator" : "153:2-153:22",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "codeProperty" : "code",
@@ -1447,7 +1504,7 @@
                      "codes" : {
                         "type" : "ToList",
                         "operand" : {
-                           "locator" : "145:14-145:21",
+                           "locator" : "153:14-153:21",
                            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
                            "name" : "Ouchie",
                            "type" : "CodeRef"
@@ -1458,7 +1515,7 @@
                "relationship" : [ ]
             }
          }, {
-            "locator" : "152:1-155:44",
+            "locator" : "160:1-163:44",
             "name" : "DateTest2",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -1470,7 +1527,7 @@
                }
             },
             "expression" : {
-               "locator" : "153:2-155:44",
+               "locator" : "161:2-163:44",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -1480,7 +1537,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "153:2-153:14",
+                  "locator" : "161:2-161:14",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -1490,7 +1547,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "153:2-153:12",
+                     "locator" : "161:2-161:12",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "type" : "Retrieve",
@@ -1505,7 +1562,7 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "154:3-155:44",
+                  "locator" : "162:3-163:44",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "After",
                   "operand" : [ {
@@ -1516,7 +1573,7 @@
                         "asType" : "{http://hl7.org/fhir}dateTime",
                         "type" : "As",
                         "operand" : {
-                           "locator" : "155:4-155:12",
+                           "locator" : "163:4-163:12",
                            "path" : "onset",
                            "scope" : "c",
                            "type" : "Property",
@@ -1542,7 +1599,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "155:20-155:44",
+                     "locator" : "163:20-163:44",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                      "type" : "DateTime",
                      "year" : {
@@ -1589,7 +1646,7 @@
                }
             }
          }, {
-            "locator" : "157:1-160:91",
+            "locator" : "165:1-168:91",
             "name" : "DateTest3",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -1601,7 +1658,7 @@
                }
             },
             "expression" : {
-               "locator" : "158:2-160:91",
+               "locator" : "166:2-168:91",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -1611,7 +1668,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "158:2-158:14",
+                  "locator" : "166:2-166:14",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -1621,7 +1678,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "158:2-158:12",
+                     "locator" : "166:2-166:12",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "type" : "Retrieve",
@@ -1636,11 +1693,11 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "159:3-160:91",
+                  "locator" : "167:3-168:91",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "And",
                   "operand" : [ {
-                     "locator" : "160:4-160:44",
+                     "locator" : "168:4-168:44",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "type" : "After",
                      "operand" : [ {
@@ -1651,7 +1708,7 @@
                            "asType" : "{http://hl7.org/fhir}dateTime",
                            "type" : "As",
                            "operand" : {
-                              "locator" : "160:4-160:12",
+                              "locator" : "168:4-168:12",
                               "path" : "onset",
                               "scope" : "c",
                               "type" : "Property",
@@ -1677,7 +1734,7 @@
                            }
                         } ]
                      }, {
-                        "locator" : "160:20-160:44",
+                        "locator" : "168:20-168:44",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                         "type" : "DateTime",
                         "year" : {
@@ -1722,7 +1779,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "160:50-160:91",
+                     "locator" : "168:50-168:91",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "type" : "Before",
                      "operand" : [ {
@@ -1733,7 +1790,7 @@
                            "asType" : "{http://hl7.org/fhir}dateTime",
                            "type" : "As",
                            "operand" : {
-                              "locator" : "160:50-160:58",
+                              "locator" : "168:50-168:58",
                               "path" : "onset",
                               "scope" : "c",
                               "type" : "Property",
@@ -1759,7 +1816,7 @@
                            }
                         } ]
                      }, {
-                        "locator" : "160:67-160:91",
+                        "locator" : "168:67-168:91",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                         "type" : "DateTime",
                         "year" : {
@@ -1807,7 +1864,7 @@
                }
             }
          }, {
-            "locator" : "162:1-165:91",
+            "locator" : "170:1-173:91",
             "name" : "DateTest4",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -1819,7 +1876,7 @@
                }
             },
             "expression" : {
-               "locator" : "163:2-165:91",
+               "locator" : "171:2-173:91",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -1829,7 +1886,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "163:2-163:24",
+                  "locator" : "171:2-171:24",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -1839,7 +1896,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "163:2-163:22",
+                     "locator" : "171:2-171:22",
                      "dataType" : "{http://hl7.org/fhir}Condition",
                      "templateId" : "http://hl7.org/fhir/StructureDefinition/Condition",
                      "codeProperty" : "code",
@@ -1855,7 +1912,7 @@
                      "codes" : {
                         "type" : "ToList",
                         "operand" : {
-                           "locator" : "163:14-163:21",
+                           "locator" : "171:14-171:21",
                            "resultTypeName" : "{urn:hl7-org:elm-types:r1}Code",
                            "name" : "Ouchie",
                            "type" : "CodeRef"
@@ -1865,11 +1922,11 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "164:3-165:91",
+                  "locator" : "172:3-173:91",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "And",
                   "operand" : [ {
-                     "locator" : "165:4-165:44",
+                     "locator" : "173:4-173:44",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "type" : "After",
                      "operand" : [ {
@@ -1880,7 +1937,7 @@
                            "asType" : "{http://hl7.org/fhir}dateTime",
                            "type" : "As",
                            "operand" : {
-                              "locator" : "165:4-165:12",
+                              "locator" : "173:4-173:12",
                               "path" : "onset",
                               "scope" : "c",
                               "type" : "Property",
@@ -1906,7 +1963,7 @@
                            }
                         } ]
                      }, {
-                        "locator" : "165:20-165:44",
+                        "locator" : "173:20-173:44",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                         "type" : "DateTime",
                         "year" : {
@@ -1951,7 +2008,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "165:50-165:91",
+                     "locator" : "173:50-173:91",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                      "type" : "Before",
                      "operand" : [ {
@@ -1962,7 +2019,7 @@
                            "asType" : "{http://hl7.org/fhir}dateTime",
                            "type" : "As",
                            "operand" : {
-                              "locator" : "165:50-165:58",
+                              "locator" : "173:50-173:58",
                               "path" : "onset",
                               "scope" : "c",
                               "type" : "Property",
@@ -1988,7 +2045,7 @@
                            }
                         } ]
                      }, {
-                        "locator" : "165:67-165:91",
+                        "locator" : "173:67-173:91",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                         "type" : "DateTime",
                         "year" : {
@@ -2036,7 +2093,7 @@
                }
             }
          }, {
-            "locator" : "167:1-168:63",
+            "locator" : "175:1-176:63",
             "name" : "IntervalDateDefinition",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2048,7 +2105,7 @@
                }
             },
             "expression" : {
-               "locator" : "168:2-168:63",
+               "locator" : "176:2-176:63",
                "lowClosed" : true,
                "highClosed" : false,
                "type" : "Interval",
@@ -2060,7 +2117,7 @@
                   }
                },
                "low" : {
-                  "locator" : "168:11-168:35",
+                  "locator" : "176:11-176:35",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                   "type" : "DateTime",
                   "year" : {
@@ -2105,7 +2162,7 @@
                   }
                },
                "high" : {
-                  "locator" : "168:38-168:62",
+                  "locator" : "176:38-176:62",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                   "type" : "DateTime",
                   "year" : {
@@ -2151,7 +2208,7 @@
                }
             }
          }, {
-            "locator" : "170:1-171:18",
+            "locator" : "178:1-179:18",
             "name" : "IntervalIntegerDefinition",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2163,7 +2220,7 @@
                }
             },
             "expression" : {
-               "locator" : "171:2-171:18",
+               "locator" : "179:2-179:18",
                "lowClosed" : false,
                "highClosed" : true,
                "type" : "Interval",
@@ -2175,24 +2232,24 @@
                   }
                },
                "low" : {
-                  "locator" : "171:11",
+                  "locator" : "179:11",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "1",
                   "type" : "Literal"
                },
                "high" : {
-                  "locator" : "171:14-171:17",
+                  "locator" : "179:14-179:17",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "type" : "Multiply",
                   "operand" : [ {
-                     "locator" : "171:14-171:15",
+                     "locator" : "179:14-179:15",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "10",
                      "type" : "Literal"
                   }, {
-                     "locator" : "171:17",
+                     "locator" : "179:17",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                      "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                      "value" : "3",
@@ -2201,23 +2258,23 @@
                }
             }
          }, {
-            "locator" : "173:1-174:34",
+            "locator" : "181:1-182:34",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "IntervalIntegerReferenceTestDoesntWork",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "174:5-174:34",
+               "locator" : "182:5-182:34",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "In",
                "operand" : [ {
-                  "locator" : "174:5",
+                  "locator" : "182:5",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Integer",
                   "valueType" : "{urn:hl7-org:elm-types:r1}Integer",
                   "value" : "5",
                   "type" : "Literal"
                }, {
-                  "locator" : "174:10-174:34",
+                  "locator" : "182:10-182:34",
                   "name" : "IntervalIntegerDefinition",
                   "type" : "ExpressionRef",
                   "resultTypeSpecifier" : {
@@ -2230,7 +2287,7 @@
                } ]
             }
          }, {
-            "locator" : "176:1-179:78",
+            "locator" : "184:1-187:78",
             "name" : "IntervalTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2242,7 +2299,7 @@
                }
             },
             "expression" : {
-               "locator" : "177:2-179:78",
+               "locator" : "185:2-187:78",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -2252,7 +2309,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "177:2-177:11",
+                  "locator" : "185:2-185:11",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -2262,7 +2319,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "177:2-177:9",
+                     "locator" : "185:2-185:9",
                      "name" : "CodeTest",
                      "type" : "ExpressionRef",
                      "resultTypeSpecifier" : {
@@ -2276,7 +2333,7 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "178:3-179:78",
+                  "locator" : "186:3-187:78",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "In",
                   "operand" : [ {
@@ -2287,7 +2344,7 @@
                         "asType" : "{http://hl7.org/fhir}dateTime",
                         "type" : "As",
                         "operand" : {
-                           "locator" : "179:4-179:12",
+                           "locator" : "187:4-187:12",
                            "path" : "onset",
                            "scope" : "c",
                            "type" : "Property",
@@ -2313,7 +2370,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "179:17-179:78",
+                     "locator" : "187:17-187:78",
                      "lowClosed" : true,
                      "highClosed" : false,
                      "type" : "Interval",
@@ -2325,7 +2382,7 @@
                         }
                      },
                      "low" : {
-                        "locator" : "179:26-179:50",
+                        "locator" : "187:26-187:50",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                         "type" : "DateTime",
                         "year" : {
@@ -2370,7 +2427,7 @@
                         }
                      },
                      "high" : {
-                        "locator" : "179:53-179:77",
+                        "locator" : "187:53-187:77",
                         "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                         "type" : "DateTime",
                         "year" : {
@@ -2418,17 +2475,17 @@
                }
             }
          }, {
-            "locator" : "181:1-182:23",
+            "locator" : "189:1-190:23",
             "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
             "name" : "FirstExists",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
             "expression" : {
-               "locator" : "182:2-182:23",
+               "locator" : "190:2-190:23",
                "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                "type" : "Exists",
                "operand" : {
-                  "locator" : "182:8-182:23",
+                  "locator" : "190:8-190:23",
                   "name" : "IntervalTest",
                   "type" : "ExpressionRef",
                   "resultTypeSpecifier" : {
@@ -2441,7 +2498,7 @@
                }
             }
          }, {
-            "locator" : "184:1-185:13",
+            "locator" : "192:1-193:13",
             "name" : "SimpleRetrieveReferenceTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2453,7 +2510,7 @@
                }
             },
             "expression" : {
-               "locator" : "185:2-185:13",
+               "locator" : "193:2-193:13",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -2463,7 +2520,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "185:2-185:13",
+                  "locator" : "193:2-193:13",
                   "alias" : "s",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -2473,7 +2530,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "185:2-185:11",
+                     "locator" : "193:2-193:11",
                      "name" : "SimpleTest",
                      "type" : "ExpressionRef",
                      "resultTypeSpecifier" : {
@@ -2488,7 +2545,7 @@
                "relationship" : [ ]
             }
          }, {
-            "locator" : "187:1-188:59",
+            "locator" : "195:1-196:59",
             "name" : "RetrieveReferenceWithFilterTest",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2500,7 +2557,7 @@
                }
             },
             "expression" : {
-               "locator" : "188:2-188:59",
+               "locator" : "196:2-196:59",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -2510,7 +2567,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "188:2-188:11",
+                  "locator" : "196:2-196:11",
                   "alias" : "c",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -2520,7 +2577,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "188:2-188:9",
+                     "locator" : "196:2-196:9",
                      "name" : "CodeTest",
                      "type" : "ExpressionRef",
                      "resultTypeSpecifier" : {
@@ -2534,7 +2591,7 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "188:13-188:59",
+                  "locator" : "196:13-196:59",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "After",
                   "operand" : [ {
@@ -2545,7 +2602,7 @@
                         "asType" : "{http://hl7.org/fhir}dateTime",
                         "type" : "As",
                         "operand" : {
-                           "locator" : "188:19-188:27",
+                           "locator" : "196:19-196:27",
                            "path" : "onset",
                            "scope" : "c",
                            "type" : "Property",
@@ -2571,7 +2628,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "188:35-188:59",
+                     "locator" : "196:35-196:59",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                      "type" : "DateTime",
                      "year" : {
@@ -2618,7 +2675,7 @@
                }
             }
          }, {
-            "locator" : "190:1-191:32",
+            "locator" : "198:1-199:32",
             "name" : "MultipleNestedTest1",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2630,7 +2687,7 @@
                }
             },
             "expression" : {
-               "locator" : "191:2-191:32",
+               "locator" : "199:2-199:32",
                "name" : "RetrieveReferenceWithFilterTest",
                "type" : "ExpressionRef",
                "resultTypeSpecifier" : {
@@ -2642,7 +2699,7 @@
                }
             }
          }, {
-            "locator" : "193:1-194:69",
+            "locator" : "201:1-202:69",
             "name" : "MultipleNestedTest2",
             "context" : "Unfiltered",
             "accessLevel" : "Public",
@@ -2654,7 +2711,7 @@
                }
             },
             "expression" : {
-               "locator" : "194:2-194:69",
+               "locator" : "202:2-202:69",
                "type" : "Query",
                "resultTypeSpecifier" : {
                   "type" : "ListTypeSpecifier",
@@ -2664,7 +2721,7 @@
                   }
                },
                "source" : [ {
-                  "locator" : "194:2-194:22",
+                  "locator" : "202:2-202:22",
                   "alias" : "m",
                   "resultTypeSpecifier" : {
                      "type" : "ListTypeSpecifier",
@@ -2674,7 +2731,7 @@
                      }
                   },
                   "expression" : {
-                     "locator" : "194:2-194:20",
+                     "locator" : "202:2-202:20",
                      "name" : "MultipleNestedTest1",
                      "type" : "ExpressionRef",
                      "resultTypeSpecifier" : {
@@ -2688,7 +2745,7 @@
                } ],
                "relationship" : [ ],
                "where" : {
-                  "locator" : "194:24-194:69",
+                  "locator" : "202:24-202:69",
                   "resultTypeName" : "{urn:hl7-org:elm-types:r1}Boolean",
                   "type" : "Before",
                   "operand" : [ {
@@ -2699,7 +2756,7 @@
                         "asType" : "{http://hl7.org/fhir}dateTime",
                         "type" : "As",
                         "operand" : {
-                           "locator" : "194:30-194:36",
+                           "locator" : "202:30-202:36",
                            "path" : "onset",
                            "scope" : "m",
                            "type" : "Property",
@@ -2725,7 +2782,7 @@
                         }
                      } ]
                   }, {
-                     "locator" : "194:45-194:69",
+                     "locator" : "202:45-202:69",
                      "resultTypeName" : "{urn:hl7-org:elm-types:r1}DateTime",
                      "type" : "DateTime",
                      "year" : {

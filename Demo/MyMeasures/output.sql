@@ -190,21 +190,6 @@ RETURN
              WHERE  [PatientBirthDateTest].[birthDate] < ((SELECT TOP 1 DATEFROMPARTS(1971, 1, 1) AS [_Result])))) AS [_sourceTable]
 GO
 --
--- start Patient
---
-DROP FUNCTION Patient
-GO
-CREATE FUNCTION Patient
-( )
-RETURNS TABLE 
-AS
-RETURN 
-    SELECT TOP 1 *
-    FROM   (SELECT [_sourceTable].*,
-                   [_sourceTable].[id] AS [_Context]
-            FROM   [patient] AS [_sourceTable]) AS [_UNUSED]
-GO
---
 -- start StartOfTest
 --
 DROP FUNCTION StartOfTest
@@ -214,15 +199,12 @@ CREATE FUNCTION StartOfTest
 RETURNS TABLE 
 AS
 RETURN 
-    (SELECT TOP 1 [low] AS [low],
-                  [hi] AS [hi],
-                  1 AS [lowClosed],
-                  1 AS [hiClosed]
-     FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
-                          [Measurement_Period].[hi] AS [hi],
-                          [Measurement_Period].[lowClosed] AS [lowClosed],
-                          [Measurement_Period].[hiClosed] AS [hiClosed]
-             FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_UNUSED])
+    SELECT TOP 1 [_sourceTable].[low] AS [_Result]
+    FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                         [Measurement_Period].[hi] AS [hi],
+                         [Measurement_Period].[lowClosed] AS [lowClosed],
+                         [Measurement_Period].[hiClosed] AS [hiClosed]
+            FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable]
 GO
 --
 -- start QuantityTest
@@ -238,11 +220,87 @@ RETURN
                   'years' AS [units])
 GO
 --
--- start Flexible_Sigmoidoscopy_Performed
+-- start DateMathTest
 --
-DROP FUNCTION Flexible_Sigmoidoscopy_Performed
+DROP FUNCTION DateMathTest
 GO
-CREATE FUNCTION Flexible_Sigmoidoscopy_Performed
+CREATE FUNCTION DateMathTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 CASE (SELECT [op2].[units]
+                        FROM   ((SELECT TOP 1 5 AS [value],
+                                              'years' AS [units])) AS [op2]) WHEN 'years' THEN DATEADD(year, (SELECT -[op2].[value]
+                                                                                                              FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                    'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                     FROM   ((SELECT TOP 1 DATEFROMPARTS(2020, 1, 1) AS [_Result])) AS [op1])) WHEN 'months' THEN DATEADD(month, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                  FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                                                                                                                                        'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                         FROM   ((SELECT TOP 1 DATEFROMPARTS(2020, 1, 1) AS [_Result])) AS [op1])) WHEN 'weeks' THEN DATEADD(week, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                          'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           FROM   ((SELECT TOP 1 DATEFROMPARTS(2020, 1, 1) AS [_Result])) AS [op1])) WHEN 'days' THEN DATEADD(day, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           FROM   ((SELECT TOP 1 DATEFROMPARTS(2020, 1, 1) AS [_Result])) AS [op1])) END AS [_Result])
+GO
+--
+-- start ReferenceDateMathTest
+--
+DROP FUNCTION ReferenceDateMathTest
+GO
+CREATE FUNCTION ReferenceDateMathTest
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    (SELECT TOP 1 CASE (SELECT [op2].[units]
+                        FROM   ((SELECT TOP 1 [QuantityTest].[value] AS [value],
+                                              [QuantityTest].[units] AS [units]
+                                 FROM   [QuantityTest]() AS [QuantityTest])) AS [op2]) WHEN 'years' THEN DATEADD(year, (SELECT -[op2].[value]
+                                                                                                                        FROM   ((SELECT TOP 1 [QuantityTest].[value] AS [value],
+                                                                                                                                              [QuantityTest].[units] AS [units]
+                                                                                                                                 FROM   [QuantityTest]() AS [QuantityTest])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                         FROM   ((SELECT TOP 1 [StartOfTest].[_Result] AS [_Result]
+                                                                                                                                                                                                  FROM   [StartOfTest]() AS [StartOfTest])) AS [op1])) WHEN 'months' THEN DATEADD(month, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                          FROM   ((SELECT TOP 1 [QuantityTest].[value] AS [value],
+                                                                                                                                                                                                                                                                                                                [QuantityTest].[units] AS [units]
+                                                                                                                                                                                                                                                                                                   FROM   [QuantityTest]() AS [QuantityTest])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                           FROM   ((SELECT TOP 1 [StartOfTest].[_Result] AS [_Result]
+                                                                                                                                                                                                                                                                                                                                                                    FROM   [StartOfTest]() AS [StartOfTest])) AS [op1])) WHEN 'weeks' THEN DATEADD(week, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                          FROM   ((SELECT TOP 1 [QuantityTest].[value] AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                [QuantityTest].[units] AS [units]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                   FROM   [QuantityTest]() AS [QuantityTest])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           FROM   ((SELECT TOP 1 [StartOfTest].[_Result] AS [_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    FROM   [StartOfTest]() AS [StartOfTest])) AS [op1])) WHEN 'days' THEN DATEADD(day, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        FROM   ((SELECT TOP 1 [QuantityTest].[value] AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              [QuantityTest].[units] AS [units]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 FROM   [QuantityTest]() AS [QuantityTest])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         FROM   ((SELECT TOP 1 [StartOfTest].[_Result] AS [_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  FROM   [StartOfTest]() AS [StartOfTest])) AS [op1])) END AS [_Result])
+GO
+--
+-- start Patient
+--
+DROP FUNCTION Patient
+GO
+CREATE FUNCTION Patient
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT TOP 1 *
+    FROM   (SELECT [_sourceTable].*,
+                   [_sourceTable].[id] AS [_Context]
+            FROM   [patient] AS [_sourceTable]) AS [_UNUSED]
+GO
+--
+-- start FlexibleSigmoidoscopyPerformed
+--
+DROP FUNCTION FlexibleSigmoidoscopyPerformed
+GO
+CREATE FUNCTION FlexibleSigmoidoscopyPerformed
 ( )
 RETURNS TABLE 
 AS
@@ -256,21 +314,55 @@ RETURN
                          display,
                          ver
             FROM   [Flexible_Sigmoidoscopy]()) AS codeTable
-           ON [_sourceTable].[code_coding_code] = codeTable.code
-              AND [_sourceTable].[code_coding_system] = codeTable.codesystem
+           ON [_sourceTable].[code_coding_code] = [codeTable].[code]
+              AND [_sourceTable].[code_coding_system] = [codeTable].[codesystem]
     WHERE  [_sourceTable].[status] = ((SELECT TOP 1 'completed' AS [_Result]))
-           AND ([_sourceTable].[performedPeriod_end] >= ((SELECT TOP 1 [low] AS [_Result]
+           AND ([_sourceTable].[performedPeriod_end] >= ((SELECT TOP 1 CASE (SELECT [op2].[units]
+                                                                             FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                   'years' AS [units])) AS [op2]) WHEN 'years' THEN DATEADD(year, (SELECT -[op2].[value]
+                                                                                                                                                                   FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                         'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                          FROM   (SELECT TOP 1 [_sourceTable].[hi] AS [_Result]
+                                                                                                                                                                                                                                  FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                                                                                                                                                                                                                                                       [Measurement_Period].[hi] AS [hi],
+                                                                                                                                                                                                                                                       [Measurement_Period].[lowClosed] AS [lowClosed],
+                                                                                                                                                                                                                                                       [Measurement_Period].[hiClosed] AS [hiClosed]
+                                                                                                                                                                                                                                          FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable]) AS [op1])) WHEN 'months' THEN DATEADD(month, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                  FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                        'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                         FROM   (SELECT TOP 1 [_sourceTable].[hi] AS [_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                 FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                      [Measurement_Period].[hi] AS [hi],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                      [Measurement_Period].[lowClosed] AS [lowClosed],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                      [Measurement_Period].[hiClosed] AS [hiClosed]
+                                                                                                                                                                                                                                                                                                                                                                                                                                         FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable]) AS [op1])) WHEN 'weeks' THEN DATEADD(week, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      FROM   (SELECT TOP 1 [_sourceTable].[hi] AS [_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   [Measurement_Period].[hi] AS [hi],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   [Measurement_Period].[lowClosed] AS [lowClosed],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   [Measurement_Period].[hiClosed] AS [hiClosed]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable]) AS [op1])) WHEN 'days' THEN DATEADD(day, (SELECT -[op2].[value]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          FROM   ((SELECT TOP 1 5 AS [value],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                'years' AS [units])) AS [op2]), (SELECT [op1].[_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 FROM   (SELECT TOP 1 [_sourceTable].[hi] AS [_Result]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              [Measurement_Period].[hi] AS [hi],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              [Measurement_Period].[lowClosed] AS [lowClosed],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              [Measurement_Period].[hiClosed] AS [hiClosed]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable]) AS [op1])) END AS [_Result]
                                                           FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
                                                                                [Measurement_Period].[hi] AS [hi],
                                                                                [Measurement_Period].[lowClosed] AS [lowClosed],
                                                                                [Measurement_Period].[hiClosed] AS [hiClosed]
-                                                                  FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_UNUSED]))
-                AND [_sourceTable].[performedPeriod_end] <= ((SELECT TOP 1 [hi] AS [_Result]
+                                                                  FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable]))
+                AND [_sourceTable].[performedPeriod_end] <= ((SELECT TOP 1 [_sourceTable].[hi] AS [_Result]
                                                               FROM   (SELECT TOP 1 [Measurement_Period].[low] AS [low],
                                                                                    [Measurement_Period].[hi] AS [hi],
                                                                                    [Measurement_Period].[lowClosed] AS [lowClosed],
                                                                                    [Measurement_Period].[hiClosed] AS [hiClosed]
-                                                                      FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_UNUSED])))
+                                                                      FROM   [Measurement_Period]() AS [Measurement_Period]) AS [_sourceTable])))
 GO
 --
 -- start AgeInYearsTest
@@ -312,6 +404,21 @@ AS
 RETURN 
     (SELECT [PatientContextRetrieveFilteredConditions].*
      FROM   [PatientContextRetrieveFilteredConditions]() AS [PatientContextRetrieveFilteredConditions])
+GO
+--
+-- start CountPatientsFlexibleSigmoidoscopyPerformed
+--
+DROP FUNCTION CountPatientsFlexibleSigmoidoscopyPerformed
+GO
+CREATE FUNCTION CountPatientsFlexibleSigmoidoscopyPerformed
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(1) AS [_Result]
+    FROM   (SELECT DISTINCT [_Context]
+            FROM   ((SELECT [FlexibleSigmoidoscopyPerformed].*
+                     FROM   [FlexibleSigmoidoscopyPerformed]() AS [FlexibleSigmoidoscopyPerformed])) AS [_UNUSED]) AS [_sourceTable]
 GO
 --
 -- start CrossContextCountPatientsWithConditions
@@ -528,8 +635,8 @@ RETURN
                          display,
                          ver
             FROM   [Ouchie]()) AS codeTable
-           ON [_sourceTable].[code_coding_code] = codeTable.code
-              AND [_sourceTable].[code_coding_system] = codeTable.codesystem
+           ON [_sourceTable].[code_coding_code] = [codeTable].[code]
+              AND [_sourceTable].[code_coding_system] = [codeTable].[codesystem]
 GO
 --
 -- start DateTest2
@@ -578,8 +685,8 @@ RETURN
                          display,
                          ver
             FROM   [Ouchie]()) AS codeTable
-           ON [_sourceTable].[code_coding_code] = codeTable.code
-              AND [_sourceTable].[code_coding_system] = codeTable.codesystem
+           ON [_sourceTable].[code_coding_code] = [codeTable].[code]
+              AND [_sourceTable].[code_coding_system] = [codeTable].[codesystem]
     WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
            AND [_sourceTable].[onsetDateTime] < ((SELECT TOP 1 DATETIME2FROMPARTS(2022, 2, 1, 0, 0, 0, 0, 7) AS [_Result]))
 GO

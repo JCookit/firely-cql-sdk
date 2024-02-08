@@ -52,21 +52,26 @@ define "PatientCountBirthDateTest":
 define "PatientCountBirthDateTestWithFilter":
 	Count("PatientBirthDateTest" p where p.birthDate before @1971-01-01)
 
-context Patient
-
-
 define "StartOfTest":
-  Interval[start of "Measurement Period", end of "Measurement Period"]
+  start of "Measurement Period"
 
 define "QuantityTest":
   5 years
 
-define "Flexible Sigmoidoscopy Performed":
+define "DateMathTest":
+  @2020-01-01 - 5 years
+
+define "ReferenceDateMathTest":
+  StartOfTest - QuantityTest
+
+context Patient
+
+
+
+define "FlexibleSigmoidoscopyPerformed":
 	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
 		where FlexibleSigmoidoscopy.status = 'completed'
-		//	and FlexibleSigmoidoscopy.performed in Interval[(end of "Measurement Period") - 5 years, end of "Measurement Period"]
-			and FlexibleSigmoidoscopy.performed in Interval[(start of "Measurement Period"), end of "Measurement Period"]
-
+			and FlexibleSigmoidoscopy.performed in Interval[(end of "Measurement Period") - 5 years, end of "Measurement Period"]
 
 define "AgeInYearsTest":
   Patient.birthDate
@@ -81,6 +86,9 @@ define "PatientContextRetrieveReference":
 
 
 context Unfiltered
+
+define "CountPatientsFlexibleSigmoidoscopyPerformed":
+  Count("FlexibleSigmoidoscopyPerformed")
 
 define "CrossContextCountPatientsWithConditions":
 	Count("PatientContextRetrieveFilteredConditions")

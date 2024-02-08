@@ -1026,14 +1026,7 @@ namespace Hl7.Cql.Compiler
                     {
                         new SelectScalarExpression
                         {
-                            Expression = new ColumnReferenceExpression
-                            {
-                                MultiPartIdentifier = new MultiPartIdentifier
-                                {
-                                    // TODO: hardcode this because this is what the Interval type builds
-                                    Identifiers = { new Identifier { Value = intervalPart, QuoteType = QuoteType.SquareBracket } }
-                                },
-                            },
+                            Expression = BuildColumnReference(SourceTableAlias, intervalPart),
                             ColumnName = new IdentifierOrValueExpression 
                             { 
                                 Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } 
@@ -1047,7 +1040,7 @@ namespace Hl7.Cql.Compiler
                             new QueryDerivedTable
                             {
                                 QueryExpression = FindQuerySpecification(operand),
-                                Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
+                                Alias = new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }
                             }
                         }
                     },
@@ -1340,8 +1333,9 @@ namespace Hl7.Cql.Compiler
             var lowClosed = ie.lowClosed;
             var hiClosed = ie.highClosed;
 
-            if (lowExpression.DataType != hiExpression.DataType)
-                throw new InvalidOperationException("low and hi of Interval must be same type");
+            // TODO disabling this check for now because type is not being full tracked
+            //if (lowExpression.DataType != hiExpression.DataType)
+            //    throw new InvalidOperationException("low and hi of Interval must be same type");
 
             var (lowTuple, lowFrom) = UnwrapScalarSelectElements(lowExpression);
             var (hiTuple, hiFrom) = UnwrapScalarSelectElements(hiExpression);
@@ -1845,6 +1839,7 @@ namespace Hl7.Cql.Compiler
                 typeof(object),      // TODO: infer type?;
                 ctx.CqlContext);
 
+            // TODO this is possibly duplicative, but worry about combining later
             static SelectScalarExpression BuildSimpleColumnReference(Identifier sourceTableIdentifier, string destinationcolumnName)
             {
                 return new SelectScalarExpression
@@ -2441,33 +2436,13 @@ namespace Hl7.Cql.Compiler
                             {
                                 ComparisonType = BooleanComparisonType.Equals,
                                 FirstExpression = sqlTableEntry.DefaultCodingCodeExpression,
-                                SecondExpression = new ColumnReferenceExpression
-                                {
-                                    MultiPartIdentifier = new MultiPartIdentifier
-                                    {
-                                        Identifiers =
-                                        {
-                                            new Identifier { Value = "codeTable" },
-                                            new Identifier { Value = "code" }
-                                        }
-                                    }
-                                }
+                                SecondExpression = BuildColumnReference("codeTable", "code") 
                             },
                             SecondExpression = new BooleanComparisonExpression
                             {
                                 ComparisonType = BooleanComparisonType.Equals,
                                 FirstExpression = sqlTableEntry.DefaultCodingCodeSystemExpression,
-                                SecondExpression = new ColumnReferenceExpression
-                                {
-                                    MultiPartIdentifier = new MultiPartIdentifier
-                                    {
-                                        Identifiers =
-                                        {
-                                            new Identifier { Value = "codeTable" },
-                                            new Identifier { Value = "codesystem" }
-                                        }
-                                    }
-                                }
+                                SecondExpression = BuildColumnReference("codeTable", "codesystem")
                             }
                         }
                     });
@@ -2561,17 +2536,7 @@ namespace Hl7.Cql.Compiler
                         // a Patient object in a Patient context (just the id column)
                         {
                             "patient",
-                            new ColumnReferenceExpression
-                            {
-                                MultiPartIdentifier = new MultiPartIdentifier
-                                {
-                                    Identifiers =
-                                    {
-                                        new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket },
-                                        new Identifier { Value = "id", QuoteType = QuoteType.SquareBracket }
-                                    }
-                                }
-                            }
+                            BuildColumnReference(SourceTableAlias, "id")
                         },
                     }
                 }
@@ -2588,21 +2553,9 @@ namespace Hl7.Cql.Compiler
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "procedure",
-                    DefaultCodingCodeExpression = new ColumnReferenceExpression
-                    {
-                        MultiPartIdentifier = new MultiPartIdentifier
-                        { 
-                            // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_code", QuoteType = QuoteType.SquareBracket } }
-                        }
-                    },
-                    DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
-                    {
-                        MultiPartIdentifier = new MultiPartIdentifier
-                        {
-                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_system", QuoteType = QuoteType.SquareBracket } }
-                        }
-                    },
+                    // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
+                    DefaultCodingCodeExpression = BuildColumnReference(SourceTableAlias, "code_coding_code"),
+                    DefaultCodingCodeSystemExpression = BuildColumnReference(SourceTableAlias, "code_coding_system"),
                     ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
                     {
                         // a Condition object in a Patient context (extract the patient id)
@@ -2611,19 +2564,9 @@ namespace Hl7.Cql.Compiler
                             new FunctionCall
                             {
                                 FunctionName = new Identifier { Value = "JSON_VALUE" },
-                                Parameters =
+                                Parameters = 
                                 {
-                                    new ColumnReferenceExpression
-                                    {
-                                        MultiPartIdentifier = new MultiPartIdentifier
-                                        {
-                                            Identifiers =
-                                            {
-                                                new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket },
-                                                new Identifier { Value = "subject_string", QuoteType = QuoteType.SquareBracket }
-                                            }
-                                        }
-                                    },
+                                    BuildColumnReference(SourceTableAlias, "subject_string"),
                                     new StringLiteral { Value = "$.id" }
                                 }
                             }
@@ -2636,21 +2579,8 @@ namespace Hl7.Cql.Compiler
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "condition",
-                    DefaultCodingCodeExpression = new ColumnReferenceExpression
-                    {
-                        MultiPartIdentifier = new MultiPartIdentifier
-                        { 
-                            // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_code", QuoteType = QuoteType.SquareBracket } }
-                        }
-                    },
-                    DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
-                    {
-                        MultiPartIdentifier = new MultiPartIdentifier
-                        {
-                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_system", QuoteType = QuoteType.SquareBracket } }
-                        }
-                    },
+                    DefaultCodingCodeExpression = BuildColumnReference(SourceTableAlias, "code_coding_code"),
+                    DefaultCodingCodeSystemExpression = BuildColumnReference(SourceTableAlias, "code_coding_system"),
                     ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
                     {
                         // a Condition object in a Patient context (extract the patient id)
@@ -2661,17 +2591,7 @@ namespace Hl7.Cql.Compiler
                                 FunctionName = new Identifier { Value = "JSON_VALUE" },
                                 Parameters =
                                 {
-                                    new ColumnReferenceExpression
-                                    {
-                                        MultiPartIdentifier = new MultiPartIdentifier
-                                        {
-                                            Identifiers =
-                                            {
-                                                new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket },
-                                                new Identifier { Value = "subject_string", QuoteType = QuoteType.SquareBracket}
-                                            }
-                                        }
-                                    },
+                                    BuildColumnReference(SourceTableAlias, "subject_string"),
                                     new StringLiteral { Value = "$.id" }
                                 }
                             }
@@ -2684,19 +2604,21 @@ namespace Hl7.Cql.Compiler
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "observation",
-                    DefaultCodingCodeExpression = new ColumnReferenceExpression
+                    DefaultCodingCodeExpression = BuildColumnReference(SourceTableAlias, "code_coding_code"),
+                    DefaultCodingCodeSystemExpression = BuildColumnReference(SourceTableAlias, "code_coding_system"),                    ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
                     {
-                        MultiPartIdentifier = new MultiPartIdentifier
-                        { 
-                            // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_code", QuoteType = QuoteType.SquareBracket } }
-                        }
-                    },
-                    DefaultCodingCodeSystemExpression = new ColumnReferenceExpression
-                    {
-                        MultiPartIdentifier = new MultiPartIdentifier
+                        // a Condition object in a Patient context (extract the patient id)
                         {
-                            Identifiers = { new Identifier { Value = SourceTableAlias, QuoteType = QuoteType.SquareBracket }, new Identifier { Value = "code_coding_system", QuoteType = QuoteType.SquareBracket } }
+                            "patient",
+                            new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "subject_string"),
+                                    new StringLiteral { Value = "$.id" }
+                                }
+                            }
                         }
                     }
                 }
@@ -2749,10 +2671,10 @@ namespace Hl7.Cql.Compiler
                         DataType = typeof(CqlInterval<>) // TODO: extract base type
                     };
 
-                    intervalTuple.Values.Add("low", BuildColumnReferenceExpression(functionName, "low"));
-                    intervalTuple.Values.Add("hi", BuildColumnReferenceExpression(functionName, "hi"));
-                    intervalTuple.Values.Add("lowClosed", BuildColumnReferenceExpression(functionName, "lowClosed"));
-                    intervalTuple.Values.Add("hiClosed", BuildColumnReferenceExpression(functionName, "hiClosed"));
+                    intervalTuple.Values.Add("low", BuildColumnReference(functionName, "low"));
+                    intervalTuple.Values.Add("hi", BuildColumnReference(functionName, "hi"));
+                    intervalTuple.Values.Add("lowClosed", BuildColumnReference(functionName, "lowClosed"));
+                    intervalTuple.Values.Add("hiClosed", BuildColumnReference(functionName, "hiClosed"));
 
                     return WrapInSelectScalarExpression(intervalTuple, fromClause, ctx);
                 }
@@ -2802,10 +2724,28 @@ namespace Hl7.Cql.Compiler
                 }
                 else
                 {
-                    return WrapInSelectScalarExpression(
-                        BuildColumnReferenceExpression(functionName, ResultColumnName),
-                        fromClause,
-                        ctx);
+                    // better be a primitive type (or it should have been handled above)
+                    var primitiveType = ere.resultTypeName != null ? TypeResolver.ResolveType(ere.resultTypeName.Name) : null;
+
+                    if (primitiveType == typeof(CqlQuantity))
+                    {
+                        var intervalTuple = new ScalarTuple
+                        {
+                            DataType = typeof(CqlQuantity) 
+                        };
+
+                        intervalTuple.Values.Add("value", BuildColumnReference(functionName, "value"));
+                        intervalTuple.Values.Add("units", BuildColumnReference(functionName, "units"));
+
+                        return WrapInSelectScalarExpression(intervalTuple, fromClause, ctx);
+                    }
+                    else
+                    {
+                        return WrapInSelectScalarExpression(
+                            BuildColumnReference(functionName, ResultColumnName),
+                            fromClause,
+                            ctx);
+                    }
                 }
             }
             else
@@ -2838,22 +2778,6 @@ namespace Hl7.Cql.Compiler
                     SqlExpression.FragmentTypes.SelectStatement,
                     typeof(object),   // TODO: infer type
                     ctx.CqlContext);
-            }
-
-
-            ColumnReferenceExpression BuildColumnReferenceExpression(string functionName, string columnName)
-            {
-                return new ColumnReferenceExpression
-                {
-                    MultiPartIdentifier = new MultiPartIdentifier
-                    {
-                        Identifiers =
-                            {
-                                new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket },
-                                new Identifier { Value = columnName, QuoteType = QuoteType.SquareBracket }
-                            }
-                    }
-                };
             }
         }
 
@@ -2962,177 +2886,85 @@ namespace Hl7.Cql.Compiler
 
             var op1 = TranslateExpression(binaryExpression.operand[0], ctx);
             var op2 = TranslateExpression(binaryExpression.operand[1], ctx);
+            ScalarExpression fragment;
 
             // do special things if dealing with dates; for now just check the type of first arg
-            if (binaryExpression.operand[0].resultTypeName != null)
+            var op1Type = binaryExpression.operand[0].resultTypeName != null 
+                ? TypeResolver.ResolveType(binaryExpression.operand[0].resultTypeName.Name) 
+                : null;
+
+            if (op1Type != null
+                && (op1Type == typeof(CqlDate) || op1Type == typeof(CqlDateTime)))
             {
-                var op1Type = TypeResolver.ResolveType(binaryExpression.operand[0].resultTypeName.Name) ?? throw new InvalidOperationException();
-                if (op1Type == typeof(CqlDate) || op1Type == typeof(CqlDateTime))
+                // this just became date math --- second param better be Quantity and this better be + or -
+                // (cql->elm might enforce this, not sure)
+
+                var op2Type = TypeResolver.ResolveType(binaryExpression.operand[1].resultTypeName.Name) ?? throw new InvalidOperationException();
+                if (op2Type != typeof(CqlQuantity) || (binType != BinaryExpressionType.Add && binType != BinaryExpressionType.Subtract))
+                    throw new InvalidOperationException();
+
+                // expression becomes
+                // case (select top(1) units from op2) 
+                // when 'years' THEN DATEADD(year, (select top(1) value from op2), op1) end
+                // when 'months' THEN DATEADD(month, (select top(1) value from op2), op1) end
+                // etc
+
+                fragment = new SimpleCaseExpression
                 {
-                    // this just became date math --- second param better be Quantity and this better be + or -
-                    // (cql->elm might enforce this, not sure)
-
-                    var op2Type = TypeResolver.ResolveType(binaryExpression.operand[1].resultTypeName.Name) ?? throw new InvalidOperationException();
-                    if (op2Type != typeof(CqlQuantity) || (binType != BinaryExpressionType.Add && binType != BinaryExpressionType.Subtract))
-                        throw new InvalidOperationException();
-
-                    // expression becomes
-                    // case (select top(1) units from op2) 
-                    // when 'years' THEN DATEADD(year, (select top(1) value from op2), op1) end
-                    // when 'months' THEN DATEADD(month, (select top(1) value from op2), op1) end
-                    // etc
-
-                    SimpleCaseExpression caseFragment = new SimpleCaseExpression
+                    InputExpression = new ScalarSubquery
                     {
-                        InputExpression = new ScalarSubquery
+                        QueryExpression = new QuerySpecification
                         {
-                            QueryExpression = new QuerySpecification
+                            SelectElements =
                             {
-                                SelectElements =
+                                new SelectScalarExpression
                                 {
-                                    new SelectScalarExpression
-                                    {
-                                        Expression = new ColumnReferenceExpression
-                                        {
-                                            MultiPartIdentifier = new MultiPartIdentifier
-                                            {
-                                                Identifiers =
-                                                {
-                                                    new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket },
-                                                    new Identifier { Value = "units", QuoteType = QuoteType.SquareBracket }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                FromClause = new FromClause
-                                {
-                                    TableReferences =
-                                    {
-                                        new QueryDerivedTable
-                                        {
-                                            QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
-                                            Alias = new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        WhenClauses =
-                        {
-                            new SimpleWhenClause
-                            {
-                                WhenExpression = new StringLiteral { Value = "years" },
-                                ThenExpression = new FunctionCall
-                                {
-                                    FunctionName = new Identifier { Value = "DATEADD" },
-                                    Parameters =
-                                    {
-                                        new ColumnReferenceExpression
-                                        {
-                                            MultiPartIdentifier = new MultiPartIdentifier
-                                            {
-                                                Identifiers =
-                                                {
-                                                    new Identifier { Value = "year" }
-                                                }
-                                            }
-                                        },
-                                        new ScalarSubquery
-                                        {
-                                            QueryExpression = new QuerySpecification
-                                            {
-                                                SelectElements =
-                                                {
-                                                    new SelectScalarExpression
-                                                    {
-                                                        Expression = new ColumnReferenceExpression
-                                                        {
-                                                            MultiPartIdentifier = new MultiPartIdentifier
-                                                            {
-                                                                Identifiers =
-                                                                {
-                                                                    new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket },
-                                                                    new Identifier { Value = "value", QuoteType = QuoteType.SquareBracket }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                FromClause = new FromClause
-                                                {
-                                                    TableReferences =
-                                                    {
-                                                        new QueryDerivedTable
-                                                        {
-                                                            QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
-                                                            Alias = new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        new ScalarSubquery
-                                        {
-                                            QueryExpression = new QuerySpecification
-                                            {
-                                                SelectElements =
-                                                {
-                                                    new SelectScalarExpression
-                                                    {
-                                                        Expression = new ColumnReferenceExpression
-                                                        {
-                                                            MultiPartIdentifier = new MultiPartIdentifier
-                                                            {
-                                                                Identifiers =
-                                                                {
-                                                                    new Identifier { Value = "op1", QuoteType = QuoteType.SquareBracket },
-                                                                    new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                FromClause = new FromClause
-                                                {
-                                                    TableReferences =
-                                                    {
-                                                        new QueryDerivedTable
-                                                        {
-                                                            QueryExpression = (op1.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
-                                                            Alias = new Identifier { Value = "op1", QuoteType = QuoteType.SquareBracket }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        },
-                                    }
+                                    Expression = BuildColumnReference("op2", "units")
                                 }
                             },
+                            FromClause = new FromClause
+                            {
+                                TableReferences =
+                            {
+                                new QueryDerivedTable
+                                {
+                                    QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
+                                    Alias = new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket }
+                                }
+                            }
+                            }
                         }
-                    };
-                }
+                    },
+                    WhenClauses =
+                    {
+                        BuildWhenClause(binType, op1, op2, "years", "year"),
+                        BuildWhenClause(binType, op1, op2, "months", "month"),
+                        BuildWhenClause(binType, op1, op2, "weeks", "week"),
+                        BuildWhenClause(binType, op1, op2, "days", "day"),
+                    }
+                };
             }
-
-
-            ScalarExpression fragment = new BinaryExpression
+            else
             {
-                BinaryExpressionType = binType,
-                FirstExpression = new ScalarSubquery
+                fragment = new BinaryExpression
                 {
-                    QueryExpression = new QueryParenthesisExpression
+                    BinaryExpressionType = binType,
+                    FirstExpression = new ScalarSubquery
                     {
-                        QueryExpression = (op1.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression
-                    }
-                },
-                SecondExpression = new ScalarSubquery
-                {
-                    QueryExpression = new QueryParenthesisExpression
+                        QueryExpression = new QueryParenthesisExpression
+                        {
+                            QueryExpression = (op1.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression
+                        }
+                    },
+                    SecondExpression = new ScalarSubquery
                     {
-                        QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression
+                        QueryExpression = new QueryParenthesisExpression
+                        {
+                            QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression
+                        }
                     }
-                }
-            };
+                };
+            }
             return WrapInSelectScalarExpression(fragment, null, ctx);
 
 
@@ -3156,6 +2988,108 @@ namespace Hl7.Cql.Compiler
             //    fragment = parenthesis;
             //}
             //return WrapInSelectScalarExpression(fragment, ReconcileScalarFromClauses(lhsFrom, rhsFrom), ctx);
+
+            static SimpleWhenClause BuildWhenClause(
+                BinaryExpressionType binType,
+                SqlExpression op1,
+                SqlExpression op2,
+                string cqlUnit,
+                string sqlDatePart)
+            {
+                return new SimpleWhenClause
+                {
+                    WhenExpression = new StringLiteral { Value = cqlUnit },
+                    ThenExpression = new FunctionCall
+                    {
+                        FunctionName = new Identifier { Value = "DATEADD" },
+                        Parameters =
+                        {
+                            // datepart
+                            new ColumnReferenceExpression
+                            {
+                                MultiPartIdentifier = new MultiPartIdentifier
+                                {
+                                    Identifiers =
+                                    {
+                                        new Identifier { Value = sqlDatePart }
+                                    }
+                                }
+                            },
+                            // number
+                            new ScalarSubquery
+                            {
+                                QueryExpression = new QuerySpecification
+                                {
+                                    SelectElements =
+                                    {
+                                        new SelectScalarExpression
+                                        {
+                                            Expression = binType == BinaryExpressionType.Add
+                                                        ? BuildColumnReference("op2", "value")
+                                                        : new Microsoft.SqlServer.TransactSql.ScriptDom.UnaryExpression
+                                                        {
+                                                            UnaryExpressionType = UnaryExpressionType.Negative,
+                                                            Expression = BuildColumnReference("op2", "value")
+                                                        }
+                                        }
+                                    },
+                                    FromClause = new FromClause
+                                    {
+                                        TableReferences =
+                                        {
+                                            new QueryDerivedTable
+                                            {
+                                                QueryExpression = (op2.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
+                                                Alias = new Identifier { Value = "op2", QuoteType = QuoteType.SquareBracket }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            // date
+                            new ScalarSubquery
+                            {
+                                QueryExpression = new QuerySpecification
+                                {
+                                    SelectElements =
+                                    {
+                                        new SelectScalarExpression
+                                        {
+                                            Expression = BuildColumnReference("op1", ResultColumnName)
+                                        }
+                                    },
+                                    FromClause = new FromClause
+                                    {
+                                        TableReferences =
+                                        {
+                                            new QueryDerivedTable
+                                            {
+                                                QueryExpression = (op1.SqlFragment as SelectStatement ?? throw new InvalidOperationException())?.QueryExpression,
+                                                Alias = new Identifier { Value = "op1", QuoteType = QuoteType.SquareBracket }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    }
+                };
+            }
+        }
+
+        private static ColumnReferenceExpression BuildColumnReference(string tableName, string columnName)
+        {
+            return new ColumnReferenceExpression
+            {
+                MultiPartIdentifier = new MultiPartIdentifier
+                {
+                    Identifiers =
+                    {
+                        new Identifier { Value = tableName, QuoteType = QuoteType.SquareBracket },
+                        new Identifier { Value = columnName, QuoteType = QuoteType.SquareBracket }
+                    }
+                }
+            };
         }
 
         private FromClause ReconcileScalarFromClauses(params FromClause[] froms)
