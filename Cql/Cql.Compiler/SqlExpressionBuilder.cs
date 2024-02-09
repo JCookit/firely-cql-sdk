@@ -490,7 +490,7 @@ namespace Hl7.Cql.Compiler
                     result = After(after, ctx);
                     break;
                 case AliasRef ar:
-                    // result = AliasRef(ar, ctx);
+                    result = AliasRef(ar, ctx);
                     break;
                 case AllTrue alt:
                     // result = AllTrue(alt, ctx);
@@ -514,7 +514,7 @@ namespace Hl7.Cql.Compiler
                     result = Before(before, ctx);
                     break;
                 case CalculateAgeAt caa:
-                    // result = CalculateAgeAt(caa, ctx);
+                    result = CalculateAgeAt(caa, ctx);
                     break;
                 case CalculateAge ca:
                     // result = CalculateAge(ca, ctx);
@@ -1007,6 +1007,58 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        private SqlExpression? CalculateAgeAt(CalculateAgeAt caa, SqlExpressionBuilderContext ctx)
+        {
+            var birthdate = TranslateExpression(caa.operand[0], ctx);
+            var asOf = TranslateExpression(caa.operand[1], ctx);
+            var precision = caa.precision;
+
+            if (precision != DateTimePrecision.Year)
+            {
+                // don't know anything but years yet
+                throw new NotImplementedException();
+            }
+
+            // YOU ARE HERE
+
+            // create
+            // SELECT select DATEDIFF(YEAR, birthDate, asOf) - 
+            //   CASE WHEN(MONTH(birthDate) > MONTH(asOf)) OR (MONTH(birthDate) = MONTH(asOf) AND DAY(birthDate) > DAY(asOf))
+            //     THEN 1
+            //     ELSE 0
+            //   END
+
+
+            throw new NotImplementedException();
+        }
+
+        private SqlExpression? AliasRef(AliasRef ar, SqlExpressionBuilderContext ctx)
+        {
+            // HACK
+            // this shows up when it is a reference to the Result column in the where clause of a query
+            // so the right thing to do is construct a SELECT Result statement
+
+            var selectStatement = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = BuildColumnReference(ResultColumnName),
+                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName } }
+                        }
+                    },
+                }
+            };
+
+            return new SqlExpression(
+                selectStatement,
+                SqlExpression.FragmentTypes.SelectStatement,
+                typeof(object));
+        }
+
         private SqlExpression? Start(Start start, SqlExpressionBuilderContext ctx)
             => BuildIntervalPartQuery(start.operand, "low", ctx);
 
@@ -1067,92 +1119,62 @@ namespace Hl7.Cql.Compiler
             var sourceExpression = TranslateExpression(ce.source, ctx);
             var sourceSelect = sourceExpression.SqlFragment as SelectStatement ?? throw new InvalidOperationException();
 
+            // there are 3 cases:
+            // 1. unfiltered context counting an unfiltered context.  returns a single scalar
+            //    - that's just a Count(1) of the subquery
+            // 2. unfiltered context counting a filtered context.  returns a single scalar (the count of top-level items in the filtered context)
+            //    - that's a Count(DISTINCT _Context) of the subquery
+            // 3. filtered context counting a filtered context.  returns a list of scalars
+            //    - does a COUNT(1) GroupBy _Context
+
+            var baseQuery = FindQuerySpecification(sourceSelect);
+            var firstTableReference = baseQuery.FromClause.TableReferences.Single();
+
+            var functionName = (firstTableReference as SchemaObjectFunctionTableReference)?.SchemaObject?.BaseIdentifier?.Value;
+
             // HACK
-            // are we in unfiltered context?
             // look up the from clause of the sourceExpression
             // - does it match a known def?
             // - if it does, what is the context of that def?
-            //   - if it's something other than unfiltered, do an additional wrapping
-            //
-            // the table of a filtered-context define always contains a _Context column (which should be the unique ids of that context type - ie Patient ids)
-            // the behavior of an unfiltered
-            // Count(<Patient context query>)
-            // is under the covers like
-            // Count(from [Patient] p return <Patient context query>(p))
-            //
-            // <Patient context query> could return a scalar or a list
-            // this wrapping of 'from [Patient] p return' means the <Patient context query> is virtually called N times, building
-            // a list of the results.   So, this could be either a List<scalar> or a List<List<>>
-            // since this is hard to express in SQL, we use the DISTINCT _Context values to form the outer list
-            //
-            // I think this will break down if there is more than one level nesting, but lots of other things will break in that case too
+            //   - is it something other than unfiltered
+            bool countingFilteredDefine = 
+                !String.IsNullOrEmpty(functionName)
+                && ctx.Definitions.TryGetValue(this.ThisLibraryKey, functionName, out var definition)
+                && !String.Equals(definition?.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase);
+            bool isFilteredContext = InFilteredContext(ctx);
 
-            if (String.IsNullOrEmpty(ctx.CqlContext)
-             || String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
+            // used for case 1 & 3
+            SelectScalarExpression count1 = new SelectScalarExpression
             {
-                var query = FindQuerySpecification(sourceSelect);
-                var firstTableReference = query.FromClause.TableReferences.Single();
-
-                var functionName = (firstTableReference as SchemaObjectFunctionTableReference)?.SchemaObject?.BaseIdentifier?.Value;
-
-                if (!String.IsNullOrEmpty(functionName)
-                 && ctx.Definitions.TryGetValue(this.ThisLibraryKey, functionName, out var definition)
-                 && !String.Equals(definition?.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
+                Expression = new FunctionCall
                 {
-                    // <sourceSelect> becomes
-                    // SELECT DISTINCT _Context FROM (<sourceSelect>) AS UNUSED
-                    sourceSelect = new SelectStatement
-                    {
-                        QueryExpression = new QuerySpecification
-                        {
-                            SelectElements =
-                            {
-                                new SelectScalarExpression
-                                {
-                                    Expression = new ColumnReferenceExpression
-                                    {
-                                        MultiPartIdentifier = new MultiPartIdentifier
-                                        {
-                                            Identifiers = { new Identifier { Value = ContextColumnName, QuoteType = QuoteType.SquareBracket } }
-                                        }
-                                    }
-                                }
-                            },
-                            FromClause = new FromClause
-                            {
-                                TableReferences =
-                                {
-                                    new QueryDerivedTable
-                                    {
-                                        QueryExpression = sourceSelect.QueryExpression,
-                                        Alias = new Identifier { Value = UnusedTableName, QuoteType = QuoteType.SquareBracket }
-                                    }
-                                }
-                            },
-                            UniqueRowFilter = UniqueRowFilter.Distinct,
-                        }
-                    };
-                }
+                    FunctionName = new Identifier { Value = "COUNT" },
+                    Parameters = { new IntegerLiteral { Value = "1" } },
+                },
+                ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } }
+            };
+            // used for case 2
+            SelectScalarExpression countDistinctContext = new SelectScalarExpression
+            {
+                Expression = new FunctionCall
+                {
+                    FunctionName = new Identifier { Value = "COUNT" },
+                    UniqueRowFilter = UniqueRowFilter.Distinct,
+                    Parameters = { BuildColumnReference(SourceTableAlias, ContextColumnName) },
+                },
+                ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } }
+            };
 
-            }
-
-
-            // wrap in SELECT COUNT(1) AS Result FROM <sourceSelect>
+            // base query 
             var select = new SelectStatement
             {
                 QueryExpression = new QuerySpecification
                 {
                     SelectElements =
                     {
-                        new SelectScalarExpression
-                        {
-                            Expression = new FunctionCall
-                            {
-                                FunctionName = new Identifier { Value = "COUNT" },
-                                Parameters = {new IntegerLiteral { Value = "1" } },
-                            },
-                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket } }
-                        }
+                        !isFilteredContext && countingFilteredDefine
+                                ? countDistinctContext   // case 2
+                                : count1,                // case 1 & 3
                     },
                     FromClause = new FromClause
                     {
@@ -1168,42 +1190,29 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            // TODO:  decide how to handle scalar results in filtered contexts
-            // (list results work in the limited case where counting is done at the unfiltered context due to the _Context column)
-            // 
-            //if (!String.IsNullOrEmpty(ctx.CqlContext)
-            //    && !String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase))
-            //{
-            //    // in a filtered context, group by the _Context column
-            //    var querySpec = FindQuerySpecification(select);
+            // for case 3, add a groupby
+            if (isFilteredContext && countingFilteredDefine)
+            {
+                // add Context column and groupby
 
-            //    querySpec.GroupByClause = new GroupByClause
-            //    {
-            //        GroupingSpecifications =
-            //        {
-            //            new ExpressionGroupingSpecification
-            //            {
-            //                Expression = new ColumnReferenceExpression
-            //                {
-            //                    MultiPartIdentifier = new MultiPartIdentifier
-            //                    {
-            //                        Identifiers = { new Identifier { Value = ContextColumnName } }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    };
-            //    querySpec.SelectElements.Add(new SelectScalarExpression
-            //    {
-            //        Expression = new ColumnReferenceExpression
-            //        {
-            //            MultiPartIdentifier = new MultiPartIdentifier
-            //            {
-            //                Identifiers = { new Identifier { Value = ContextColumnName } }
-            //            }
-            //        }
-            //    });
-            //}
+                var querySpec = FindQuerySpecification(select);
+
+                querySpec.SelectElements.Add(new SelectScalarExpression
+                {
+                    Expression = BuildColumnReference(SourceTableAlias, ContextColumnName),
+                });
+
+                querySpec.GroupByClause = new GroupByClause
+                {
+                    GroupingSpecifications =
+                    {
+                        new ExpressionGroupingSpecification
+                        {
+                            Expression = BuildColumnReference(SourceTableAlias, ContextColumnName)
+                        }
+                    }
+                };
+            }
 
             return new SqlExpression(
                 select, 
@@ -1244,11 +1253,24 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
+            if (InFilteredContext(ctx))
+            {
+                // remove the top 1 
+                var querySpec = FindQuerySpecification(select);
+                querySpec.TopRowFilter = null;
+            }
+
             return new SqlExpression(
                 select, 
                 SqlExpression.FragmentTypes.SelectStatement, 
                 listExpression.DataType,
                 ctx.CqlContext);
+        }
+
+        private bool InFilteredContext(SqlExpressionBuilderContext ctx)
+        {
+            return !String.IsNullOrEmpty(ctx.CqlContext)
+                && !String.Equals(ctx.CqlContext, "unfiltered", StringComparison.InvariantCultureIgnoreCase);
         }
 
         private SqlExpression? Exists(Exists ex, SqlExpressionBuilderContext ctx)
@@ -3092,6 +3114,22 @@ namespace Hl7.Cql.Compiler
             };
         }
 
+        // HACK - overload which does not require table name -- really shouldn't use this
+        private static ColumnReferenceExpression BuildColumnReference(string columnName)
+        {
+            return new ColumnReferenceExpression
+            {
+                MultiPartIdentifier = new MultiPartIdentifier
+                {
+                    Identifiers =
+                    {
+                        new Identifier { Value = columnName, QuoteType = QuoteType.SquareBracket }
+                    }
+                }
+            };
+        }
+
+
         private FromClause ReconcileScalarFromClauses(params FromClause[] froms)
         {
             if (froms.Length == 0)
@@ -3295,7 +3333,7 @@ namespace Hl7.Cql.Compiler
         // and then when wrapping, tables are added
         //
         //
-        // NOTE:  an explicit TOP 1 is added to indicate a scalar. 
+        // NOTE:  an explicit TOP 1 is added to indicate a scalar.   (unless in filtered context!)
         private SqlExpression WrapInSelectScalarExpression(
             ScalarTuple scalarTuple, 
             FromClause? fromClause,
@@ -3306,7 +3344,9 @@ namespace Hl7.Cql.Compiler
             QuerySpecification querySpecification = new QuerySpecification
             {
                 FromClause = fromClause,
-                TopRowFilter = new TopRowFilter
+                TopRowFilter = InFilteredContext(ctx) 
+                    ? null 
+                    : new TopRowFilter
                 {
                     Expression = new IntegerLiteral { Value = "1" }
                 }
@@ -3383,6 +3423,7 @@ namespace Hl7.Cql.Compiler
 
                 // TODO: strong assumption here is that the 0th element is the one we want
                 // to be complete, it is the one marked "_Result" or a tuple if we get that fancy
+                // there also could be a Context column, but that also should be last
                 SelectScalarExpression selectScalarExpression = querySpecification.SelectElements[0] as SelectScalarExpression ?? throw new InvalidOperationException();
 
                 return (selectScalarExpression.Expression, querySpecification.FromClause);
@@ -3519,6 +3560,8 @@ namespace Hl7.Cql.Compiler
         /// <exception cref="InvalidOperationException"></exception>
         private SqlExpression WrapBooleanExpressionInSelectStatement(BooleanExpression booleanExpression, FromClause fromClause, SqlExpressionBuilderContext ctx)
         {
+            // TODO:  add top 1?
+
             var booleanSelectStatement = new SelectStatement
             {
                 QueryExpression = new QuerySpecification
@@ -3542,6 +3585,17 @@ namespace Hl7.Cql.Compiler
                     FromClause = fromClause
                 }
             };
+
+            // HACK -- if in filtered context, add the context column
+            if (InFilteredContext(ctx))
+            {
+                var querySpecification = FindQuerySpecification(booleanSelectStatement);
+                querySpecification.SelectElements.Add(new SelectScalarExpression
+                {
+                    // TODO: table name here
+                    Expression = BuildColumnReference(ContextColumnName),
+                });
+            }
 
             return new SqlExpression(
                 booleanSelectStatement,

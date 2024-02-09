@@ -34,9 +34,11 @@ define "AllPatients":
 define "AllPatientsCount":
   Count("AllPatients")
 
-// NOTE:  Count("AllPatients") > 5 doesn't currently work because of table join logic; but works if you separate the steps
 define "AllPatientCountBoolean":
   "AllPatientsCount" > 5
+
+define "AllPatientCountBoolean2":
+  Count("AllPatients") > 5 
 
 define "ExplicitSingletonFrom":
   singleton from "AllPatients"
@@ -64,9 +66,13 @@ define "DateMathTest":
 define "ReferenceDateMathTest":
   StartOfTest - QuantityTest
 
+
+// Patient context defines
+
 context Patient
 
-
+define "InInitialPopulation":
+  AgeInYearsAt(@2013-01-01) >= 16
 
 define "FlexibleSigmoidoscopyPerformed":
 	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
@@ -81,9 +87,21 @@ define "PatientContextRetrieveFilteredConditions":
   		where 
 			(c.onset) after @2020-01-01T00:00:00.000Z 
 
+define "PatientContextConditionsCount":
+  Count("PatientContextRetrieveFilteredConditions")
+
+/* aggregate operations in a filtered context don't work yet 
+define "PatientContextConditionsCountBoolean":
+  Count("PatientContextRetrieveFilteredConditions") > 5
+
+define "PatientContextStupidAdd":
+  Count("PatientContextRetrieveFilteredConditions") + 5
+  */
+
 define "PatientContextRetrieveReference":
   "PatientContextRetrieveFilteredConditions"
 
+// Unfiltered
 
 context Unfiltered
 
@@ -93,14 +111,18 @@ define "CountPatientsFlexibleSigmoidoscopyPerformed":
 define "CrossContextCountPatientsWithConditions":
 	Count("PatientContextRetrieveFilteredConditions")
 
-/*
-define "DoesThisWork":
-       Count(from "PatientContextRetrieveFilteredConditions" pcr where Count(pcr) > 2)
+	/*
+define "ThisWontWorkProbablyEver":
+       Count("PatientContextRetrieveFilteredConditions" pcr where Count(pcr) > 2)
+	   */
+
+define "CountPatientsOfAge":
+  Count("InInitialPopulation" IP where IP = true)
+
+define "Denominator":
+  Count("InInitialPopulation")
 
 
-define "CrossContextCountPatientWithTwoConditions":
-	Count("PatientContextCountConditions" pccc where pccc >= 2)
-*/
 
 /* this requires joining patient table with the define result
 define "Test":

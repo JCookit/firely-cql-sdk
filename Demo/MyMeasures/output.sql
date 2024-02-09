@@ -133,6 +133,22 @@ RETURN
     FROM   [AllPatientsCount]() AS [AllPatientsCount]
 GO
 --
+-- start AllPatientCountBoolean2
+--
+DROP FUNCTION AllPatientCountBoolean2
+GO
+CREATE FUNCTION AllPatientCountBoolean2
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF (((SELECT TOP 1 COUNT(1) AS [_Result]
+                  FROM   ((SELECT [AllPatients].*
+                           FROM   [AllPatients]() AS [AllPatients])) AS [_sourceTable])) > ((SELECT TOP 1 5 AS [_Result])), 1, 0) AS [_Result]
+    FROM   ((SELECT [AllPatients].*
+             FROM   [AllPatients]() AS [AllPatients])) AS [_sourceTable]
+GO
+--
 -- start ExplicitSingletonFrom
 --
 DROP FUNCTION ExplicitSingletonFrom
@@ -290,10 +306,24 @@ CREATE FUNCTION Patient
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT TOP 1 *
+    SELECT *
     FROM   (SELECT [_sourceTable].*,
                    [_sourceTable].[id] AS [_Context]
             FROM   [patient] AS [_sourceTable]) AS [_UNUSED]
+GO
+--
+-- start InInitialPopulation
+--
+DROP FUNCTION InInitialPopulation
+GO
+CREATE FUNCTION InInitialPopulation
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT IIF ([Patient].[birthDate] >= ((SELECT TOP 1 DATEFROMPARTS(1970, 1, 1) AS [_Result])), 1, 0) AS [_Result],
+           [_Context]
+    FROM   [Patient]() AS [Patient]
 GO
 --
 -- start FlexibleSigmoidoscopyPerformed
@@ -393,6 +423,22 @@ RETURN
     WHERE  [_sourceTable].[onsetDateTime] > ((SELECT TOP 1 DATETIME2FROMPARTS(2020, 1, 1, 0, 0, 0, 0, 7) AS [_Result]))
 GO
 --
+-- start PatientContextConditionsCount
+--
+DROP FUNCTION PatientContextConditionsCount
+GO
+CREATE FUNCTION PatientContextConditionsCount
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT   COUNT(1) AS [_Result],
+             [_sourceTable].[_Context]
+    FROM     ((SELECT [PatientContextRetrieveFilteredConditions].*
+               FROM   [PatientContextRetrieveFilteredConditions]() AS [PatientContextRetrieveFilteredConditions])) AS [_sourceTable]
+    GROUP BY [_sourceTable].[_Context]
+GO
+--
 -- start PatientContextRetrieveReference
 --
 DROP FUNCTION PatientContextRetrieveReference
@@ -415,10 +461,9 @@ CREATE FUNCTION CountPatientsFlexibleSigmoidoscopyPerformed
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT COUNT(1) AS [_Result]
-    FROM   (SELECT DISTINCT [_Context]
-            FROM   ((SELECT [FlexibleSigmoidoscopyPerformed].*
-                     FROM   [FlexibleSigmoidoscopyPerformed]() AS [FlexibleSigmoidoscopyPerformed])) AS [_UNUSED]) AS [_sourceTable]
+    SELECT COUNT(DISTINCT [_sourceTable].[_Context]) AS [_Result]
+    FROM   ((SELECT [FlexibleSigmoidoscopyPerformed].*
+             FROM   [FlexibleSigmoidoscopyPerformed]() AS [FlexibleSigmoidoscopyPerformed])) AS [_sourceTable]
 GO
 --
 -- start CrossContextCountPatientsWithConditions
@@ -430,10 +475,38 @@ CREATE FUNCTION CrossContextCountPatientsWithConditions
 RETURNS TABLE 
 AS
 RETURN 
-    SELECT COUNT(1) AS [_Result]
-    FROM   (SELECT DISTINCT [_Context]
-            FROM   ((SELECT [PatientContextRetrieveFilteredConditions].*
-                     FROM   [PatientContextRetrieveFilteredConditions]() AS [PatientContextRetrieveFilteredConditions])) AS [_UNUSED]) AS [_sourceTable]
+    SELECT COUNT(DISTINCT [_sourceTable].[_Context]) AS [_Result]
+    FROM   ((SELECT [PatientContextRetrieveFilteredConditions].*
+             FROM   [PatientContextRetrieveFilteredConditions]() AS [PatientContextRetrieveFilteredConditions])) AS [_sourceTable]
+GO
+--
+-- start CountPatientsOfAge
+--
+DROP FUNCTION CountPatientsOfAge
+GO
+CREATE FUNCTION CountPatientsOfAge
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(DISTINCT [_sourceTable].[_Context]) AS [_Result]
+    FROM   ((SELECT [InInitialPopulation].*
+             FROM   [InInitialPopulation]() AS [InInitialPopulation]
+             WHERE  [_Result] = ((SELECT TOP 1 1 AS [_Result])))) AS [_sourceTable]
+GO
+--
+-- start Denominator
+--
+DROP FUNCTION Denominator
+GO
+CREATE FUNCTION Denominator
+( )
+RETURNS TABLE 
+AS
+RETURN 
+    SELECT COUNT(DISTINCT [_sourceTable].[_Context]) AS [_Result]
+    FROM   ((SELECT [InInitialPopulation].*
+             FROM   [InInitialPopulation]() AS [InInitialPopulation])) AS [_sourceTable]
 GO
 --
 -- start FirstCompare

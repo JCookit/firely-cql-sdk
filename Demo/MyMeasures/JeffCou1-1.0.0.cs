@@ -33,6 +33,7 @@ public class JeffCou1_1_0_0
     internal Lazy<IEnumerable<Patient>> __AllPatients;
     internal Lazy<int?> __AllPatientsCount;
     internal Lazy<bool?> __AllPatientCountBoolean;
+    internal Lazy<bool?> __AllPatientCountBoolean2;
     internal Lazy<Patient> __ExplicitSingletonFrom;
     internal Lazy<IEnumerable<Patient>> __PatientBirthDateTest;
     internal Lazy<int?> __PatientCountBirthDateTest;
@@ -45,9 +46,13 @@ public class JeffCou1_1_0_0
     internal Lazy<IEnumerable<Procedure>> __FlexibleSigmoidoscopyPerformed;
     internal Lazy<Date> __AgeInYearsTest;
     internal Lazy<IEnumerable<Condition>> __PatientContextRetrieveFilteredConditions;
+    internal Lazy<int?> __PatientContextConditionsCount;
+    internal Lazy<bool?> __PatientContextConditionsCountBoolean;
+    internal Lazy<int?> __PatientContextStupidAdd;
     internal Lazy<IEnumerable<Condition>> __PatientContextRetrieveReference;
     internal Lazy<int?> __CountPatientsFlexibleSigmoidoscopyPerformed;
     internal Lazy<int?> __CrossContextCountPatientsWithConditions;
+    internal Lazy<int?> __ThisWontWorkProbablyEver;
     internal Lazy<bool?> __FirstCompare;
     internal Lazy<bool?> __SecondCompare;
     internal Lazy<bool?> __ThirdCompare;
@@ -97,6 +102,7 @@ public class JeffCou1_1_0_0
         __AllPatients = new Lazy<IEnumerable<Patient>>(this.AllPatients_Value);
         __AllPatientsCount = new Lazy<int?>(this.AllPatientsCount_Value);
         __AllPatientCountBoolean = new Lazy<bool?>(this.AllPatientCountBoolean_Value);
+        __AllPatientCountBoolean2 = new Lazy<bool?>(this.AllPatientCountBoolean2_Value);
         __ExplicitSingletonFrom = new Lazy<Patient>(this.ExplicitSingletonFrom_Value);
         __PatientBirthDateTest = new Lazy<IEnumerable<Patient>>(this.PatientBirthDateTest_Value);
         __PatientCountBirthDateTest = new Lazy<int?>(this.PatientCountBirthDateTest_Value);
@@ -109,9 +115,13 @@ public class JeffCou1_1_0_0
         __FlexibleSigmoidoscopyPerformed = new Lazy<IEnumerable<Procedure>>(this.FlexibleSigmoidoscopyPerformed_Value);
         __AgeInYearsTest = new Lazy<Date>(this.AgeInYearsTest_Value);
         __PatientContextRetrieveFilteredConditions = new Lazy<IEnumerable<Condition>>(this.PatientContextRetrieveFilteredConditions_Value);
+        __PatientContextConditionsCount = new Lazy<int?>(this.PatientContextConditionsCount_Value);
+        __PatientContextConditionsCountBoolean = new Lazy<bool?>(this.PatientContextConditionsCountBoolean_Value);
+        __PatientContextStupidAdd = new Lazy<int?>(this.PatientContextStupidAdd_Value);
         __PatientContextRetrieveReference = new Lazy<IEnumerable<Condition>>(this.PatientContextRetrieveReference_Value);
         __CountPatientsFlexibleSigmoidoscopyPerformed = new Lazy<int?>(this.CountPatientsFlexibleSigmoidoscopyPerformed_Value);
         __CrossContextCountPatientsWithConditions = new Lazy<int?>(this.CrossContextCountPatientsWithConditions_Value);
+        __ThisWontWorkProbablyEver = new Lazy<int?>(this.ThisWontWorkProbablyEver_Value);
         __FirstCompare = new Lazy<bool?>(this.FirstCompare_Value);
         __SecondCompare = new Lazy<bool?>(this.SecondCompare_Value);
         __ThirdCompare = new Lazy<bool?>(this.ThirdCompare_Value);
@@ -285,6 +295,19 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("AllPatientCountBoolean")]
 	public bool? AllPatientCountBoolean() => 
 		__AllPatientCountBoolean.Value;
+
+	private bool? AllPatientCountBoolean2_Value()
+	{
+		var a_ = this.AllPatients();
+		var b_ = context.Operators.CountOrNull<Patient>(a_);
+		var c_ = context.Operators.Greater(b_, (int?)5);
+
+		return c_;
+	}
+
+    [CqlDeclaration("AllPatientCountBoolean2")]
+	public bool? AllPatientCountBoolean2() => 
+		__AllPatientCountBoolean2.Value;
 
 	private Patient ExplicitSingletonFrom_Value()
 	{
@@ -473,6 +496,44 @@ public class JeffCou1_1_0_0
 	public IEnumerable<Condition> PatientContextRetrieveFilteredConditions() => 
 		__PatientContextRetrieveFilteredConditions.Value;
 
+	private int? PatientContextConditionsCount_Value()
+	{
+		var a_ = this.PatientContextRetrieveFilteredConditions();
+		var b_ = context.Operators.CountOrNull<Condition>(a_);
+
+		return b_;
+	}
+
+    [CqlDeclaration("PatientContextConditionsCount")]
+	public int? PatientContextConditionsCount() => 
+		__PatientContextConditionsCount.Value;
+
+	private bool? PatientContextConditionsCountBoolean_Value()
+	{
+		var a_ = this.PatientContextRetrieveFilteredConditions();
+		var b_ = context.Operators.CountOrNull<Condition>(a_);
+		var c_ = context.Operators.Greater(b_, (int?)5);
+
+		return c_;
+	}
+
+    [CqlDeclaration("PatientContextConditionsCountBoolean")]
+	public bool? PatientContextConditionsCountBoolean() => 
+		__PatientContextConditionsCountBoolean.Value;
+
+	private int? PatientContextStupidAdd_Value()
+	{
+		var a_ = this.PatientContextRetrieveFilteredConditions();
+		var b_ = context.Operators.CountOrNull<Condition>(a_);
+		var c_ = context.Operators.Add(b_, (int?)5);
+
+		return c_;
+	}
+
+    [CqlDeclaration("PatientContextStupidAdd")]
+	public int? PatientContextStupidAdd() => 
+		__PatientContextStupidAdd.Value;
+
 	private IEnumerable<Condition> PatientContextRetrieveReference_Value()
 	{
 		var a_ = this.PatientContextRetrieveFilteredConditions();
@@ -507,6 +568,27 @@ public class JeffCou1_1_0_0
     [CqlDeclaration("CrossContextCountPatientsWithConditions")]
 	public int? CrossContextCountPatientsWithConditions() => 
 		__CrossContextCountPatientsWithConditions.Value;
+
+	private int? ThisWontWorkProbablyEver_Value()
+	{
+		var a_ = this.PatientContextRetrieveFilteredConditions();
+		bool? b_(Condition pcr)
+		{
+			var e_ = context.Operators.ToList<Condition>(pcr);
+			var f_ = context.Operators.CountOrNull<Condition>(e_);
+			var g_ = context.Operators.Greater(f_, (int?)2);
+
+			return g_;
+		};
+		var c_ = context.Operators.WhereOrNull<Condition>(a_, b_);
+		var d_ = context.Operators.CountOrNull<Condition>(c_);
+
+		return d_;
+	}
+
+    [CqlDeclaration("ThisWontWorkProbablyEver")]
+	public int? ThisWontWorkProbablyEver() => 
+		__ThisWontWorkProbablyEver.Value;
 
 	private bool? FirstCompare_Value()
 	{
