@@ -937,7 +937,7 @@ namespace Hl7.Cql.Compiler
                     // result = ToConcept(tc, ctx);
                     break;
                 case ToDateTime tdte:
-                    // result = ToDateTime(tdte, ctx);
+                    result = ToDateTime(tdte, ctx);
                     break;
                 case ToDate tde:
                     // result = ToDate(tde, ctx);
@@ -1007,6 +1007,12 @@ namespace Hl7.Cql.Compiler
             return result!;
         }
 
+        private SqlExpression? ToDateTime(ToDateTime tdte, SqlExpressionBuilderContext ctx)
+        {
+            // HACK:  assume noop
+            return TranslateExpression(tdte.operand, ctx);
+        }
+
         private SqlExpression? CalculateAgeAt(CalculateAgeAt caa, SqlExpressionBuilderContext ctx)
         {
             var birthdate = TranslateExpression(caa.operand[0], ctx);
@@ -1019,7 +1025,8 @@ namespace Hl7.Cql.Compiler
                 throw new NotImplementedException();
             }
 
-            // YOU ARE HERE
+            var (birthDateUnwrapped, birthDateFrom) = UnwrapScalarSelectElement(birthdate);
+            var (asOfUnwrapped, asOfFrom) = UnwrapScalarSelectElement(asOf);
 
             // create
             // SELECT select DATEDIFF(YEAR, birthDate, asOf) - 
@@ -1027,9 +1034,117 @@ namespace Hl7.Cql.Compiler
             //     THEN 1
             //     ELSE 0
             //   END
+            var selectStatement = new SelectStatement
+            {
+                QueryExpression = new QuerySpecification
+                {
+                    SelectElements =
+                    {
+                        new SelectScalarExpression
+                        {
+                            Expression = new BinaryExpression
+                            {
+                                BinaryExpressionType = BinaryExpressionType.Subtract,
+                                FirstExpression = new FunctionCall
+                                {
+                                    FunctionName = new Identifier { Value = "DATEDIFF" },
+                                    Parameters =
+                                    {
+                                        new ColumnReferenceExpression { MultiPartIdentifier = new MultiPartIdentifier { Identifiers = { new Identifier { Value = "YEAR" , QuoteType = QuoteType.NotQuoted } } } },
+                                        birthDateUnwrapped,
+                                        asOfUnwrapped
+                                    }
+                                },
+                                SecondExpression = new SearchedCaseExpression
+                                {
+                                    WhenClauses =
+                                    {
+                                        new SearchedWhenClause
+                                        {
+                                            WhenExpression = new BooleanBinaryExpression
+                                            {
+                                                BinaryExpressionType = BooleanBinaryExpressionType.Or,
+                                                FirstExpression = new BooleanParenthesisExpression
+                                                { 
+                                                    Expression = new BooleanComparisonExpression
+                                                    {
+                                                        ComparisonType = BooleanComparisonType.GreaterThan,
+                                                        FirstExpression = new FunctionCall
+                                                        {
+                                                            FunctionName = new Identifier { Value = "MONTH" },
+                                                            Parameters = { birthDateUnwrapped }
+                                                        },
+                                                        SecondExpression = new FunctionCall
+                                                        {
+                                                            FunctionName = new Identifier { Value = "MONTH" },
+                                                            Parameters = { asOfUnwrapped }
+                                                        }
+                                                    }
+                                                },
+                                                SecondExpression = new BooleanParenthesisExpression
+                                                {
+                                                    Expression = new BooleanBinaryExpression
+                                                    {
+                                                        BinaryExpressionType = BooleanBinaryExpressionType.And,
+                                                        FirstExpression = new BooleanComparisonExpression
+                                                        {
+                                                            ComparisonType = BooleanComparisonType.Equals,
+                                                            FirstExpression = new FunctionCall
+                                                            {
+                                                                FunctionName = new Identifier { Value = "MONTH" },
+                                                                Parameters = { birthDateUnwrapped }
+                                                            },
+                                                            SecondExpression = new FunctionCall
+                                                            {
+                                                                FunctionName = new Identifier { Value = "MONTH" },
+                                                                Parameters = { asOfUnwrapped }
+                                                            }
+                                                        },
+                                                        SecondExpression = new BooleanComparisonExpression
+                                                        {
+                                                            ComparisonType = BooleanComparisonType.GreaterThan,
+                                                            FirstExpression = new FunctionCall
+                                                            {
+                                                                FunctionName = new Identifier { Value = "DAY" },
+                                                                Parameters = { birthDateUnwrapped }
+                                                            },
+                                                            SecondExpression = new FunctionCall
+                                                            {
+                                                                FunctionName = new Identifier { Value = "DAY" },
+                                                                Parameters = { asOfUnwrapped }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            ThenExpression = new IntegerLiteral { Value = "1" }
+                                        }
+                                    },
+                                    ElseExpression = new IntegerLiteral { Value = "0" }
+                                }
+                            },
+                            ColumnName = new IdentifierOrValueExpression { Identifier = new Identifier { Value = ResultColumnName } }
+                        }
+                    },
+                    FromClause = ReconcileScalarFromClauses(birthDateFrom, asOfFrom)
+                }
+            };
 
+            // HACK -- if in filtered context, add the context column
+            if (InFilteredContext(ctx))
+            {
+                var querySpecification = FindQuerySpecification(selectStatement);
+                querySpecification.SelectElements.Add(new SelectScalarExpression
+                {
+                    // TODO: table name here
+                    Expression = BuildColumnReference(ContextColumnName),
+                });
+            }
 
-            throw new NotImplementedException();
+            return new SqlExpression(
+                selectStatement,
+                SqlExpression.FragmentTypes.SelectStatementScalar,
+                typeof(int));
         }
 
         private SqlExpression? AliasRef(AliasRef ar, SqlExpressionBuilderContext ctx)
@@ -1395,10 +1510,10 @@ namespace Hl7.Cql.Compiler
             var originalRhs = TranslateExpression(booleanExpression.operand[1], ctx);
             var (unwrappedRhs, rhsFrom) = UnwrapScalarSelectElement(originalRhs);
 
-            ScalarExpression newLhs = originalLhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
+            ScalarExpression newLhs = originalLhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar && !InFilteredContext(ctx)
                     ? WrapInSelectScalarExpression(unwrappedLhs, lhsFrom, ctx, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
                     : unwrappedLhs;
-            ScalarExpression newRhs = originalRhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar
+            ScalarExpression newRhs = originalRhs.FragmentType == SqlExpression.FragmentTypes.SelectStatementScalar && !InFilteredContext(ctx)
                     ? WrapInSelectScalarExpression(unwrappedRhs, rhsFrom, ctx, true).SqlFragment as ScalarSubquery ?? throw new InvalidOperationException()
                     : unwrappedRhs;
 
@@ -1739,7 +1854,7 @@ namespace Hl7.Cql.Compiler
         {
             SelectScalarExpression? selectScalarExpression = null;
 
-            Type sourceTableType;
+            string sourceTableTypeName;
             Identifier sourceTableIdentifier;
             FromClause fromClause;
             string? elmElementType = null; // TODO not sure we can always figure this out?  but works in some cases
@@ -1748,7 +1863,7 @@ namespace Hl7.Cql.Compiler
             {
                 // I think? this is the case where the property source is the result of a Retrieve.   Don't know if this is always true
                 var sourceTable = ctx.GetScope(pe.scope) ?? throw new InvalidOperationException();
-                sourceTableType = sourceTable.Type;
+                sourceTableTypeName = sourceTable.Type.Name;
                 sourceTableIdentifier = sourceTable.SqlExpression as Identifier ?? throw new InvalidOperationException();
                 elmElementType = (sourceTable.ElmExpression as Elm.Retrieve)?.dataType.Name;
 
@@ -1774,15 +1889,22 @@ namespace Hl7.Cql.Compiler
                 // TODO this seems to be a pattern
                 // this means the source is the result of another expression
                 var sourceExpression = TranslateExpression(pe.source, ctx);
-                sourceTableType = sourceExpression.DataType;
-                sourceTableIdentifier = new Identifier { Value = sourceTableType.Name, QuoteType = QuoteType.SquareBracket };
+                sourceTableTypeName = sourceExpression.DataType.Name;
+
+                // sigh.  HACK that happens for patient.birthDate.value, where the source table 
+                if (sourceTableTypeName == "Object")
+                {
+                    sourceTableTypeName = "Patient";
+                }
+
+                sourceTableIdentifier = new Identifier { Value = sourceTableTypeName, QuoteType = QuoteType.SquareBracket };
 
                 // the from clause is the same as the one from the source expression
                 fromClause = FindTableReference(sourceExpression.SqlFragment);
             }
 
             // map the property name to a column name -- TODO: should be a fancier lookup
-            switch (sourceTableType.Name.ToLowerInvariant())
+            switch (sourceTableTypeName.ToLowerInvariant())
             {
                 case "condition":
                     {
@@ -1799,6 +1921,7 @@ namespace Hl7.Cql.Compiler
                         switch (pe.path)
                         {
                             case "birthDate":
+                            case "birthDate.value":  // HACK
                                 selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "birthDate");
                                 break;
                         }
@@ -2663,6 +2786,17 @@ namespace Hl7.Cql.Compiler
             // a list (currently) does select *
             bool isScalar = (ere.resultTypeSpecifier == null || !(ere.resultTypeSpecifier is Elm.ListTypeSpecifier));
 
+            // seems to be a massive HACK
+            // if it otherwise looks like a scalar, it _might_ be Patient
+            bool isHackyPatientQuery = false;
+            if (isScalar 
+                && ere.resultTypeSpecifier == null
+                && ere.resultTypeName == null
+                && String.Equals(functionName, "Patient", StringComparison.InvariantCultureIgnoreCase))
+            {
+                isHackyPatientQuery = true;
+            }
+
             FromClause fromClause = new FromClause
             {
                 TableReferences =
@@ -2681,7 +2815,7 @@ namespace Hl7.Cql.Compiler
                 }
             };
 
-            if (isScalar)
+            if (isScalar && !isHackyPatientQuery)
             {
                 // if it's a tuple type, then add all the columns; else just add Result
                 // TODO: for now, hardcode Interval but eventually this has to be generic
@@ -2780,19 +2914,18 @@ namespace Hl7.Cql.Compiler
                             QueryExpression = new QuerySpecification
                             {
                                 SelectElements =
-                            {
-                                new SelectStarExpression
                                 {
-                                    Qualifier = new MultiPartIdentifier
+                                    new SelectStarExpression
                                     {
-                                        Identifiers =
+                                        Qualifier = new MultiPartIdentifier
                                         {
-                                            new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket }
+                                            Identifiers =
+                                            {
+                                                new Identifier { Value = functionName, QuoteType = QuoteType.SquareBracket }
+                                            }
                                         }
                                     }
-                                }
-                            },
-
+                                },
                                 FromClause = fromClause
                             },
                         },
