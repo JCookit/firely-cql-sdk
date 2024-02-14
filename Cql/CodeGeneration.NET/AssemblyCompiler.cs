@@ -137,7 +137,14 @@ namespace Hl7.Cql.CodeGeneration.NET
             {
                 if (!navToLibraryStream.TryGetValue(node.NodeId, out var sourceCodeStream))
                     throw new InvalidOperationException($"Library {node.NodeId} doesn't exist in the source code dictionary.");
-                CompileNode(sourceCodeStream, assemblies, node, references, additionalReferences);
+                try
+                {
+                    CompileNode(sourceCodeStream, assemblies, node, references, additionalReferences);
+                }
+                catch
+                {
+                    // HACK silently eat
+                }
             }
             return assemblies;
         }

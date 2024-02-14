@@ -17,16 +17,33 @@ context Patient
 define "InInitialPopulation":
   AgeInYearsAt((end of "Measurement Period") - 5 years) >= 50
 
-define "FlexibleSigmoidoscopyPerformed":
+define "FlexibleSigmoidoscopyConditions":
 	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
+
+define "FlexibleSigmoidoscopyPerformed":
+	"FlexibleSigmoidoscopyConditions" FlexibleSigmoidoscopy
 		where FlexibleSigmoidoscopy.status = 'completed'
 			and FlexibleSigmoidoscopy.performed in Interval[(end of "Measurement Period") - 5 years, end of "Measurement Period"]
 
-define "FlexibleSigmoidoscopyPerformed2":
-	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
-		with AgeInYearsAt(@2020-01-01) >= 50
-		where FlexibleSigmoidoscopy.status = 'completed'
-			and FlexibleSigmoidoscopy.performed in Interval[(end of "Measurement Period") - 5 years, end of "Measurement Period"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+// Unfiltered
+// 
 
 context Unfiltered
 
@@ -38,6 +55,11 @@ define "Denominator":
 
 define "Percentage":
   (Numerator / Denominator) * 100
+
+
+
+
+
 
 
 //
