@@ -4,22 +4,28 @@ using FHIR version '4.0.1'
 
 include FHIRHelpers version '4.0.001' called FHIRHelpers
 
+// codes needed for queries
 codesystem "SnoMed" : 'http://snomed.info/sct'
 
 code "Flexible Sigmoidoscopy": '73761001' from "SnoMed"
 code "Hypertension" : '59621000' from "SnoMed"
 
+// parameterized 
 parameter "Measurement Period" Interval<DateTime>
   default Interval[@2019-01-01T00:00:00.0, @2020-01-01T00:00:00.0)
 
+// execute these for a single Patient
 context Patient
 
+// do they meet criteria?  -- return a boolean
 define "InInitialPopulation":
   AgeInYearsAt((end of "Measurement Period") - 5 years) >= 50
 
+// builds a list all eligible conditions
 define "FlexibleSigmoidoscopyConditions":
 	[Procedure: "Flexible Sigmoidoscopy"] FlexibleSigmoidoscopy
 
+// further scoped to the measurement period
 define "FlexibleSigmoidoscopyPerformed":
 	"FlexibleSigmoidoscopyConditions" FlexibleSigmoidoscopy
 		where FlexibleSigmoidoscopy.status = 'completed'
@@ -47,12 +53,15 @@ define "FlexibleSigmoidoscopyPerformed":
 
 context Unfiltered
 
+// aggregate above across all patients -- return an integer
 define "Numerator":
   Count("FlexibleSigmoidoscopyPerformed")
 
+// aggregate across all patients -- return an integer
 define "Denominator":
   Count("InInitialPopulation" i where i = true)
 
+// do some math
 define "Percentage":
   (Numerator / Denominator) * 100
 

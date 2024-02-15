@@ -137,70 +137,78 @@ namespace Hl7.Cql.Packager
                 File.WriteAllText(file.FullName, sqlStatement);
             }
 
-            var packager = new LibraryPackager();
-            var resources = packager.PackageResources(elmDir,
-                cqlDir,
-                graph,
-                typeResolver,
-                new CqlOperatorsBinding(typeResolver, FhirTypeConverter.Create(ModelInfo.ModelInspector)),
-                new TypeManager(typeResolver),
-                CanonicalUri,
-                logFactory);
 
-            if (fhirDir != null)
+            try
             {
-                var options = new JsonSerializerOptions()
-                    .ForFhir(typeof(Resource).Assembly)
-                    .Pretty();
+                var packager = new LibraryPackager();
+                var resources = packager.PackageResources(elmDir,
+                    cqlDir,
+                    graph,
+                    typeResolver,
+                    new CqlOperatorsBinding(typeResolver, FhirTypeConverter.Create(ModelInfo.ModelInspector)),
+                    new TypeManager(typeResolver),
+                    CanonicalUri,
+                    logFactory);
 
-                cliLogger.LogInformation($"Writing FHIR resources to {fhirDir.FullName}");
-
-                foreach (var resource in resources)
+                if (fhirDir != null)
                 {
-                    var file = new FileInfo(Path.Combine(fhirDir.FullName, $"{resource.Id}.json"));
-                    cliLogger.LogInformation($"Writing {file.FullName}");
-                    using var fs = new FileStream(file.FullName, FileMode.Create, FileAccess.Write, FileShare.Read);
-                    JsonSerializer.Serialize(fs, resource, options);
+                    var options = new JsonSerializerOptions()
+                        .ForFhir(typeof(Resource).Assembly)
+                        .Pretty();
+
+                    cliLogger.LogInformation($"Writing FHIR resources to {fhirDir.FullName}");
+
+                    foreach (var resource in resources)
+                    {
+                        var file = new FileInfo(Path.Combine(fhirDir.FullName, $"{resource.Id}.json"));
+                        cliLogger.LogInformation($"Writing {file.FullName}");
+                        using var fs = new FileStream(file.FullName, FileMode.Create, FileAccess.Write, FileShare.Read);
+                        JsonSerializer.Serialize(fs, resource, options);
+                    }
+                }
+                if (csDir != null)
+                {
+                    cliLogger.LogInformation($"Writing C# source files to {csDir.FullName}");
+                    // Write out the C# source code to the desired output location
+                    foreach (var resource in resources)
+                    {
+                        if (resource is Binary binary)
+                        {
+                            if (binary.ContentType == "text/plain")
+                            {
+                                var bytes = binary.Data;
+                                DirectoryInfo? sourceDir = null;
+                                if (binary.Id.StartsWith("Tuple_"))
+                                {
+                                    sourceDir = new(Path.Combine(csDir.FullName, "Tuples"));
+                                }
+                                else
+                                {
+                                    sourceDir = new(csDir.FullName);
+                                }
+                                EnsureDirectory(sourceDir);
+                                var filePath = Path.Combine(sourceDir.FullName, $"{binary.Id}.cs");
+                                cliLogger.LogInformation($"Writing {filePath}");
+                                File.WriteAllBytes(filePath, bytes);
+                            }
+                        }
+                        else if (resource is Library library && library.Content != null)
+                        {
+                            var textPlain = library.Content
+                                .SingleOrDefault(c => c.ContentType == "text/plain");
+                            if (textPlain != null)
+                            {
+                                var bytes = textPlain.Data;
+                                var sourceFilePath = Path.Combine(csDir.FullName, $"{library.Id}.cs");
+                                File.WriteAllBytes(sourceFilePath, bytes);
+                            }
+                        }
+                    }
                 }
             }
-            if (csDir != null)
+            catch
             {
-                cliLogger.LogInformation($"Writing C# source files to {csDir.FullName}");
-                // Write out the C# source code to the desired output location
-                foreach (var resource in resources)
-                {
-                    if (resource is Binary binary)
-                    {
-                        if (binary.ContentType == "text/plain")
-                        {
-                            var bytes = binary.Data;
-                            DirectoryInfo? sourceDir = null;
-                            if (binary.Id.StartsWith("Tuple_"))
-                            {
-                                sourceDir = new(Path.Combine(csDir.FullName, "Tuples"));
-                            }
-                            else
-                            {
-                                sourceDir = new(csDir.FullName);
-                            }
-                            EnsureDirectory(sourceDir);
-                            var filePath = Path.Combine(sourceDir.FullName, $"{binary.Id}.cs");
-                            cliLogger.LogInformation($"Writing {filePath}");
-                            File.WriteAllBytes(filePath, bytes);
-                        }
-                    }
-                    else if (resource is Library library && library.Content != null)
-                    {
-                        var textPlain = library.Content
-                            .SingleOrDefault(c => c.ContentType == "text/plain");
-                        if (textPlain != null)
-                        {
-                            var bytes = textPlain.Data;
-                            var sourceFilePath = Path.Combine(csDir.FullName, $"{library.Id}.cs");
-                            File.WriteAllBytes(sourceFilePath, bytes);
-                        }
-                    }
-                }
+                // HACK silently eat
             }
         }
 
