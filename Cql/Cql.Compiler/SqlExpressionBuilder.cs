@@ -1932,7 +1932,32 @@ namespace Hl7.Cql.Compiler
                         switch (pe.path)
                         {
                             case "performed":   // TODO: hack because performed is a range
-                                selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "performedPeriod_end");
+                                selectScalarExpression = new SelectScalarExpression
+                                {
+                                    Expression = new FunctionCall
+                                    {
+                                        FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                        Parameters =
+                                        {
+                                            new ColumnReferenceExpression
+                                            {
+                                                MultiPartIdentifier = new MultiPartIdentifier
+                                                {
+                                                    Identifiers =
+                                                    {
+                                                        sourceTableIdentifier,
+                                                        new Identifier { Value = "performedPeriod_string", QuoteType = QuoteType.SquareBracket }
+                                                    }
+                                                }
+                                            },
+                                            new StringLiteral { Value = "$.end" }
+                                        }
+                                    },
+                                    ColumnName = new IdentifierOrValueExpression
+                                    {
+                                        Identifier = new Identifier { Value = ResultColumnName, QuoteType = QuoteType.SquareBracket }
+                                    }
+                                };
                                 break;
                             case "status":
                                 selectScalarExpression = BuildSimpleColumnReference(sourceTableIdentifier, "status");
@@ -2742,8 +2767,26 @@ namespace Hl7.Cql.Compiler
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "condition",
-                    DefaultCodingCodeExpression = BuildColumnReference(SourceTableAlias, "code_coding_code"),
-                    DefaultCodingCodeSystemExpression = BuildColumnReference(SourceTableAlias, "code_coding_system"),
+                    DefaultCodingCodeExpression = 
+                        new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "code_string"),
+                                    new StringLiteral { Value = "$.coding[0].code" }
+                                }
+                            },
+                    DefaultCodingCodeSystemExpression = 
+                        new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "code_string"),
+                                    new StringLiteral { Value = "$.coding[0].system" }
+                                }
+                            },
                     ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
                     {
                         // a Condition object in a Patient context (extract the patient id)
@@ -2767,8 +2810,27 @@ namespace Hl7.Cql.Compiler
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "observation",
-                    DefaultCodingCodeExpression = BuildColumnReference(SourceTableAlias, "code_coding_code"),
-                    DefaultCodingCodeSystemExpression = BuildColumnReference(SourceTableAlias, "code_coding_system"),                    ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
+                    DefaultCodingCodeExpression = 
+                        new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "code_string"),
+                                    new StringLiteral { Value = "$.coding[0].code" }
+                                }
+                            },
+                    DefaultCodingCodeSystemExpression = 
+                        new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "code_string"),
+                                    new StringLiteral { Value = "$.coding[0].system" }
+                                }
+                            },
+                    ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
                     {
                         // a Condition object in a Patient context (extract the patient id)
                         {
