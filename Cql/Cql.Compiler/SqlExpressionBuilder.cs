@@ -2698,9 +2698,27 @@ namespace Hl7.Cql.Compiler
                 new FhirSqlTableMapEntry
                 {
                     SqlTableName = "procedure",
-                    // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamicly generated)
-                    DefaultCodingCodeExpression = BuildColumnReference(SourceTableAlias, "code_coding_code"),
-                    DefaultCodingCodeSystemExpression = BuildColumnReference(SourceTableAlias, "code_coding_system"),
+                    // TODO: figure out what to do with table identifier; probably need to make this unique (ie dynamically generated)
+                    DefaultCodingCodeExpression =                             
+                        new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "code_string"),
+                                    new StringLiteral { Value = "$.coding[0].code" }
+                                }
+                            }, //BuildColumnReference(SourceTableAlias, "code_coding_code"),
+                    DefaultCodingCodeSystemExpression =
+                        new FunctionCall
+                            {
+                                FunctionName = new Identifier { Value = "JSON_VALUE" },
+                                Parameters =
+                                {
+                                    BuildColumnReference(SourceTableAlias, "code_string"),
+                                    new StringLiteral { Value = "$.coding[0].system" }
+                                }
+                            }, //BuildColumnReference(SourceTableAlias, "code_coding_system"),
                     ContextIdentifierExpression = new Dictionary<string, ScalarExpression>
                     {
                         // a Condition object in a Patient context (extract the patient id)
